@@ -429,24 +429,21 @@ body.curve-mode .only3d { display: none; }
   outline-offset: -2px;
 }
 
-/* the "i" sits opposite the scene controls, in the same chip language */
+/* last item in the header, right of the theme toggle */
 .info-btn {
-  position: absolute;
-  top: .5rem;
-  left: .5rem;
-  z-index: 4;
-  width: 2.6rem;
-  height: 2.6rem;
+  flex: 0 0 auto;
+  width: 1.85rem;
+  height: 1.85rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--panel);
+  background: var(--panel-2);
   border: 1px solid var(--line);
-  border-radius: var(--radius);
+  border-radius: 50%;
   color: var(--muted);
-  font: 600 17px/1 var(--sans);
-  font-style: italic;
+  font: italic 600 15px/1 Georgia, "Times New Roman", serif;
   cursor: pointer;
+  transition: color .12s ease, border-color .12s ease;
 }
 .info-btn:hover { color: var(--accent); border-color: var(--accent); }
 
