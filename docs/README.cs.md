@@ -61,7 +61,7 @@ vedle čerstvého `js/app.js`.
 ## Načtení firmwaru
 
 Přetáhněte `.bin` i jeho `.xdf` do levého panelu, nebo stiskněte **Vybrat soubory**. **Oba
-soubory musí mít stejný název** — `granpasso.bin` + `granpasso.xdf`. Dvojic můžete pustit
+soubory musí mít stejný název** — `firmware.bin` + `firmware.xdf`. Dvojic můžete pustit
 kolik chcete; z každé je karta v seznamu s vlastní barvou.
 
 Název na kartě se upravuje přímo na místě. Co napíšete, to se objeví v bublině pod

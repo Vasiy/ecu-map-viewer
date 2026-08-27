@@ -63,7 +63,7 @@ neben einem frischen `js/app.js` behalten.
 ## Firmware laden
 
 Ziehen Sie eine `.bin` samt `.xdf` in die linke Spalte oder klicken Sie **Dateien wählen**.
-**Beide Dateien brauchen denselben Namen** — `granpasso.bin` + `granpasso.xdf`. Es dürfen
+**Beide Dateien brauchen denselben Namen** — `firmware.bin` + `firmware.xdf`. Es dürfen
 beliebig viele Paare sein; jedes wird zu einer Karte in der Liste mit eigener Farbe.
 
 Der Name auf der Karte ist direkt änderbar. Was dort steht, steht auch im Tooltip, in der

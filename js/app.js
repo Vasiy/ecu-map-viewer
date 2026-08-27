@@ -2,7 +2,7 @@
  * Wiring: files in, surfaces out.
  *
  * A dataset is one firmware image plus the definition that explains it. Images
- * and definitions are paired by file name (granpasso.bin + granpasso.xdf); an
+ * and definitions are paired by file name (firmware.bin + firmware.xdf); an
  * image that arrives alone can borrow one of the built-in preset definitions.
  */
 (function () {

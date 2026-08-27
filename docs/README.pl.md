@@ -61,7 +61,7 @@ zostawić stary `index.html` obok świeżego `js/app.js`.
 ## Wczytanie firmware'u
 
 Przeciągnij `.bin` razem z jego `.xdf` na lewy panel albo naciśnij **Wybierz pliki**. **Oba
-pliki muszą mieć tę samą nazwę** — `granpasso.bin` + `granpasso.xdf`. Par może być dowolnie
+pliki muszą mieć tę samą nazwę** — `firmware.bin` + `firmware.xdf`. Par może być dowolnie
 wiele; każda staje się kartą na liście, z własnym kolorem.
 
 Nazwę na karcie zmienia się na miejscu. To, co wpiszesz, trafia do podpowiedzi pod

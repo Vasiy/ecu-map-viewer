@@ -63,8 +63,8 @@ naast een verse `js/app.js` houden.
 ## Firmware laden
 
 Sleep een `.bin` met de bijbehorende `.xdf` naar het linkerpaneel, of klik op **Bestanden
-kiezen**. **Beide bestanden moeten dezelfde naam hebben** — `granpasso.bin` +
-`granpasso.xdf`. Je mag zoveel paren neerzetten als je wilt; elk paar wordt een kaart in de
+kiezen**. **Beide bestanden moeten dezelfde naam hebben** — `firmware.bin` +
+`firmware.xdf`. Je mag zoveel paren neerzetten als je wilt; elk paar wordt een kaart in de
 lijst met een eigen kleur.
 
 De naam op de kaart pas je ter plekke aan. Wat je typt, staat ook in de tooltip, in de

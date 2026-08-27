@@ -63,7 +63,7 @@ http.server` no envía ninguna cabecera de caché, y el navegador puede quedarse
 ## Cargar un firmware
 
 Arrastra un `.bin` y su `.xdf` al panel izquierdo, o pulsa **Elegir archivos**. **Los dos
-archivos necesitan el mismo nombre** — `granpasso.bin` + `granpasso.xdf`. Suelta tantas
+archivos necesitan el mismo nombre** — `firmware.bin` + `firmware.xdf`. Suelta tantas
 parejas como quieras: cada una se convierte en una tarjeta de la lista, con su color.
 
 El nombre de la tarjeta se edita ahí mismo. Lo que escribas es lo que aparece en el aviso

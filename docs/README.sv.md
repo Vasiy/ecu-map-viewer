@@ -61,7 +61,7 @@ gammal `index.html` bredvid en färsk `js/app.js`.
 ## Läsa in firmware
 
 Dra en `.bin` och dess `.xdf` till vänsterpanelen, eller tryck **Välj filer**. **Båda
-filerna måste ha samma namn** — `granpasso.bin` + `granpasso.xdf`. Släpp hur många par du
+filerna måste ha samma namn** — `firmware.bin` + `firmware.xdf`. Släpp hur många par du
 vill; varje par blir ett kort i listan med egen färg.
 
 Namnet på kortet ändras på plats. Det du skriver är det som står i verktygstipset, i

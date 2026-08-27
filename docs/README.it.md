@@ -62,7 +62,7 @@ http.server` non manda alcuna intestazione di cache, e il browser può tenersi u
 ## Caricare un firmware
 
 Trascina un `.bin` e il suo `.xdf` nel pannello di sinistra, oppure premi **Scegli i
-file**. **I due file devono avere lo stesso nome** — `granpasso.bin` + `granpasso.xdf`.
+file**. **I due file devono avere lo stesso nome** — `firmware.bin` + `firmware.xdf`.
 Puoi lasciare quante coppie vuoi: ognuna diventa una scheda nell'elenco, con il suo colore.
 
 Il nome sulla scheda si modifica sul posto. Quello che scrivi finisce nel suggerimento

@@ -230,7 +230,7 @@ test('every locale names itself', function () {
 test('a missing string falls back to English, and placeholders fill in', function () {
   I18N.setLang('de');
   assert.strictEqual(I18N.t('theme.dark'), 'Dunkel');
-  assert.strictEqual(I18N.t('files.paired', { name: 'granpasso' }), 'granpasso geladen');
+  assert.strictEqual(I18N.t('files.paired', { name: 'stock' }), 'stock geladen');
   assert.strictEqual(I18N.t('nope.missing'), 'nope.missing');
   I18N.setLang('en');
 });

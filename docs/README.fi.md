@@ -64,7 +64,7 @@ lukea.
 ## Firmwaren lataaminen
 
 Raahaa `.bin` ja sen `.xdf` vasempaan paneeliin tai paina **Valitse tiedostot**.
-**Tiedostoilla pitää olla sama nimi** — `granpasso.bin` + `granpasso.xdf`. Pareja saa
+**Tiedostoilla pitää olla sama nimi** — `firmware.bin` + `firmware.xdf`. Pareja saa
 pudottaa niin monta kuin haluaa; jokaisesta tulee listaan kortti omalla värillään.
 
 Kortin nimeä muokataan paikan päällä. Se, minkä kirjoitat, näkyy osoittimen alla olevassa

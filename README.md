@@ -62,7 +62,7 @@ http.server` sends no cache headers at all, and a browser can end up running a s
 ## Load a firmware
 
 Drag a `.bin` and its `.xdf` into the left panel, or press **Choose files**. **The two
-files must have the same name** — `granpasso.bin` + `granpasso.xdf`. Drop as many pairs
+files must have the same name** — `firmware.bin` + `firmware.xdf`. Drop as many pairs
 as you like; each becomes a card in the list with its own colour.
 
 The name in the card is editable. Whatever you type is what the tooltip, the legend and

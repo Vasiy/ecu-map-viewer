@@ -36,7 +36,7 @@ page.on('pageerror', (e) => errors.push('pageerror: ' + e.message));
 await page.goto(BASE + '/index.html', { waitUntil: 'load' });
 await page.waitForTimeout(400);
 
-await drop(page, ['granpasso.bin', 'granpasso.xdf', 'multistrada.bin', 'multistrada.xdf', 'ducati1198.bin', 'ducati1198.xdf']);
+await drop(page, ['multistrada.bin', 'multistrada.xdf', 'ducati1198.bin', 'ducati1198.xdf', 'hypermotard.bin', 'hypermotard.xdf']);
 
 const report = {};
 report.datasets = await page.locator('.ds').count();
@@ -69,7 +69,7 @@ await page.locator('.ds .vis').nth(2).check();
 await page.waitForTimeout(400);
 
 // custom display name shows up on the trace
-await page.locator('.ds .ds-name').first().fill('Granpasso — stock');
+await page.locator('.ds .ds-name').first().fill('Multistrada — stock');
 await page.waitForTimeout(600);
 report.traceName = await page.evaluate(() => document.getElementById('plot').data[0].name);
 
@@ -121,10 +121,17 @@ await page.screenshot({ path: shots + '/shot-4-diff.png' });
 await page.locator('[data-mode="surface"]').click();
 await page.waitForTimeout(400);
 
-// a lone .bin must fall back to a preset definition
-await drop(page, ['tuned.bin']);
+// a lone .bin must fall back to a preset definition. The bytes are one of the
+// images already here, handed over under a name no .xdf matches.
+await page.evaluate(async () => {
+  const dt = new DataTransfer();
+  const buf = await (await fetch('testdata/multistrada.bin')).arrayBuffer();
+  dt.items.add(new File([buf], 'no-definition.bin'));
+  document.getElementById('drop').dispatchEvent(new DragEvent('drop', { dataTransfer: dt, bubbles: true }));
+});
+await page.waitForTimeout(1200);
 report.presetSelects = await page.locator('.ds .preset').count();
-await page.locator('.ds .preset').first().selectOption('granpasso');
+await page.locator('.ds .preset').first().selectOption('mts1100');
 await page.waitForTimeout(900);
 report.tracesAfterPreset = await page.evaluate(() =>
   document.getElementById('plot').data.filter((d) => d.type === 'surface').length);

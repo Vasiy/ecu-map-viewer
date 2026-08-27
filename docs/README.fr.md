@@ -63,8 +63,8 @@ ancien `index.html` à côté d'un `js/app.js` tout neuf.
 ## Charger un firmware
 
 Faites glisser un `.bin` et son `.xdf` dans le panneau de gauche, ou cliquez sur **Choisir
-des fichiers**. **Les deux fichiers doivent porter le même nom** — `granpasso.bin` +
-`granpasso.xdf`. Déposez autant de paires que vous voulez : chacune devient une carte dans
+des fichiers**. **Les deux fichiers doivent porter le même nom** — `firmware.bin` +
+`firmware.xdf`. Déposez autant de paires que vous voulez : chacune devient une carte dans
 la liste, avec sa propre couleur.
 
 Le nom sur la carte se modifie sur place. Ce que vous y écrivez apparaît dans l'infobulle,
