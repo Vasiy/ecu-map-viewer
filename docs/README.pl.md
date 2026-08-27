@@ -92,6 +92,8 @@ XDF zawiera dziesiątki tablic, dlatego lista **Mapa** jest pogrupowana:
 - **Powierzchnie (3D)** — dokładne tytuły z definicji.
 - **Krzywe (1D)** — tablice jednowymiarowe, rysowane zwykłym wykresem liniowym.
 
+Role obejmują mapy główne i typowe korekty — deltę, temperaturę powietrza i silnika, rozgrzewanie, fazę, moment maksymalny. Dokładne nazwy porównywane są bez interpunkcji i bez znaczników w rodzaju `[corsaro]`, więc `Fuel - Main` i `Fuel Main` trafiają do jednej pozycji.
+
 Licznik obok (`2/3`) mówi, w ilu wczytanych firmware'ach jest ta tablica. Ten, w którym jej
 nie ma, zostaje oznaczony na czerwono na swojej karcie.
 

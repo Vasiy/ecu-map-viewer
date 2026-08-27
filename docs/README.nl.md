@@ -95,6 +95,8 @@ Een XDF bevat tientallen tabellen, dus de keuzelijst **Map** is gegroepeerd:
 - **Vlakken (3D)** — de exacte titels uit de definitie.
 - **Curven (1D)** — eendimensionale tabellen, getekend als gewone lijngrafiek.
 
+Rollen dekken de hoofdmaps en de gebruikelijke correcties — delta, lucht- en motortemperatuur, opwarmen, fase, maximumkoppel. Exacte titels worden vergeleken zonder leestekens en zonder markeringen als `[corsaro]`, zodat `Fuel - Main` en `Fuel Main` in één regel belanden.
+
 De teller ernaast (`2/3`) zegt in hoeveel geladen firmwares die tabel zit. De firmware die
 hem mist, krijgt een rode melding op zijn kaart.
 

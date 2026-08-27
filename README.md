@@ -93,6 +93,8 @@ An XDF holds dozens of tables, so the **Map** selector groups them:
 - **Surfaces (3D)** — exact titles from the definition.
 - **Curves (1D)** — one-dimensional tables, drawn as an ordinary line chart.
 
+Roles cover the main maps and the usual corrections — delta, air and engine temperature, warm-up, phase, maximum torque. Exact titles are matched with punctuation and tags like `[corsaro]` ignored, so `Fuel - Main` and `Fuel Main` land in one entry.
+
 The counter beside each entry (`2/3`) says how many of the loaded firmwares carry that
 table. A firmware that does not is marked in red on its card.
 
@@ -175,6 +177,7 @@ on a board with no route to the internet:
 | `js/binio.js` | reads cells from the image per the `EMBEDDEDDATA` geometry |
 | `js/xdf.js` | the XDF model: tables, axes, reading a table out of a firmware |
 | `js/presets.js` | built-in definitions for a `.bin` with no XDF |
+| `js/roles.js` | title normalising, and matching a map across definitions |
 | `js/grid.js` | ranges, bilinear sampling, difference, cross-sections |
 | `js/viewer.js` | the Plotly layer: surfaces, contours, axis ranges |
 | `js/app.js` | file loading, datasets, modes |

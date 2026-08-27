@@ -93,6 +93,8 @@ Un XDF contiene decine di tabelle, perciò il selettore **Mappa** è raggruppato
 - **Superfici (3D)** — i titoli esatti della definizione.
 - **Curve (1D)** — le tabelle monodimensionali, disegnate come un normale grafico a linee.
 
+I ruoli coprono le mappe principali e le correzioni consuete — delta, temperatura aria e motore, riscaldamento, fase, coppia massima. I titoli esatti si confrontano senza punteggiatura e senza marcature come `[corsaro]`, così `Fuel - Main` e `Fuel Main` finiscono in una sola voce.
+
 Il contatore accanto (`2/3`) dice in quanti firmware caricati c'è quella tabella. Quello a
 cui manca viene segnalato in rosso sulla sua scheda.
 

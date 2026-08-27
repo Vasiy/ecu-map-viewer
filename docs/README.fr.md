@@ -96,6 +96,8 @@ Une XDF contient des dizaines de tables, d'où le regroupement du sélecteur
 - **Surfaces (3D)** — les titres exacts de la définition.
 - **Courbes (1D)** — les tables à une dimension, tracées en graphique linéaire ordinaire.
 
+Les rôles couvrent les cartographies principales et les corrections habituelles — delta, température d'air et moteur, montée en température, phase, couple maximum. Les titres exacts sont comparés sans la ponctuation ni les marques comme `[corsaro]`, si bien que `Fuel - Main` et `Fuel Main` tiennent dans une seule entrée.
+
 Le compteur à côté (`2/3`) indique combien de firmwares chargés portent cette table. Celui
 qui ne l'a pas est signalé en rouge sur sa carte.
 

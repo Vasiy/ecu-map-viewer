@@ -94,6 +94,8 @@ Eine XDF enthält Dutzende Tabellen, deshalb ist die Auswahl **Kennfeld** gruppi
 - **Flächen (3D)** — die exakten Titel aus der Definition.
 - **Kurven (1D)** — eindimensionale Tabellen, als gewöhnliches Liniendiagramm.
 
+Rollen decken die Hauptkennfelder und die üblichen Korrekturen ab — Delta, Luft- und Motortemperatur, Warmlauf, Phase, maximales Drehmoment. Exakte Titel werden ohne Satzzeichen und ohne Marken wie `[corsaro]` verglichen, sodass `Fuel - Main` und `Fuel Main` in einem Eintrag landen.
+
 Der Zähler daneben (`2/3`) sagt, wie viele der geladenen Firmwares diese Tabelle führen.
 Wo sie fehlt, steht ein roter Hinweis auf der Karte.
 

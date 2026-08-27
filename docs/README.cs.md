@@ -92,6 +92,8 @@ XDF obsahuje desítky tabulek, proto je nabídka **Mapa** rozdělená:
 - **Plochy (3D)** — přesné názvy z definice.
 - **Křivky (1D)** — jednorozměrné tabulky, kreslené obyčejným čárovým grafem.
 
+Role pokrývají hlavní mapy i obvyklé korekce — deltu, teplotu vzduchu a motoru, zahřívání, fázi, maximální moment. Přesné názvy se porovnávají bez interpunkce a bez značek typu `[corsaro]`, takže `Fuel - Main` a `Fuel Main` skončí v jedné položce.
+
 Počítadlo vedle (`2/3`) říká, v kolika načtených firmwarech ta tabulka je. Ten, kterému
 chybí, je na své kartě označen červeně.
 

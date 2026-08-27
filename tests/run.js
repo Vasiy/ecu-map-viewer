@@ -15,6 +15,7 @@ var XDF = require(path.join(ROOT, 'js/xdf.js'));
 var Grid = require(path.join(ROOT, 'js/grid.js'));
 var Presets = require(path.join(ROOT, 'js/presets.js'));
 var I18N = require(path.join(ROOT, 'js/i18n.js'));
+var Roles = require(path.join(ROOT, 'js/roles.js'));
 
 var passed = 0, failed = 0;
 function test(name, fn) {
@@ -210,6 +211,71 @@ test('grid slice interpolates between rows', function () {
 test('grid padded range keeps a flat map visible', function () {
   var flat = Grid.padded([12, 12]);
   assert.ok(flat[1] > flat[0]);
+});
+
+/* ---------- roles ---------- */
+
+/* Real titles, as the four definitions in testdata/ spell them. */
+var TITLES = {
+  '@ign-main': ['Ignition - Main', 'Ignition Main advance', 'Ignition Main Advance', 'Ignition map'],
+  '@ign-delta': ['Ignition - Delta Vertical', 'Ignition Delta', 'Ignition Delta(Right cylinder)'],
+  '@ign-air': ['Ignition - Air Temperature Multiplier', 'Ignition Air temp', 'Ignition Air temp correction'],
+  '@ign-engine': ['Ignition - Coolant Temperature Multiplier', 'Ignition Engine temp',
+                  'Ignition Engine temp Correction'],
+  '@fuel-main': ['Fuel - Main', 'Fuel Main', 'Fuel map'],
+  '@fuel-delta': ['Fuel - Delta Vertical', 'Fuel Delta', 'Fuel Delta (Right cylinder)'],
+  '@fuel-air': ['Fuel - Air Temperature/Pressure Multiplier', 'Fuel Air-temp-pressure',
+                'Fuel: Pressure-Air Temp Correction'],
+  '@fuel-engine': ['Fuel - Coolant Temperature Multiplier', 'Fuel Engine temp', 'Fuel Engine Temp Correction'],
+  '@fuel-warm': ['Fuel - Startup Multiplier', 'Fuel Warm up'],
+  '@fuel-phase': ['[corsaro] 4A 3 F4 Fuel Phase (End of Ignition/Injection pulse)', 'Fuel Phase'],
+  '@torque-max': ['Torque - Maximum Calculated', 'Torque maximum calculated']
+};
+
+test('a role matches the same map however a definition spells it', function () {
+  Object.keys(TITLES).forEach(function (role) {
+    TITLES[role].forEach(function (title) {
+      assert.strictEqual(Roles.roleOf(title), role, title);
+    });
+  });
+});
+
+test('a qualified table never passes for the main map', function () {
+  ['Offset Ignition map', 'Offset Fuel map', '[corsaro] 4D 0 80 Idle Fuel Table',
+   'Ignition - DQS Cut Time', '[corsaro] 48 5 6A 9A Ignition Dwell Threshold',
+   'Torque - Engine Calculated', 'Torque', 'Rev Limit', 'New Table', 'Unknown Table 1'
+  ].forEach(function (title) {
+    var role = Roles.roleOf(title);
+    assert.ok(role !== '@ign-main' && role !== '@fuel-main', title + ' -> ' + role);
+  });
+});
+
+test('idle corrections do not take the engine-temp role', function () {
+  assert.strictEqual(Roles.roleOf('[corsaro] 48 F AE Ignition Engine Temp correction Idle_1'), null);
+  assert.strictEqual(Roles.roleOf('Ignition Engine temp'), '@ign-engine');
+});
+
+test('normTitle joins titles that differ only in punctuation or noise', function () {
+  assert.strictEqual(Roles.normTitle('Fuel - Main'), Roles.normTitle('Fuel Main'));
+  assert.strictEqual(Roles.normTitle('Torque - Maximum Calculated'), Roles.normTitle('Torque maximum calculated'));
+  assert.strictEqual(Roles.normTitle('[corsaro] 4D 0 80 Idle Fuel Table'), 'idle fuel table');
+  assert.notStrictEqual(Roles.normTitle('Fuel Main'), Roles.normTitle('Fuel Delta'));
+});
+
+test('a definition with several candidates gives up its surface first', function () {
+  var tables = [
+    { title: 'Ignition Engine Temp correction Idle_1', is3d: false },
+    { title: 'Ignition Engine temp', is3d: true }
+  ];
+  assert.strictEqual(Roles.pick(tables, '@ign-engine').title, 'Ignition Engine temp');
+  assert.strictEqual(Roles.pick(tables, '@fuel-main'), null);
+});
+
+test('every role carries a label that exists in English', function () {
+  Roles.ROLES.forEach(function (r) {
+    assert.ok(r.label in I18N.locales.en, r.key + ' has no label');
+  });
+  assert.strictEqual(Roles.listed().length, Roles.ROLES.length);
 });
 
 /* ---------- i18n ---------- */

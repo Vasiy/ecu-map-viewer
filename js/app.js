@@ -40,55 +40,10 @@
     return fileName.replace(/\.[^.]+$/, '');
   }
 
-  /*
-   * The same physical map is titled differently on every platform
-   * ("Ignition Main advance", "Ignition - Main", "Ignition map"), so a role
-   * matches it by meaning. Roles are what makes a cross-platform comparison
-   * one click instead of one pick per firmware.
-   */
-  var ROLES = [
-    { key: '@ign-main', label: 'role.ign_main', family: /\bignition\b|\bspark\b/, kind: /\bmain\b|\bmap\b|\badvance\b/ },
-    { key: '@ign-delta', label: 'role.ign_delta', family: /\bignition\b|\bspark\b/, kind: /\bdelta\b/ },
-    { key: '@fuel-main', label: 'role.fuel_main', family: /\bfuel\b|\binjection\b/, kind: /\bmain\b|\bmap\b/ },
-    { key: '@fuel-delta', label: 'role.fuel_delta', family: /\bfuel\b|\binjection\b/, kind: /\bdelta\b/ }
-  ];
-  // qualifiers that mean "a correction of the map", not the map itself
-  var NOT_MAIN = /\boffset\b|\btemp\b|\btemperature\b|\bidle\b|\bdwell\b|\bcut\b|\bcorrection\b|\bcorr\b|\bmultiplier\b|\btorque\b|\bthreshold\b|\bstartup\b|\bstart\b|\bphase\b|\bwarm\b|\btrim\b|\bflow\b|\blegend\b|\bbreakpoint/;
-
-  function roleWords(title) {
-    return String(title).toLowerCase()
-      .replace(/^\[[^\]]*\]\s*/, '')
-      .replace(/[^a-z0-9]+/g, ' ')
-      .trim();
-  }
-
-  function roleOf(table) {
-    var w = roleWords(table.title);
-    for (var i = 0; i < ROLES.length; i++) {
-      var r = ROLES[i];
-      if (!r.family.test(w) || !r.kind.test(w)) continue;
-      if (r.key.indexOf('main') > 0 && NOT_MAIN.test(w)) continue;
-      return r.key;
-    }
-    return null;
-  }
-
-  function roleTable(ds, roleKey) {
-    var hits = tablesOf(ds).filter(function (tb) { return roleOf(tb) === roleKey; });
-    if (!hits.length) return null;
-    // prefer a surface over a curve, then the shortest title (least qualified)
-    hits.sort(function (a, b) {
-      if (a.is3d !== b.is3d) return a.is3d ? -1 : 1;
-      return a.title.length - b.title.length;
-    });
-    return hits[0];
-  }
+  var Roles = window.Roles;
 
   function normTitle(title) {
-    return String(title).toLowerCase()
-      .replace(/^\[[^\]]*\]\s*/, '')          // "[corsaro] Ignition Idle" -> "Ignition Idle"
-      .replace(/\s+/g, ' ')
-      .trim();
+    return Roles.normTitle(title);
   }
 
   function hex(n) {
@@ -218,7 +173,7 @@
   }
 
   function findTable(ds, key) {
-    if (key && key.charAt(0) === '@') return roleTable(ds, key);
+    if (key && key.charAt(0) === '@') return Roles.pick(tablesOf(ds), key);
     var hit = tablesOf(ds).filter(function (tb) { return normTitle(tb.title) === key; });
     return hit.length ? hit[0] : null;
   }
@@ -257,8 +212,10 @@
     }
     sel.disabled = false;
 
-    var roleEntries = ROLES.map(function (r) {
-      var owners = state.datasets.filter(function (ds) { return ds.doc && roleTable(ds, r.key); });
+    var roleEntries = Roles.listed().map(function (r) {
+      var owners = state.datasets.filter(function (ds) {
+        return ds.doc && Roles.pick(tablesOf(ds), r.key);
+      });
       return { key: r.key, title: t(r.label), owners: owners, is3d: true };
     }).filter(function (r) { return r.owners.length > 0; });
 

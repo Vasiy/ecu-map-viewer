@@ -63,9 +63,14 @@ computed from the *visible* datasets only (`Viewer.visibleRange`), and every
 surface pins its own `cmin`/`cmax`. Breaking either one makes a hidden dataset
 silently distort the scene. `tests/run.js` guards the first.
 
-**Titles differ per platform**, so `ROLES` in `js/app.js` matches a map by meaning
-("Ignition Main advance" / "Ignition - Main" / "Ignition map" are all `@ign-main`).
-Add a role there rather than special-casing a title elsewhere.
+**Titles differ per platform**, so `js/roles.js` matches a map by meaning: "Ignition
+Main advance" / "Ignition - Main" / "Ignition map" are all `@ign-main`. Eleven roles
+cover the main maps and the recurring corrections; `normTitle()` in the same file
+strips the noise definitions carry — a `[corsaro]` tag, address crumbs like "4A 3 F4",
+and the punctuation that only splits a name — so the exact-title group joins
+"Fuel - Main" with "Fuel Main". Add a role there rather than special-casing a title
+elsewhere, and keep `tests/run.js` fed with the real spellings: those tests are the
+record of how each definition writes each map.
 
 **The scene is never left empty, and hot paths never rebuild it.** Measured on
 this machine (Chromium; WebKit is ~1.7x slower across the board):

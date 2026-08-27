@@ -94,6 +94,8 @@ Un XDF guarda decenas de tablas, así que el selector **Mapa** va agrupado:
 - **Superficies (3D)** — los títulos exactos de la definición.
 - **Curvas (1D)** — tablas de una dimensión, dibujadas como un gráfico de líneas normal.
 
+Los roles cubren los mapas principales y las correcciones habituales: delta, temperatura del aire y del motor, calentamiento, fase, par máximo. Los títulos exactos se comparan sin puntuación ni marcas como `[corsaro]`, así que `Fuel - Main` y `Fuel Main` caen en una sola entrada.
+
 El contador de al lado (`2/3`) dice en cuántos firmwares cargados está esa tabla. El que no
 la tiene queda marcado en rojo en su tarjeta.
 

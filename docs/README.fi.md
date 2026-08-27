@@ -95,6 +95,8 @@ XDF sisältää kymmeniä taulukoita, joten **Kartta**-valikko on ryhmitelty:
 - **Pinnat (3D)** — määrittelyn tarkat otsikot.
 - **Käyrät (1D)** — yksiulotteiset taulukot, piirrettynä tavallisena viivakuvaajana.
 
+Roolit kattavat pääkartat ja tavanomaiset korjaukset — deltan, ilman ja moottorin lämpötilan, lämmityksen, vaiheen ja suurimman väännön. Tarkkoja otsikoita verrataan ilman välimerkkejä ja ilman `[corsaro]`-tyylisiä merkintöjä, joten `Fuel - Main` ja `Fuel Main` päätyvät samaan riviin.
+
 Vieressä oleva laskuri (`2/3`) kertoo, kuinka monessa ladatussa firmwaressa taulukko on. Se,
 josta se puuttuu, merkitään punaisella omaan korttiinsa.
 

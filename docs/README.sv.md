@@ -92,6 +92,8 @@ En XDF rymmer dussintals tabeller, så listan **Karta** är grupperad:
 - **Ytor (3D)** — de exakta titlarna ur definitionen.
 - **Kurvor (1D)** — endimensionella tabeller, ritade som ett vanligt linjediagram.
 
+Roller täcker huvudkartorna och de vanliga korrigeringarna — delta, luft- och motortemperatur, uppvärmning, fas, maximalt vridmoment. Exakta titlar jämförs utan skiljetecken och utan märken som `[corsaro]`, så `Fuel - Main` och `Fuel Main` hamnar i samma post.
+
 Räknaren intill (`2/3`) säger i hur många inlästa firmware tabellen finns. Den som saknar
 den märks med rött på sitt kort.
 
