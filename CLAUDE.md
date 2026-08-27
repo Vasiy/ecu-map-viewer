@@ -56,6 +56,31 @@ silently distort the scene. `tests/run.js` guards the first.
 ("Ignition Main advance" / "Ignition - Main" / "Ignition map" are all `@ign-main`).
 Add a role there rather than special-casing a title elsewhere.
 
+**The scene is never left empty, and hot paths never rebuild it.** Measured on
+this machine (Chromium; WebKit is ~1.7x slower across the board):
+
+| path | before | after |
+|---|---|---|
+| drop two pairs -> first surface | 859 ms | ~300 ms |
+| opacity slider, ten steps | 1572 ms | ~210 ms |
+| cross-section slider, ten steps | 2307 ms | ~480 ms |
+| toggle one dataset | 530-720 ms | 330-400 ms |
+
+Three rules produce that, and undoing any of them costs it back:
+
+1. `draw()` puts an invisible seed surface in the scene when there is nothing to
+   show. Dropping to zero traces tears the gl3d subplot down, and rebuilding it
+   costs ~500 ms of context creation and shader compilation on the next drop.
+2. Properties that change during a drag restyle in place (`setOpacity`,
+   `updateSlice`, `drawSlice`'s restyle path) instead of going through `draw()`.
+   Contours are the exception — restyling them rebuilds the mesh anyway and
+   measured slower than a plain redraw, so that toggle stays a redraw.
+3. A checkbox is one `Plotly.update`: visibility, the cross-section line and the
+   rescaled z axis in a single redraw rather than three.
+
+Parsing is not the bottleneck and never was: a 110 KB XDF parses in ~9 ms and a
+32x20 table reads in ~2 ms. Measure before optimising anything here.
+
 **A 1-D table is a chart, not a surface.** `isCurve()` in `js/app.js` switches the
 stage to the 2-D renderer when every selected grid has a single column, and
 `body.curve-mode` hides the controls that only mean something for a surface.

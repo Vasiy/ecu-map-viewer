@@ -95,6 +95,21 @@
     return '0x' + Number(n).toString(16).toUpperCase();
   }
 
+  /* Coalesce repeated work into one animation frame -- slider drags fire many
+     input events per frame and each redraw is far more expensive than one. */
+  var frameJobs = {}, framePending = false;
+  function onNextFrame(key, fn) {
+    frameJobs[key] = fn;
+    if (framePending) return;
+    framePending = true;
+    window.requestAnimationFrame(function () {
+      framePending = false;
+      var jobs = frameJobs;
+      frameJobs = {};
+      Object.keys(jobs).forEach(function (k) { jobs[k](); });
+    });
+  }
+
   function toast(message, kind) {
     var box = $('toasts');
     var node = document.createElement('div');
@@ -108,6 +123,9 @@
   /* ---------- loading ---------- */
 
   function readFile(file, asText) {
+    if (typeof file.arrayBuffer === 'function') {
+      return asText ? file.text() : file.arrayBuffer();
+    }
     return new Promise(function (resolve, reject) {
       var fr = new FileReader();
       fr.onerror = function () { reject(new Error('read error')); };
@@ -349,6 +367,7 @@
     var items = buildItems();
     lastItems = items;
     var visible = items.filter(function (i) { return i.visible; });
+    var wasCurve = curveMode;
     curveMode = isCurve(items);
     document.body.classList.toggle('curve-mode', curveMode);
     el.empty.hidden = visible.length > 0;
@@ -384,7 +403,9 @@
         slice: sliceSpec(items),
         camera: Viewer.currentCamera(el.plot)
       });
-      window.Plotly.Plots.resize(el.plot);
+      // only worth a resize when the stage swapped renderers; a plain redraw
+      // already fits the box, and a resize costs a full relayout
+      if (wasCurve) window.Plotly.Plots.resize(el.plot);
     }
     renderSlice(items);
   }
@@ -691,13 +712,18 @@
     });
 
     el.contours.addEventListener('change', function (ev) {
+      // measured: restyling the contour object rebuilds the mesh anyway and
+      // lands slower than a plain redraw, so this one stays a redraw
       state.contours = ev.target.checked;
       renderPlot();
     });
 
     el.opacity.addEventListener('input', function (ev) {
       state.opacity = Number(ev.target.value) / 100;
-      renderPlot();
+      if (curveMode || !lastItems.length) { renderPlot(); return; }
+      onNextFrame('opacity', function () {
+        Viewer.setOpacity(el.plot, lastItems, state.opacity);
+      });
     });
 
     el.sliceSel.addEventListener('change', function (ev) {
@@ -708,7 +734,7 @@
 
     el.sliceRange.addEventListener('input', function (ev) {
       state.sliceIndex = Number(ev.target.value);
-      renderSlice(lastItems);
+      onNextFrame('slice', function () { renderSlice(lastItems); });
     });
 
     el.btnReset.addEventListener('click', function () { Viewer.resetCamera(el.plot); });

@@ -81,6 +81,20 @@
    * item: { name, color, grid: {x,y,z}, visible, digits, units }
    * opts: { theme, contours, opacity, diff: {baseName} | null }
    */
+  /*
+   * Contours on the surface itself plus a projection onto each wall: floor
+   * (rpm x tps), back wall (tps x value), side wall (rpm x value).
+   */
+  function contourSpec(item, opts) {
+    var lineColor = mix(item.color, opts.theme === 'light' ? '#101318' : '#ffffff', 0.2);
+    var on = !!opts.contours;
+    return {
+      x: { show: on, project: { x: on }, color: lineColor, width: 1, highlight: false },
+      y: { show: on, project: { y: on }, color: lineColor, width: 1, highlight: false },
+      z: { show: on, project: { z: on }, usecolormap: true, width: 2, highlight: false }
+    };
+  }
+
   function surfaceTrace(item, opts) {
     var range = Grid.extent(item.grid.z) || [0, 1];
     var cmin = range[0], cmax = range[1];
@@ -89,10 +103,6 @@
       var span = Math.max(Math.abs(cmin), Math.abs(cmax), 0.1);
       cmin = -span; cmax = span;
     }
-    // Wall projections in the dataset's own hue. In difference mode the fill is a
-    // shared diverging ramp (it has to be: the colour means the sign), so the
-    // contour lines are the only thing left that says which map a surface is.
-    var lineColor = mix(item.color, opts.theme === 'light' ? '#101318' : '#ffffff', 0.2);
     var unit = item.units ? ' ' + item.units : '';
     return {
       type: 'surface',
@@ -107,13 +117,7 @@
       cauto: false,
       cmin: cmin,
       cmax: cmax,
-      // contours on the surface itself plus a projection onto each wall:
-      // floor (rpm x tps), back wall (tps x value), side wall (rpm x value)
-      contours: {
-        x: { show: !!opts.contours, project: { x: !!opts.contours }, color: lineColor, width: 1, highlight: false },
-        y: { show: !!opts.contours, project: { y: !!opts.contours }, color: lineColor, width: 1, highlight: false },
-        z: { show: !!opts.contours, project: { z: !!opts.contours }, usecolormap: true, width: 2, highlight: false }
-      },
+      contours: contourSpec(item, opts),
       hovertemplate: '<b>' + item.name + '</b><br>' +
         t('axis.rpm') + ': %{y:.0f}<br>' +
         t('axis.tps') + ': %{x}<br>' +
@@ -229,6 +233,24 @@
     toImageButtonOptions: { format: 'png', scale: 2 }
   };
 
+  /*
+   * Build the WebGL scene before there is anything to show.
+   *
+   * The first 3-D plot in a page costs ~0.5 s: WebGL context plus shader
+   * compilation. An empty scene would pay that on the first drop, so the empty
+   * state keeps one invisible surface instead of no traces at all -- the gl3d
+   * subplot is built while the user is still picking files, and the first real
+   * draw only swaps the data in. Dropping to zero traces tears the subplot down
+   * again, which is exactly what we are avoiding.
+   */
+  function seedTrace() {
+    return {
+      type: 'surface',
+      x: [0, 1], y: [0, 1], z: [[0, 0], [0, 0]],
+      opacity: 0, showscale: false, hoverinfo: 'skip', showlegend: false
+    };
+  }
+
   /* z range across the visible items only -- the rule this tool exists to honour. */
   function visibleRange(items) {
     var grids = items.filter(function (i) { return i.visible; })
@@ -240,6 +262,7 @@
     if (opts.slice) opts.slice.lift = sliceLift(items);
     var traces = items.map(function (i) { return surfaceTrace(i, opts); })
       .concat(items.map(function (i) { return sliceTrace(i, opts); }));
+    if (!traces.length) traces = [seedTrace()];   // keep the scene warm
     // a single visible surface can afford a colour bar; several would fight
     var vis = items.filter(function (i) { return i.visible; });
     if (vis.length === 1) {
@@ -258,18 +281,29 @@
    * Toggle one dataset and rescale the axis to what is left visible.
    * Kept separate from draw() so a checkbox does not rebuild every surface.
    */
+  /*
+   * Toggle one dataset: its surface, its cross-section line and the rescaled z
+   * axis go out as a single update. Three separate calls meant three redraws of
+   * the whole scene for one checkbox.
+   */
   function setVisible(el, items, index, visible, opts) {
     items[index].visible = visible;
     var lineIndex = items.length + index;
-    var lineOn = visible && !!(opts && opts.slice);
-    return window.Plotly.restyle(el, { visible: [visible, lineOn] }, [index, lineIndex])
-      .then(function () {
-        // the line has to be re-cut: the lift follows the rescaled axis
-        if (lineOn) return updateSlice(el, items, opts.slice, opts);
-      })
-      .then(function () {
-        return window.Plotly.relayout(el, { 'scene.zaxis.range': visibleRange(items) });
+    var slice = opts && opts.slice;
+    var lineOn = visible && !!slice;
+    var style = { visible: [visible, lineOn] };
+    if (lineOn) {
+      var geom = sliceGeometry(items[index], {
+        axis: slice.axis, value: slice.value, lift: sliceLift(items)
       });
+      style.x = [undefined, geom.x];
+      style.y = [undefined, geom.y];
+      style.z = [undefined, geom.z];
+    }
+    return window.Plotly.update(el,
+      style,
+      { 'scene.zaxis.range': visibleRange(items) },
+      [index, lineIndex]);
   }
 
   /*
@@ -279,6 +313,10 @@
    */
   function updateSlice(el, items, slice, opts) {
     if (!el || !el.data) return Promise.resolve();
+    // turning an already-off cross-section off again costs a full restyle
+    if (!slice && !el.data.some(function (d) { return d.type === 'scatter3d' && d.visible; })) {
+      return Promise.resolve();
+    }
     var indices = [], x = [], y = [], z = [], vis = [];
     var lift = slice ? sliceLift(items) : 0;
     items.forEach(function (item, i) {
@@ -291,6 +329,20 @@
     return window.Plotly.restyle(el, { x: x, y: y, z: z, visible: vis }, indices);
   }
 
+  /*
+   * Opacity and contours change often (a slider drag, a checkbox) and touch one
+   * trace property each. A full react rebuilds every mesh -- 200-300 ms a step,
+   * which turns a drag into a slideshow -- so they restyle in place instead.
+   */
+  function surfaceIndices(items) {
+    return items.map(function (_, i) { return i; });
+  }
+
+  function setOpacity(el, items, value) {
+    if (!el || !el.data || !items.length) return Promise.resolve();
+    return window.Plotly.restyle(el, { opacity: value }, surfaceIndices(items));
+  }
+
   function currentCamera(el) {
     return el && el._fullLayout && el._fullLayout.scene ? el._fullLayout.scene.camera : null;
   }
@@ -299,8 +351,26 @@
     return window.Plotly.relayout(el, { 'scene.camera': { eye: { x: 1.65, y: -1.75, z: 0.95 } } });
   }
 
-  /* 2-D cross-section chart: one line per visible dataset. */
+  /*
+   * 2-D cross-section chart: one line per visible dataset. While the series
+   * count and their names hold, moving the cut only changes the numbers, so it
+   * restyles; anything else rebuilds.
+   */
   function drawSlice(el, series, opts) {
+    var titled = el && el.layout && el.layout.yaxis && el.layout.yaxis.title;
+    var same = el && el.data && el.data.length === series.length &&
+      series.every(function (s, i) { return el.data[i].name === s.name; }) &&
+      titled && titled.text === opts.yTitle;
+    if (same && !opts.rebuild) {
+      return window.Plotly.restyle(el, {
+        x: series.map(function (s) { return s.at; }),
+        y: series.map(function (s) { return s.values; })
+      }, series.map(function (_, i) { return i; }));
+    }
+    return drawSliceFull(el, series, opts);
+  }
+
+  function drawSliceFull(el, series, opts) {
     var c = themeTokens(opts.theme);
     var traces = series.map(function (s) {
       return {
@@ -337,7 +407,9 @@
   }
 
   return {
-    draw: draw, drawSlice: drawSlice, setVisible: setVisible, updateSlice: updateSlice, toPng: toPng,
+    draw: draw, drawSlice: drawSlice,
+    setVisible: setVisible, updateSlice: updateSlice, toPng: toPng,
+    setOpacity: setOpacity,
     colorFor: colorFor, ramp: ramp, mix: mix, visibleRange: visibleRange,
     currentCamera: currentCamera, resetCamera: resetCamera, fmt: fmt, SERIES: SERIES
   };
