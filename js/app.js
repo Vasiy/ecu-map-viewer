@@ -405,6 +405,7 @@
   }
 
   function renderSlice(items) {
+    if (!el.sliceWrap || !el.slicePlot) return;
     var on = state.sliceAxis !== 'off' && !curveMode;
     var wasOn = !el.sliceWrap.hidden;
     el.sliceWrap.hidden = !on;
@@ -415,7 +416,13 @@
       return;
     }
     var axisVals = sliceAxisValues(items);
-    if (!axisVals.length) return;
+    // nothing to cut (difference mode with a single map, say): keep the panel
+    // out of the way instead of leaving an empty box behind
+    if (!axisVals.length || !items.some(function (i) { return i.visible; })) {
+      el.sliceWrap.hidden = true;
+      if (wasOn) window.Plotly.Plots.resize(el.plot);
+      return;
+    }
     if (state.sliceIndex >= axisVals.length) state.sliceIndex = axisVals.length - 1;
     el.sliceRange.max = String(axisVals.length - 1);
     el.sliceRange.value = String(state.sliceIndex);
@@ -710,6 +717,14 @@
       'btnReset', 'btnPng', 'btnLang', 'btnTheme', 'btnSide', 'toasts'].forEach(function (id) {
       el[id] = $(id);
     });
+    // A stale cached index.html must not take the whole render down with it.
+    if (!el.curve && el.plot && el.plot.parentNode) {
+      el.curve = document.createElement('div');
+      el.curve.id = 'curve';
+      el.curve.className = 'plot';
+      el.curve.hidden = true;
+      el.plot.parentNode.insertBefore(el.curve, el.plot.nextSibling);
+    }
     el.modeBtns = Array.prototype.slice.call(document.querySelectorAll('[data-mode]'));
 
     var savedTheme = 'dark', savedLang = 'ru';
