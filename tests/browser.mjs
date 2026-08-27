@@ -43,14 +43,16 @@ report.datasets = await page.locator('.ds').count();
 report.table = await page.locator('#tableSel').inputValue();
 report.tableOptions = await page.evaluate(() =>
   Array.from(document.querySelectorAll('#tableSel optgroup')).map((g) => g.label + ': ' + g.children.length));
-report.traces = await page.evaluate(() => document.getElementById('plot').data.length);
+report.traces = await page.evaluate(() =>
+  document.getElementById('plot').data.filter((d) => d.type === 'surface').length);
 report.baseFieldHiddenInSurfaceMode = !(await page.locator('#baseField').isVisible());
 report.contours = await page.evaluate(() => {
   const c = document.getElementById('plot').data[0].contours;
   return { x: c.x.show && c.x.project.x, y: c.y.show && c.y.project.y, z: c.z.show && c.z.project.z };
 });
-report.cRanges = await page.evaluate(() =>
-  document.getElementById('plot').data.map((d) => [Math.round(d.cmin * 10) / 10, Math.round(d.cmax * 10) / 10]));
+report.cRanges = await page.evaluate(() => document.getElementById('plot').data
+  .filter((d) => d.type === 'surface')
+  .map((d) => [Math.round(d.cmin * 10) / 10, Math.round(d.cmax * 10) / 10]));
 report.zAll = await zRange(page);
 
 await page.screenshot({ path: shots + '/shot-1-surfaces.png' });
@@ -72,7 +74,8 @@ await page.waitForTimeout(600);
 report.traceName = await page.evaluate(() => document.getElementById('plot').data[0].name);
 
 // every platform must resolve the same map through its role
-report.tracesForRole = await page.evaluate(() => document.getElementById('plot').data.length);
+report.tracesForRole = await page.evaluate(() =>
+  document.getElementById('plot').data.filter((d) => d.type === 'surface').length);
 report.noMapCards = await page.locator('.ds .warn').count();
 
 // hover tooltip over the surface
@@ -91,13 +94,26 @@ await page.waitForTimeout(500);
 await page.locator('#sliceRange').fill('20');
 await page.waitForTimeout(500);
 report.sliceTraces = await page.evaluate(() => document.getElementById('slicePlot').data.length);
+// the same cut has to appear as a line on the surfaces, and follow the slider
+report.sliceLines = await page.evaluate(() => document.getElementById('plot').data
+  .filter((d) => d.type === 'scatter3d' && d.visible)
+  .map((d) => ({ name: d.name, points: d.x.length, atRpm: d.y[0] })));
+await page.locator('#sliceRange').fill('4');
+await page.locator('#sliceRange').dispatchEvent('input');
+await page.waitForTimeout(500);
+report.sliceLinesMoved = await page.evaluate(() => document.getElementById('plot').data
+  .filter((d) => d.type === 'scatter3d' && d.visible).map((d) => d.y[0]));
+await page.locator('#sliceRange').fill('20');
+await page.locator('#sliceRange').dispatchEvent('input');
+await page.waitForTimeout(500);
 report.sliceLabel = await page.locator('#sliceValue').textContent();
 await page.screenshot({ path: shots + '/shot-3-slice.png' });
 
 // difference mode
 await page.locator('[data-mode="diff"]').click();
 await page.waitForTimeout(800);
-report.diffTraces = await page.evaluate(() => document.getElementById('plot').data.length);
+report.diffTraces = await page.evaluate(() =>
+  document.getElementById('plot').data.filter((d) => d.type === 'surface').length);
 report.baseBadge = await page.locator('.ds.is-base .badge').count();
 report.baseFieldVisible = await page.locator('#baseField').isVisible();
 report.diffRange = await zRange(page);
@@ -110,7 +126,8 @@ await drop(page, ['tuned.bin']);
 report.presetSelects = await page.locator('.ds .preset').count();
 await page.locator('.ds .preset').first().selectOption('granpasso');
 await page.waitForTimeout(900);
-report.tracesAfterPreset = await page.evaluate(() => document.getElementById('plot').data.length);
+report.tracesAfterPreset = await page.evaluate(() =>
+  document.getElementById('plot').data.filter((d) => d.type === 'surface').length);
 
 // PNG export must actually hand the browser a file
 const [download] = await Promise.all([

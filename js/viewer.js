@@ -158,6 +158,59 @@
     };
   }
 
+  /*
+   * The cross-section drawn onto the surfaces themselves: one polyline per
+   * dataset, following the map at the chosen rpm (or TPS). Emitted for every
+   * item, visible or not, so trace indices stay parallel to the surfaces and a
+   * checkbox can still restyle in place.
+   */
+  function sliceTrace(item, opts) {
+    var on = !!(opts.slice && item.visible);
+    var geom = on ? sliceGeometry(item, opts.slice) : { x: [], y: [], z: [] };
+    var unit = item.units ? ' ' + item.units : '';
+    return {
+      type: 'scatter3d',
+      mode: 'lines',
+      name: item.name,
+      x: geom.x, y: geom.y, z: geom.z,
+      visible: on,
+      showlegend: false,
+      // enough lift toward the theme's extreme to read against the surface,
+      // not so much that two cuts turn into the same pale line
+      line: { color: mix(item.color, opts.theme === 'light' ? '#101318' : '#ffffff', 0.22), width: 7 },
+      hovertemplate: '<b>' + item.name + '</b><br>' +
+        t('axis.rpm') + ': %{y:.0f}<br>' +
+        t('axis.tps') + ': %{x}<br>' +
+        (opts.diff ? 'Δ' : t('axis.value')) + ': %{z:.' + (item.digits === undefined ? 1 : item.digits) + 'f}' + unit +
+        '<extra></extra>'
+    };
+  }
+
+  /* slice: { axis: 'rpm' | 'tps', value, lift } */
+  function sliceGeometry(item, slice) {
+    // The slider walks the first visible map's axis, but breakpoints differ
+    // between platforms (2.4 deg vs 3.0 deg at the first TPS point). Pin the
+    // line to this map's own axis, or it hangs in the air beside the surface.
+    var axis = slice.axis === 'rpm' ? item.grid.y : item.grid.x;
+    var at = Math.min(Math.max(slice.value, axis[0]), axis[axis.length - 1]);
+    var cut = Grid.slice(item.grid, slice.axis === 'rpm' ? 'y' : 'x', at, 120);
+    var lift = slice.lift || 0;
+    var x = [], y = [], z = [];
+    for (var i = 0; i < cut.at.length; i++) {
+      if (slice.axis === 'rpm') { x.push(cut.at[i]); y.push(at); }
+      else { x.push(at); y.push(cut.at[i]); }
+      // a hair above the surface, otherwise the line disappears into it
+      z.push(cut.values[i] + lift);
+    }
+    return { x: x, y: y, z: z };
+  }
+
+  /* How far to lift the line so it reads on top of the surface it follows. */
+  function sliceLift(items) {
+    var r = visibleRange(items);
+    return r ? (r[1] - r[0]) * 0.004 : 0;
+  }
+
   var CONFIG = {
     displaylogo: false,
     responsive: true,
@@ -173,7 +226,9 @@
   }
 
   function draw(el, items, opts) {
-    var traces = items.map(function (i) { return surfaceTrace(i, opts); });
+    if (opts.slice) opts.slice.lift = sliceLift(items);
+    var traces = items.map(function (i) { return surfaceTrace(i, opts); })
+      .concat(items.map(function (i) { return sliceTrace(i, opts); }));
     // a single visible surface can afford a colour bar; several would fight
     var vis = items.filter(function (i) { return i.visible; });
     if (vis.length === 1) {
@@ -194,9 +249,35 @@
    */
   function setVisible(el, items, index, visible, opts) {
     items[index].visible = visible;
-    return window.Plotly.restyle(el, { visible: visible }, [index]).then(function () {
-      return window.Plotly.relayout(el, { 'scene.zaxis.range': visibleRange(items) });
+    var lineIndex = items.length + index;
+    var lineOn = visible && !!(opts && opts.slice);
+    return window.Plotly.restyle(el, { visible: [visible, lineOn] }, [index, lineIndex])
+      .then(function () {
+        // the line has to be re-cut: the lift follows the rescaled axis
+        if (lineOn) return updateSlice(el, items, opts.slice, opts);
+      })
+      .then(function () {
+        return window.Plotly.relayout(el, { 'scene.zaxis.range': visibleRange(items) });
+      });
+  }
+
+  /*
+   * Move the cross-section without rebuilding the scene -- this runs on every
+   * step of the slider, so it restyles the existing traces instead of redrawing.
+   * slice === null hides the lines.
+   */
+  function updateSlice(el, items, slice, opts) {
+    if (!el || !el.data) return Promise.resolve();
+    var indices = [], x = [], y = [], z = [], vis = [];
+    var lift = slice ? sliceLift(items) : 0;
+    items.forEach(function (item, i) {
+      var on = !!slice && item.visible;
+      var geom = on ? sliceGeometry(item, { axis: slice.axis, value: slice.value, lift: lift }) : { x: [], y: [], z: [] };
+      indices.push(items.length + i);
+      x.push(geom.x); y.push(geom.y); z.push(geom.z); vis.push(on);
     });
+    if (!indices.length) return Promise.resolve();
+    return window.Plotly.restyle(el, { x: x, y: y, z: z, visible: vis }, indices);
   }
 
   function currentCamera(el) {
@@ -245,7 +326,7 @@
   }
 
   return {
-    draw: draw, drawSlice: drawSlice, setVisible: setVisible, toPng: toPng,
+    draw: draw, drawSlice: drawSlice, setVisible: setVisible, updateSlice: updateSlice, toPng: toPng,
     colorFor: colorFor, ramp: ramp, mix: mix, visibleRange: visibleRange,
     currentCamera: currentCamera, resetCamera: resetCamera, fmt: fmt, SERIES: SERIES
   };

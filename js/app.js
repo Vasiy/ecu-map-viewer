@@ -381,11 +381,21 @@
         opacity: state.opacity,
         diff: state.mode === 'diff',
         zTitle: zTitle(),
+        slice: sliceSpec(items),
         camera: Viewer.currentCamera(el.plot)
       });
       window.Plotly.Plots.resize(el.plot);
     }
     renderSlice(items);
+  }
+
+  /* The cut the slider currently points at, or null when it is off. */
+  function sliceSpec(items) {
+    if (state.sliceAxis === 'off' || curveMode) return null;
+    var axisVals = sliceAxisValues(items);
+    if (!axisVals.length) return null;
+    var i = Math.min(state.sliceIndex, axisVals.length - 1);
+    return { axis: state.sliceAxis, value: axisVals[i] };
   }
 
   function sliceAxisValues(items) {
@@ -400,7 +410,10 @@
     el.sliceWrap.hidden = !on;
     // the 3-D canvas keeps its old height unless it is told the box changed
     if (on !== wasOn) window.Plotly.Plots.resize(el.plot);
-    if (!on) return;
+    if (!on) {
+      Viewer.updateSlice(el.plot, items, null, { theme: state.theme });
+      return;
+    }
     var axisVals = sliceAxisValues(items);
     if (!axisVals.length) return;
     if (state.sliceIndex >= axisVals.length) state.sliceIndex = axisVals.length - 1;
@@ -410,6 +423,9 @@
     el.sliceValue.textContent = state.sliceAxis === 'rpm'
       ? Viewer.fmt(at, 0) + ' ' + 'rpm'
       : Viewer.fmt(at, 2) + ' °';
+
+    // the same cut, drawn on the surfaces themselves
+    Viewer.updateSlice(el.plot, items, { axis: state.sliceAxis, value: at }, { theme: state.theme });
 
     var series = items.filter(function (i) { return i.visible; }).map(function (i) {
       var s = Grid.slice(i.grid, state.sliceAxis === 'rpm' ? 'y' : 'x', at);
@@ -525,7 +541,9 @@
         var idx = curveMode ? -1 : lastItems.map(function (i) { return i.ds; }).indexOf(ds);
         if (idx >= 0) {
           // toggle in place, then rescale the axis to the visible maps only
-          Viewer.setVisible(el.plot, lastItems, idx, ds.visible, { theme: state.theme });
+          Viewer.setVisible(el.plot, lastItems, idx, ds.visible, {
+            theme: state.theme, slice: sliceSpec(lastItems)
+          });
           renderSlice(lastItems);
           var stillVisible = lastItems.some(function (i) { return i.visible; });
           el.empty.hidden = stillVisible;
