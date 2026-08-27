@@ -76,7 +76,7 @@ report.traceName = await page.evaluate(() => document.getElementById('plot').dat
 // every platform must resolve the same map through its role
 report.tracesForRole = await page.evaluate(() =>
   document.getElementById('plot').data.filter((d) => d.type === 'surface').length);
-report.noMapCards = await page.locator('.ds .warn').count();
+report.noMapCards = await page.locator('.ds .alert').count();
 
 // hover tooltip over the surface
 const box = await page.locator('#plot').boundingBox();

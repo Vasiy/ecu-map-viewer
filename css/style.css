@@ -213,7 +213,6 @@ main {
 .muted { color: var(--muted); }
 .pad { padding: .5rem .2rem; font-size: 12px; }
 .mono { font-family: var(--mono); font-size: 11px; }
-.warn { color: var(--warn); font-size: 11px; }
 
 /* ---------- dataset cards ---------- */
 
@@ -261,6 +260,31 @@ main {
 }
 .ds-name:hover { border-bottom-color: var(--line); }
 .ds-name:focus { outline: none; border-bottom-color: var(--accent); }
+
+/* the selected map is absent from this firmware's definition: an error, not a
+   footnote -- the card carries the colour so it is findable in a long list */
+.ds.missing { border-color: var(--danger); }
+.ds.missing.off { opacity: .8; }
+
+.alert {
+  display: inline-flex;
+  align-items: baseline;
+  gap: .35rem;
+  color: var(--danger);
+  font-size: 12px;
+  font-weight: 600;
+}
+.alert::before {
+  content: "!";
+  flex: 0 0 auto;
+  width: 13px;
+  height: 13px;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  font: 700 9px/12px var(--mono);
+  text-align: center;
+  align-self: center;
+}
 
 .ds-meta {
   display: flex;

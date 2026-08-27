@@ -514,7 +514,7 @@
       row.className = 'ds' + (ds.visible && !isBase ? '' : ' off') + (isBase ? ' is-base' : '');
       row.style.setProperty('--ds-color', ds.color);
 
-      var meta;
+      var meta, missing = false;
       if (!ds.doc) {
         meta = '<select class="preset" aria-label="' + esc(t('ds.preset')) + '">' + presetOptions(ds.presetId) + '</select>';
       } else if (grid) {
@@ -526,8 +526,12 @@
         })) + '</span>';
       } else {
         var err = ds.cache[state.tableKey + ':err'];
-        meta = '<span class="warn">' + esc(err ? t('ds.read_error', { err: err }) : t('ds.no_table')) + '</span>';
+        meta = '<span class="alert">' + esc(err ? t('ds.read_error', { err: err }) : t('ds.no_table')) + '</span>';
+        missing = true;
       }
+
+      // a map the definition does not carry is a dead card: say so loudly
+      if (missing) row.classList.add('missing');
 
       row.innerHTML =
         '<label class="ds-head">' +
