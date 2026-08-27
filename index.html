@@ -78,6 +78,7 @@
     </div>
 
     <div class="plot-wrap">
+      <button id="btnInfo" class="info-btn" data-i18n-title="info.label" aria-label="About">i</button>
       <div id="plot" class="plot"></div>
       <div id="curve" class="plot" hidden></div>
       <p id="empty" class="empty muted"></p>
@@ -92,6 +93,20 @@
     </div>
   </section>
 </main>
+
+<dialog id="about" class="about">
+  <form method="dialog" class="about-body">
+    <h2 data-i18n="app.title"></h2>
+    <p class="muted" data-i18n="app.subtitle"></p>
+    <p data-i18n="info.what"></p>
+    <p data-i18n="info.usage"></p>
+    <div class="about-foot">
+      <a id="aboutRepo" href="https://github.com/Vasiy/ecu-map-viewer" target="_blank" rel="noopener"
+         data-i18n="info.repo"></a>
+      <button class="ghost" value="close" data-i18n="info.close"></button>
+    </div>
+  </form>
+</dialog>
 
 <div id="toasts" class="toasts" aria-live="polite"></div>
 

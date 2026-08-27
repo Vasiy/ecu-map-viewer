@@ -382,20 +382,30 @@ body.curve-mode .only3d { display: none; }
   top: .5rem !important;
   right: .5rem !important;
   display: flex;
+  align-items: flex-start;
+  height: auto !important;
   gap: .5rem;
 }
 /* Plotly emits a group per button family; the empty one must not draw a chip */
 .js-plotly-plot .modebar-group:empty { display: none !important; }
 .js-plotly-plot .modebar-group {
+  height: auto !important;
   background: var(--panel) !important;
   border: 1px solid var(--line);
   border-radius: var(--radius);
   padding: .15rem .2rem !important;
   margin: 0 !important;
-  display: flex;
-  align-items: center;
+  display: flex !important;
+  align-items: center !important;
+  gap: .1rem;
 }
 .js-plotly-plot .modebar-btn {
+  /* Plotly's buttons are inline anchors with a hard 22px height, so a larger
+     icon spilled out of the chip instead of sitting in the middle of it */
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  height: auto !important;
   font-size: 44px !important;
   padding: .3rem .45rem !important;
   border-radius: 7px;
@@ -406,6 +416,8 @@ body.curve-mode .only3d { display: none; }
 .js-plotly-plot .modebar-btn .icon {
   width: 1em !important;
   height: 1em !important;
+  /* Plotly nudges the glyph down 2px to sit on a text baseline we do not use */
+  top: 0 !important;
   vertical-align: middle;
 }
 
@@ -416,6 +428,58 @@ body.curve-mode .only3d { display: none; }
   outline: 2px solid var(--accent);
   outline-offset: -2px;
 }
+
+/* the "i" sits opposite the scene controls, in the same chip language */
+.info-btn {
+  position: absolute;
+  top: .5rem;
+  left: .5rem;
+  z-index: 4;
+  width: 2.6rem;
+  height: 2.6rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  color: var(--muted);
+  font: 600 17px/1 var(--sans);
+  font-style: italic;
+  cursor: pointer;
+}
+.info-btn:hover { color: var(--accent); border-color: var(--accent); }
+
+.about {
+  width: min(34rem, calc(100vw - 2rem));
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--panel);
+  color: var(--fg);
+}
+.about::backdrop { background: rgba(6, 8, 11, .55); }
+.about-body { padding: 1.1rem 1.2rem 1.2rem; }
+.about h2 {
+  margin: 0 0 .2rem;
+  font: 600 14px/1.2 var(--sans);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+.about p { margin: .55rem 0 0; font-size: 13px; }
+.about .about-foot {
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+  margin-top: 1rem;
+}
+.about a {
+  color: var(--accent);
+  font-size: 13px;
+  text-decoration: none;
+  border-bottom: 1px solid currentColor;
+}
+.about .about-foot .ghost { margin-left: auto; }
 
 .empty {
   position: absolute;

@@ -729,12 +729,19 @@
     el.btnSide.addEventListener('click', function () {
       document.body.classList.toggle('side-open');
     });
+
+    if (el.btnInfo && el.about) {
+      el.btnInfo.addEventListener('click', function () {
+        if (typeof el.about.showModal === 'function') el.about.showModal();
+        else el.about.setAttribute('open', '');   // very old engines
+      });
+    }
   }
 
   function init() {
     ['file', 'drop', 'tableSel', 'dsList', 'plot', 'curve', 'empty', 'sliceWrap', 'slicePlot',
       'sliceSel', 'sliceRange', 'sliceValue', 'contours', 'opacity', 'baseSel', 'baseField',
-      'btnReset', 'btnPng', 'langSel', 'btnTheme', 'btnSide', 'toasts'].forEach(function (id) {
+      'btnReset', 'btnPng', 'langSel', 'btnTheme', 'btnSide', 'btnInfo', 'about', 'toasts'].forEach(function (id) {
       el[id] = $(id);
     });
     // A stale cached index.html must not take the whole render down with it.
