@@ -66,8 +66,10 @@
 
   function themeTokens(theme) {
     return theme === 'light'
-      ? { paper: 'rgba(0,0,0,0)', ink: '#1b1f26', muted: '#5c636e', grid: '#d7dae0', zero: '#a9aeb8' }
-      : { paper: 'rgba(0,0,0,0)', ink: '#e8e6df', muted: '#8d95a1', grid: '#2b323b', zero: '#3d4650' };
+      ? { paper: 'rgba(0,0,0,0)', ink: '#1b1f26', muted: '#5c636e', grid: '#d7dae0', zero: '#a9aeb8',
+          accent: '#b8730a', control: '#3d434c' }
+      : { paper: 'rgba(0,0,0,0)', ink: '#e8e6df', muted: '#8d95a1', grid: '#2b323b', zero: '#3d4650',
+          accent: '#f0a52a', control: '#c2c8d2' };
   }
 
   function fmt(v, digits) {
@@ -154,6 +156,13 @@
         bgcolor: opts.theme === 'light' ? '#ffffff' : '#1b1f25',
         bordercolor: c.grid,
         font: { family: 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace', size: 12, color: c.ink }
+      },
+      // rotate / pan / zoom / reset live here; Plotly's default is a 30%-opaque
+      // white that all but disappears on a dark scene
+      modebar: {
+        bgcolor: 'rgba(0,0,0,0)',
+        color: c.control,
+        activecolor: c.accent
       }
     };
   }
@@ -214,6 +223,8 @@
   var CONFIG = {
     displaylogo: false,
     responsive: true,
+    // keep the scene controls on screen: hover-only made them easy to miss
+    displayModeBar: true,
     modeBarButtonsToRemove: ['toImage'],
     toImageButtonOptions: { format: 'png', scale: 2 }
   };
