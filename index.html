@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="ru" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ECU map viewer</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="bar">
+  <button id="btnSide" class="icon side-toggle" aria-label="Menu">≡</button>
+  <div class="brand">
+    <span class="mark" aria-hidden="true"></span>
+    <span class="brand-text">
+      <strong data-i18n="app.title">ECU map viewer</strong>
+      <small data-i18n="app.subtitle">IAW5AM calibration surfaces</small>
+    </span>
+  </div>
+  <div class="bar-actions">
+    <button id="btnLang" class="ghost">Русский</button>
+    <button id="btnTheme" class="ghost">Light</button>
+  </div>
+</header>
+
+<main>
+  <aside id="side" class="side">
+    <section id="drop" class="drop">
+      <p class="muted" data-i18n="files.hint"></p>
+      <label class="btn">
+        <input type="file" id="file" accept=".bin,.xdf" multiple hidden>
+        <span data-i18n="files.browse"></span>
+      </label>
+    </section>
+
+    <section class="field">
+      <label for="tableSel" data-i18n="table.label"></label>
+      <select id="tableSel"></select>
+    </section>
+
+    <section id="dsList" class="ds-list"></section>
+  </aside>
+
+  <section class="stage">
+    <div class="toolbar">
+      <div class="seg" role="group">
+        <button data-mode="surface" aria-pressed="true" data-i18n="view.surface"></button>
+        <button data-mode="diff" aria-pressed="false" data-i18n="view.diff"></button>
+      </div>
+
+      <label id="baseField" class="inline" hidden>
+        <span data-i18n="view.base"></span>
+        <select id="baseSel"></select>
+      </label>
+
+      <label class="inline check">
+        <input type="checkbox" id="contours" checked>
+        <span data-i18n="view.contours"></span>
+      </label>
+
+      <label class="inline">
+        <span data-i18n="view.opacity"></span>
+        <input type="range" id="opacity" min="35" max="100" value="95">
+      </label>
+
+      <label class="inline">
+        <span data-i18n="slice.label"></span>
+        <select id="sliceSel">
+          <option value="off" data-i18n="slice.off"></option>
+          <option value="rpm" data-i18n="slice.rpm"></option>
+          <option value="tps" data-i18n="slice.tps"></option>
+        </select>
+      </label>
+
+      <span class="spacer"></span>
+      <button id="btnReset" class="ghost" data-i18n="view.reset"></button>
+      <button id="btnPng" class="ghost" data-i18n="view.png"></button>
+    </div>
+
+    <div class="plot-wrap">
+      <div id="plot" class="plot"></div>
+      <p id="empty" class="empty muted"></p>
+    </div>
+
+    <div id="sliceWrap" class="slice" hidden>
+      <div class="slice-head">
+        <input type="range" id="sliceRange" min="0" max="0" value="0">
+        <output id="sliceValue" class="mono"></output>
+      </div>
+      <div id="slicePlot" class="slice-plot"></div>
+    </div>
+  </section>
+</main>
+
+<div id="toasts" class="toasts" aria-live="polite"></div>
+
+<script src="vendor/plotly.min.js"></script>
+<script src="js/xml.js"></script>
+<script src="js/expr.js"></script>
+<script src="js/binio.js"></script>
+<script src="js/xdf.js"></script>
+<script src="js/presets.js"></script>
+<script src="js/grid.js"></script>
+<script src="js/i18n.js"></script>
+<script src="js/viewer.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
