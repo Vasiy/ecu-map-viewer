@@ -17,12 +17,17 @@ node -e "new Function(require('fs').readFileSync('js/app.js','utf8'))"   # JS sy
 node tests/browser.mjs            # browser checks (needs playwright + testdata/)
 ```
 
-i18n parity is an invariant — `en` and `ru` must hold identical key sets:
+i18n parity is an invariant — all 8 locales must hold identical key sets
+(`tests/run.js` guards it; this prints the detail):
 
 ```bash
-node -e "const I=require('./js/i18n.js');const en=Object.keys(I.locales.en),ru=Object.keys(I.locales.ru);
-console.log(en.length,ru.length,en.filter(k=>!ru.includes(k)).concat(ru.filter(k=>!en.includes(k))))"
+node -e "const I=require('./js/i18n.js');const en=Object.keys(I.locales.en);
+for(const c of Object.keys(I.locales)){const k=Object.keys(I.locales[c]);
+console.log(c,k.length,'missing:',en.filter(x=>!(x in I.locales[c])).join(','))}"
 ```
+
+The locale set matches onboard-logger (en, de, es, fr, it, nl, bg, ru) so the
+strings can move there wholesale; keep the vocabulary aligned with it too.
 
 ## Architecture
 

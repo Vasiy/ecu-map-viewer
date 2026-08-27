@@ -611,8 +611,20 @@
 
   /* ---------- chrome ---------- */
 
+  function fillLangSelect() {
+    if (!el.langSel) return;
+    el.langSel.innerHTML = '';
+    window.I18N.list().forEach(function (loc) {
+      var o = document.createElement('option');
+      o.value = loc.code;
+      o.textContent = loc.name;   // each locale names itself, in itself
+      el.langSel.appendChild(o);
+    });
+  }
+
   function applyLang(lang) {
     window.I18N.setLang(lang);
+    lang = window.I18N.getLang();
     document.documentElement.lang = lang;
     document.querySelectorAll('[data-i18n]').forEach(function (node) {
       node.textContent = t(node.getAttribute('data-i18n'));
@@ -620,7 +632,11 @@
     document.querySelectorAll('[data-i18n-title]').forEach(function (node) {
       node.title = t(node.getAttribute('data-i18n-title'));
     });
-    el.btnLang.textContent = t('lang');
+    if (el.langSel) {
+      el.langSel.value = lang;
+      el.langSel.setAttribute('aria-label', t('lang.label'));
+      el.langSel.title = t('lang.label');
+    }
     el.btnTheme.textContent = state.theme === 'dark' ? t('theme.light') : t('theme.dark');
     try { localStorage.setItem('lang', lang); } catch (e) { /* private mode */ }
     refreshTables();
@@ -698,8 +714,8 @@
       Viewer.toPng(curveMode ? el.curve : el.plot, 'ecu-' + name);
     });
 
-    el.btnLang.addEventListener('click', function () {
-      applyLang(window.I18N.getLang() === 'ru' ? 'en' : 'ru');
+    el.langSel.addEventListener('change', function (ev) {
+      applyLang(ev.target.value);
     });
 
     el.btnTheme.addEventListener('click', function () {
@@ -714,7 +730,7 @@
   function init() {
     ['file', 'drop', 'tableSel', 'dsList', 'plot', 'curve', 'empty', 'sliceWrap', 'slicePlot',
       'sliceSel', 'sliceRange', 'sliceValue', 'contours', 'opacity', 'baseSel', 'baseField',
-      'btnReset', 'btnPng', 'btnLang', 'btnTheme', 'btnSide', 'toasts'].forEach(function (id) {
+      'btnReset', 'btnPng', 'langSel', 'btnTheme', 'btnSide', 'toasts'].forEach(function (id) {
       el[id] = $(id);
     });
     // A stale cached index.html must not take the whole render down with it.
@@ -727,12 +743,14 @@
     }
     el.modeBtns = Array.prototype.slice.call(document.querySelectorAll('[data-mode]'));
 
-    var savedTheme = 'dark', savedLang = 'ru';
+    // no stored choice yet: follow the browser, fall back to English
+    var savedTheme = 'dark', savedLang = window.I18N.preferred();
     try {
       savedTheme = localStorage.getItem('theme') || savedTheme;
       savedLang = localStorage.getItem('lang') || savedLang;
     } catch (e) { /* private mode */ }
 
+    fillLangSelect();
     bind();
     state.theme = savedTheme;
     document.documentElement.setAttribute('data-theme', savedTheme);

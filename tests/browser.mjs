@@ -139,9 +139,16 @@ report.pngDownload = download ? download.suggestedFilename() : null;
 // light theme + english
 await page.locator('#btnTheme').click();
 await page.waitForTimeout(600);
-await page.locator('#btnLang').click();
+await page.selectOption('#langSel', 'it');
 await page.waitForTimeout(600);
-report.lang = await page.locator('#btnLang').textContent();
+report.locales = await page.evaluate(() =>
+  Array.from(document.querySelectorAll('#langSel option')).map((o) => o.value));
+report.translated = await page.evaluate(() => ({
+  title: document.querySelector('.brand-text strong').textContent,
+  zTitle: document.getElementById('plot').layout.scene.zaxis.title.text
+}));
+await page.selectOption('#langSel', 'en');
+await page.waitForTimeout(600);
 await page.screenshot({ path: shots + '/shot-5-light-en.png' });
 
 // narrow layout

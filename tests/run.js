@@ -14,6 +14,7 @@ var BinIO = require(path.join(ROOT, 'js/binio.js'));
 var XDF = require(path.join(ROOT, 'js/xdf.js'));
 var Grid = require(path.join(ROOT, 'js/grid.js'));
 var Presets = require(path.join(ROOT, 'js/presets.js'));
+var I18N = require(path.join(ROOT, 'js/i18n.js'));
 
 var passed = 0, failed = 0;
 function test(name, fn) {
@@ -209,6 +210,36 @@ test('grid slice interpolates between rows', function () {
 test('grid padded range keeps a flat map visible', function () {
   var flat = Grid.padded([12, 12]);
   assert.ok(flat[1] > flat[0]);
+});
+
+/* ---------- i18n ---------- */
+test('every locale carries the same keys as English', function () {
+  var en = Object.keys(I18N.locales.en).sort();
+  Object.keys(I18N.locales).forEach(function (code) {
+    var keys = Object.keys(I18N.locales[code]).sort();
+    assert.deepStrictEqual(keys, en, code + ' differs from en');
+  });
+});
+
+test('every locale names itself', function () {
+  I18N.list().forEach(function (loc) {
+    assert.ok(loc.name && loc.name.length > 1, loc.code + ' has no _name');
+  });
+});
+
+test('a missing string falls back to English, and placeholders fill in', function () {
+  I18N.setLang('de');
+  assert.strictEqual(I18N.t('theme.dark'), 'Dunkel');
+  assert.strictEqual(I18N.t('files.paired', { name: 'granpasso' }), 'granpasso geladen');
+  assert.strictEqual(I18N.t('nope.missing'), 'nope.missing');
+  I18N.setLang('en');
+});
+
+test('browser language picks the closest locale', function () {
+  assert.strictEqual(I18N.preferred(['de-DE', 'en']), 'de');
+  assert.strictEqual(I18N.preferred(['it-CH']), 'it');
+  assert.strictEqual(I18N.preferred(['pt-BR']), 'en');   // not translated yet
+  assert.strictEqual(I18N.preferred([]), 'en');
 });
 
 console.log('\n' + passed + ' passed, ' + failed + ' failed');

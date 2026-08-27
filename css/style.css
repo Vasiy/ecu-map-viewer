@@ -98,7 +98,9 @@ body {
 }
 .brand-text small { color: var(--muted); font-size: 11px; letter-spacing: .04em; }
 
-.bar-actions { margin-left: auto; display: flex; gap: .4rem; }
+.bar-actions { margin-left: auto; display: flex; gap: .4rem; align-items: center; }
+
+.lang-sel { padding: .35rem 1.4rem .35rem .5rem; }
 
 /* ---------- controls ---------- */
 
