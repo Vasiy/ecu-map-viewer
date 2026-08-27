@@ -345,6 +345,8 @@ main {
 /* ---------- plot ---------- */
 
 .plot-wrap { position: relative; flex: 1 1 auto; min-height: 0; }
+/* a 1-D table has no surface to rotate, so its controls step aside */
+body.curve-mode .only3d { display: none; }
 .plot { position: absolute; inset: 0; }
 
 .empty {

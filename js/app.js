@@ -308,7 +308,7 @@
       } else {
         items.push({
           ds: ds, name: ds.name, color: ds.color, visible: ds.visible,
-          units: g.units, digits: g.decimals,
+          units: g.units, digits: g.decimals, yUnits: g.yUnits,
           grid: g
         });
       }
@@ -329,24 +329,62 @@
   /* ---------- rendering ---------- */
 
   var lastItems = [];
+  var curveMode = false;
+
+  /* A table with a single column is a curve, not a surface: plot it as one. */
+  function isCurve(items) {
+    return items.length > 0 && items.every(function (i) { return i.grid.z[0].length === 1; });
+  }
+
+  function curveXTitle(items) {
+    var first = items[0];
+    if (first && first.yUnits) return first.yUnits;
+    // the y axis of these tables is nearly always the rpm breakpoint list
+    var ys = first ? first.grid.y : [];
+    if (ys.length > 2 && ys[0] >= 400 && ys[ys.length - 1] > 2000) return t('axis.rpm');
+    return t('axis.breakpoint');
+  }
 
   function renderPlot() {
     var items = buildItems();
     lastItems = items;
     var visible = items.filter(function (i) { return i.visible; });
+    curveMode = isCurve(items);
+    document.body.classList.toggle('curve-mode', curveMode);
     el.empty.hidden = visible.length > 0;
     el.empty.textContent = state.mode === 'diff' && items.length === 0
       ? t('plot.diff_need_base')
       : t('plot.empty');
 
-    Viewer.draw(el.plot, items, {
-      theme: state.theme,
-      contours: state.contours,
-      opacity: state.opacity,
-      diff: state.mode === 'diff',
-      zTitle: zTitle(),
-      camera: Viewer.currentCamera(el.plot)
-    });
+    if (curveMode) {
+      el.plot.hidden = true;
+      el.curve.hidden = false;
+      var series = visible.map(function (i) {
+        return {
+          name: i.name, color: i.color,
+          at: i.grid.y,
+          values: i.grid.z.map(function (row) { return row[0]; })
+        };
+      });
+      Viewer.drawSlice(el.curve, series, {
+        theme: state.theme,
+        xTitle: curveXTitle(items),
+        yTitle: zTitle()
+      });
+      window.Plotly.Plots.resize(el.curve);
+    } else {
+      el.curve.hidden = true;
+      el.plot.hidden = false;
+      Viewer.draw(el.plot, items, {
+        theme: state.theme,
+        contours: state.contours,
+        opacity: state.opacity,
+        diff: state.mode === 'diff',
+        zTitle: zTitle(),
+        camera: Viewer.currentCamera(el.plot)
+      });
+      window.Plotly.Plots.resize(el.plot);
+    }
     renderSlice(items);
   }
 
@@ -357,7 +395,7 @@
   }
 
   function renderSlice(items) {
-    var on = state.sliceAxis !== 'off';
+    var on = state.sliceAxis !== 'off' && !curveMode;
     var wasOn = !el.sliceWrap.hidden;
     el.sliceWrap.hidden = !on;
     // the 3-D canvas keeps its old height unless it is told the box changed
@@ -400,6 +438,20 @@
     var range = Grid.extent(grid.z) || [0, 1];
     var span = range[1] - range[0] || 1;
     var rows = grid.z.length, cols = grid.z[0].length;
+
+    if (cols === 1) {
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      for (var i = 0; i < rows; i++) {
+        var px = rows > 1 ? (i / (rows - 1)) * (w - 3) + 1.5 : w / 2;
+        var py = h - 2 - ((grid.z[i][0] - range[0]) / span) * (h - 4);
+        if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+      }
+      ctx.stroke();
+      return;
+    }
+
     var cw = w / cols, ch = h / rows;
     for (var r = 0; r < rows; r++) {
       for (var c = 0; c < cols; c++) {
@@ -470,7 +522,7 @@
       row.querySelector('.vis').addEventListener('change', function (ev) {
         ds.visible = ev.target.checked;
         row.classList.toggle('off', !ds.visible);
-        var idx = lastItems.map(function (i) { return i.ds; }).indexOf(ds);
+        var idx = curveMode ? -1 : lastItems.map(function (i) { return i.ds; }).indexOf(ds);
         if (idx >= 0) {
           // toggle in place, then rescale the axis to the visible maps only
           Viewer.setVisible(el.plot, lastItems, idx, ds.visible, { theme: state.theme });
@@ -618,7 +670,7 @@
 
     el.btnPng.addEventListener('click', function () {
       var name = (state.tableKey || 'map').replace(/^@/, '').replace(/[^\w.-]+/g, '-');
-      Viewer.toPng(el.plot, 'ecu-' + name);
+      Viewer.toPng(curveMode ? el.curve : el.plot, 'ecu-' + name);
     });
 
     el.btnLang.addEventListener('click', function () {
@@ -635,7 +687,7 @@
   }
 
   function init() {
-    ['file', 'drop', 'tableSel', 'dsList', 'plot', 'empty', 'sliceWrap', 'slicePlot',
+    ['file', 'drop', 'tableSel', 'dsList', 'plot', 'curve', 'empty', 'sliceWrap', 'slicePlot',
       'sliceSel', 'sliceRange', 'sliceValue', 'contours', 'opacity', 'baseSel', 'baseField',
       'btnReset', 'btnPng', 'btnLang', 'btnTheme', 'btnSide', 'toasts'].forEach(function (id) {
       el[id] = $(id);

@@ -48,6 +48,10 @@ silently distort the scene. `tests/run.js` guards the first.
 ("Ignition Main advance" / "Ignition - Main" / "Ignition map" are all `@ign-main`).
 Add a role there rather than special-casing a title elsewhere.
 
+**A 1-D table is a chart, not a surface.** `isCurve()` in `js/app.js` switches the
+stage to the 2-D renderer when every selected grid has a single column, and
+`body.curve-mode` hides the controls that only mean something for a surface.
+
 ## Conventions
 
 - No `alert()`/`confirm()` — `toast(msg, kind)` in `app.js`.

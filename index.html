@@ -53,17 +53,17 @@
         <select id="baseSel"></select>
       </label>
 
-      <label class="inline check">
+      <label class="inline check only3d">
         <input type="checkbox" id="contours" checked>
         <span data-i18n="view.contours"></span>
       </label>
 
-      <label class="inline">
+      <label class="inline only3d">
         <span data-i18n="view.opacity"></span>
         <input type="range" id="opacity" min="35" max="100" value="95">
       </label>
 
-      <label class="inline">
+      <label class="inline only3d">
         <span data-i18n="slice.label"></span>
         <select id="sliceSel">
           <option value="off" data-i18n="slice.off"></option>
@@ -73,12 +73,13 @@
       </label>
 
       <span class="spacer"></span>
-      <button id="btnReset" class="ghost" data-i18n="view.reset"></button>
+      <button id="btnReset" class="ghost only3d" data-i18n="view.reset"></button>
       <button id="btnPng" class="ghost" data-i18n="view.png"></button>
     </div>
 
     <div class="plot-wrap">
       <div id="plot" class="plot"></div>
+      <div id="curve" class="plot" hidden></div>
       <p id="empty" class="empty muted"></p>
     </div>
 
