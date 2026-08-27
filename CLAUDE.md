@@ -6,16 +6,27 @@ Guidance for Claude Code working in this repository.
 
 A dependency-free browser page that reads IAW 5AM firmware dumps (`.bin`) through
 TunerPro definitions (`.xdf`) and draws the calibration tables as 3-D surfaces.
-`README.md` (Russian) is the user-facing document; read it first.
+`README.md` (English) is the user-facing document; read it first. `docs/README.<code>.md`
+holds the same instructions in the other twelve interface languages — a change to how the
+tool is used belongs in all thirteen, or in none.
 
 ## Commands
 
 ```bash
-node tests/run.js                 # offline suite: xml, expr, binio, xdf, grid
-python3 -m http.server 8123       # serve the page from the repo root
+node tests/run.js                 # offline suite: xml, expr, binio, xdf, grid, i18n
+python3 serve.py                  # serve the page (no-store headers) on 8123
 node -e "new Function(require('fs').readFileSync('js/app.js','utf8'))"   # JS syntax check
 node tests/browser.mjs            # browser checks (needs playwright + testdata/)
+
+docker build -t ecu-map-viewer .  # the same page in a container
+docker run --rm -p 8123:8123 ecu-map-viewer
 ```
+
+**`serve.py` runs both ways.** Host and port come from arguments or from `HOST`/`PORT`; the
+default stays on the loopback address and the image sets `HOST=0.0.0.0`, because a
+container that binds to 127.0.0.1 is unreachable from outside. Keep it that way: one server
+implementation means the container and the laptop behave identically, cache headers
+included.
 
 i18n parity is an invariant — all 13 locales must hold identical key sets
 (`tests/run.js` guards it; this prints the detail):

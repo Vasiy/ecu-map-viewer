@@ -1,0 +1,8 @@
+services:
+  viewer:
+    build: .
+    image: ecu-map-viewer
+    container_name: ecu-map-viewer
+    ports:
+      - "8123:8123"
+    restart: unless-stopped
