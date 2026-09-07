@@ -213,6 +213,40 @@ main {
 .muted { color: var(--muted); }
 .pad { padding: .5rem .2rem; font-size: 12px; }
 .mono { font-family: var(--mono); font-size: 11px; }
+.small { font-size: 11px; margin: 0; }
+
+/* ---------- firmware library ---------- */
+
+.lib-row { display: flex; gap: .4rem; }
+.lib-row input[type="text"] {
+  flex: 1 1 auto;
+  min-width: 0;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: .35rem .5rem;
+}
+
+.lib-list {
+  display: flex;
+  flex-direction: column;
+  gap: .3rem;
+  max-height: 9rem;
+  overflow-y: auto;
+}
+
+.lib-item {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  padding: .3rem .45rem;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+.lib-name { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lib-size { flex: 0 0 auto; }
+.lib-item .lib-load { flex: 0 0 auto; padding: .2rem .55rem; font-size: 11px; }
 
 /* ---------- dataset cards ---------- */
 

@@ -82,6 +82,28 @@ tändning och de axlar som denna styrdonsfamilj delar.
 Förinställningen är nödlösningen. Din egen XDF är alltid bättre: den bär de riktiga
 axlarna, de riktiga omräkningsformlerna och alla övriga tabeller.
 
+### Länka en .xdf för hand
+
+Varje kort har ett val för **Definition**, inte bara de som saknar en. Det följer som
+standard parkoppling efter samma namn, men du kan peka det mot vilken redan inläst `.xdf`
+som helst — även en som ett annat kort redan använder. Så jämförs flera firmware-versioner
+mot en enda definition: släpp bilderna, släpp den enda `.xdf`-filen, välj den sedan på
+varje kort i stället för att kopiera och döpa om den för varje version.
+
+## Firmwarebibliotek
+
+När ett kort med körande **onboard-logger** går att nå, läses dess firmware-bilder in utan
+att först kopieras någonstans. Panelen ovanför släppzonen listar vad det kortets
+`/api/firmware` innehåller och hämtar en `.bin` via HTTP när du trycker på **Läs in** —
+bytena hamnar i ett kort precis som en släppt fil, och inget skrivs till disk på någondera
+sidan.
+
+- Kör den här sidan som onboard-loggers eget tillägg (se nedan) så behöver listan ingen
+  adress: samma ursprung, samma server, den dyker upp av sig själv.
+- Att nå ett kort över nätverket från en sida som körs någon annanstans kräver dess adress
+  — till exempel `http://192.168.5.1:8123` — inskriven en gång i fältet; sedan minns sidan
+  den.
+
 ## Välja karta
 
 En XDF rymmer dussintals tabeller, så listan **Karta** är grupperad:

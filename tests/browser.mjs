@@ -130,11 +130,22 @@ await page.evaluate(async () => {
   document.getElementById('drop').dispatchEvent(new DragEvent('drop', { dataTransfer: dt, bubbles: true }));
 });
 await page.waitForTimeout(1200);
-report.presetSelects = await page.locator('.ds .preset').count();
-await page.locator('.ds .preset').first().selectOption('mts1100');
+report.presetSelects = await page.locator('.ds .source').count();
+await page.locator('.ds .source').first().selectOption('preset:mts1100');
 await page.waitForTimeout(900);
 report.tracesAfterPreset = await page.evaluate(() =>
   document.getElementById('plot').data.filter((d) => d.type === 'surface').length);
+
+// manual link: point that same lone .bin at an already-loaded .xdf instead of
+// a preset -- one definition now explains two firmware images at once, which
+// is the point of linking by hand rather than by matching file names
+report.sourceGroups = await page.evaluate(() =>
+  Array.from(document.querySelectorAll('.ds .source')[0].querySelectorAll('optgroup')).map((g) => g.label));
+await page.locator('.ds .source').first().selectOption('ducati1198');
+await page.waitForTimeout(900);
+report.tracesAfterManualLink = await page.evaluate(() =>
+  document.getElementById('plot').data.filter((d) => d.type === 'surface').length);
+report.missingAfterManualLink = await page.locator('.ds .alert').count();
 
 // PNG export must actually hand the browser a file
 const [download] = await Promise.all([
@@ -164,6 +175,16 @@ await page.waitForTimeout(600);
 await page.screenshot({ path: shots + '/shot-6-mobile.png' });
 report.horizontalOverflow = await page.evaluate(() =>
   document.documentElement.scrollWidth - document.documentElement.clientWidth);
+
+// firmware library panel: an unreachable address must surface an error rather
+// than hang or throw, and never claim a firmware was found
+report.libPanelPresent = (await page.locator('#libUrl').count()) > 0 &&
+  (await page.locator('#btnLibScan').count()) > 0;
+await page.fill('#libUrl', 'http://127.0.0.1:1');
+await page.locator('#btnLibScan').click();
+await page.waitForTimeout(800);
+report.libErrorShown = await page.locator('#libList').isVisible();
+report.libNoFakeItems = (await page.locator('.lib-item').count()) === 0;
 
 report.consoleErrors = errors;
 console.log(JSON.stringify(report, null, 2));

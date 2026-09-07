@@ -82,6 +82,27 @@ osie wspólne dla tej rodziny sterowników.
 Gotowa definicja to rozwiązanie awaryjne. Własny XDF jest zawsze lepszy: ma prawdziwe osie,
 prawdziwe wzory przeliczeniowe i wszystkie pozostałe tablice.
 
+### Ręczne łączenie z .xdf
+
+Każda karta ma listę wyboru **Definicja**, nie tylko te, którym jej brakuje. Domyślnie
+stosuje parowanie po tej samej nazwie, ale można ją skierować na dowolny już wczytany
+`.xdf` — także taki, którego używa już inna karta. Tak porównuje się kilka wersji firmware
+względem jednej definicji: wczytaj obrazy, wczytaj tę jedną `.xdf`, a potem wybierz ją na
+każdej karcie, zamiast kopiować i przemianowywać ją dla każdej wersji.
+
+## Biblioteka firmware
+
+Gdy dostępna jest płytka z działającym **onboard-logger**, jej obrazy firmware wczytują się
+bez wcześniejszego kopiowania gdziekolwiek. Panel nad strefą upuszczania pokazuje, co
+zawiera `/api/firmware` tej płytki, i pobiera `.bin` przez HTTP po naciśnięciu **Wczytaj**
+— bajty trafiają do karty dokładnie tak jak upuszczony plik, a po żadnej ze stron nic nie
+jest zapisywane na dysk.
+
+- Uruchom tę stronę jako własny dodatek (addon) onboard-logger (patrz niżej), a lista nie
+  potrzebuje żadnego adresu: to samo pochodzenie, ten sam serwer, pojawia się sama.
+- Dotarcie do płytki przez sieć ze strony obsługiwanej gdzie indziej wymaga jej adresu —
+  na przykład `http://192.168.5.1:8123` — wpisanego raz w pole; potem jest zapamiętywany.
+
 ## Wybór mapy
 
 XDF zawiera dziesiątki tablic, dlatego lista **Mapa** jest pogrupowana:

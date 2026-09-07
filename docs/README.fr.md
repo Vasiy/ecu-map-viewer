@@ -85,6 +85,30 @@ d'allumage principale et les axes communs à cette famille de calculateurs.
 Le préréglage est une solution de repli. Votre propre XDF vaut toujours mieux : il porte
 les vrais axes, les vraies formules de conversion et toutes les autres tables.
 
+### Lier une .xdf à la main
+
+Chaque carte porte un sélecteur **Définition**, pas seulement celles qui n'en ont pas. Il
+suit par défaut l'association par nom identique, mais vous pouvez le pointer vers n'importe
+quelle `.xdf` déjà chargée — y compris une qu'une autre carte utilise déjà. C'est ainsi que
+plusieurs versions de firmware se comparent à une seule définition : déposez les images,
+déposez l'unique `.xdf`, puis choisissez-la sur chaque carte au lieu de la copier et de la
+renommer pour chaque version.
+
+## Bibliothèque de firmwares
+
+Quand une carte électronique avec **onboard-logger** en cours d'exécution est accessible,
+ses images de firmware se chargent sans être copiées nulle part au préalable. Le panneau
+au-dessus de la zone de dépôt liste ce que contient le `/api/firmware` de cette carte et
+récupère un `.bin` par HTTP quand vous appuyez sur **Charger** — les octets atterrissent
+dans une carte exactement comme un fichier déposé, et rien n'est écrit sur le disque d'un
+côté comme de l'autre.
+
+- Faites tourner cette page en tant qu'addon d'onboard-logger (voir plus bas) et la liste
+  ne demande aucune adresse : même origine, même serveur, elle apparaît d'elle-même.
+- Atteindre une carte électronique sur le réseau depuis une page servie ailleurs demande son
+  adresse — `http://192.168.5.1:8123`, par exemple — saisie une fois dans le champ ; elle
+  est ensuite mémorisée.
+
 ## Choisir une cartographie
 
 Une XDF contient des dizaines de tables, d'où le regroupement du sélecteur

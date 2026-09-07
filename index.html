@@ -35,6 +35,17 @@
     </section>
 
     <section class="field">
+      <label for="libUrl" data-i18n="lib.label"></label>
+      <p class="muted small" data-i18n="lib.hint"></p>
+      <div class="lib-row">
+        <input type="text" id="libUrl" class="mono" spellcheck="false"
+               data-i18n-placeholder="lib.url_ph">
+        <button id="btnLibScan" class="ghost" data-i18n="lib.scan"></button>
+      </div>
+      <div id="libList" class="lib-list" hidden></div>
+    </section>
+
+    <section class="field">
       <label for="tableSel" data-i18n="table.label"></label>
       <select id="tableSel"></select>
     </section>

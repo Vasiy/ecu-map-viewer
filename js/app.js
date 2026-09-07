@@ -1,9 +1,18 @@
 /*
  * Wiring: files in, surfaces out.
  *
- * A dataset is one firmware image plus the definition that explains it. Images
- * and definitions are paired by file name (firmware.bin + firmware.xdf); an
- * image that arrives alone can borrow one of the built-in preset definitions.
+ * A dataset is one firmware image plus the definition that explains it. By
+ * default images and definitions pair by file name (firmware.bin +
+ * firmware.xdf), but every loaded .xdf stays in a library (`state.pendingDefs`)
+ * that any dataset can point at instead -- that is what lets several firmware
+ * versions share one definition without renaming copies of it. `ds.source`
+ * records the choice: empty string means "auto, by file name", `preset:<id>`
+ * means a built-in fallback, anything else names a loaded definition.
+ *
+ * The firmware library panel reads a running onboard-logger's own /api/firmware
+ * over HTTP and loads a .bin straight from there -- same-origin when this page
+ * runs as its addon, or any host the rider points it at otherwise. Nothing is
+ * copied to disk; the bytes just end up in a dataset like a dropped file would.
  */
 (function () {
   'use strict';
@@ -13,7 +22,8 @@
 
   var state = {
     datasets: [],
-    pendingDefs: {},          // basename -> parsed xdf waiting for its image
+    pendingDefs: {},          // basename -> parsed xdf, the library every dataset can link to
+    libAuto: false,
     tableKey: null,
     mode: 'surface',
     baseId: null,
@@ -93,17 +103,39 @@
     return state.datasets.filter(function (d) { return d.file === name; })[0];
   }
 
-  function addDataset(name, buffer, doc) {
+  /* ds.source decides which definition a dataset reads through: '' follows the
+     classic same-name pairing, 'preset:<id>' is a built-in fallback, and any
+     other value names a loaded .xdf in state.pendingDefs -- which is how one
+     definition ends up explaining several firmware images at once. */
+  function resolveDoc(ds) {
+    var src = ds.source;
+    if (src && src.indexOf('preset:') === 0) return Presets.docFor(src.slice(7)) || null;
+    return state.pendingDefs[src || ds.file] || null;
+  }
+
+  /* Re-point every dataset at its source after the definition library changes
+     -- a freshly dropped .xdf must reach both the image that matches its name
+     and any dataset a user already linked to it by hand. */
+  function relinkAll() {
+    state.datasets.forEach(function (ds) {
+      ds.doc = resolveDoc(ds);
+      ds.cache = {};
+    });
+  }
+
+  function addDataset(name, buffer) {
     var ds = {
       id: 'ds' + (++state.seq),
       file: name,
       name: name,
       buffer: buffer,
-      doc: doc || null,
+      source: '',
+      doc: null,
       visible: true,
       color: Viewer.colorFor(state.datasets.length, state.theme),
       cache: {}
     };
+    ds.doc = resolveDoc(ds);
     state.datasets.push(ds);
     return ds;
   }
@@ -129,9 +161,8 @@
       loaded.forEach(function (item) {
         if (item.isXdf) return;
         if (datasetByName(item.base)) { toast(t('files.duplicate', { name: item.base })); return; }
-        var doc = state.pendingDefs[item.base] || null;
-        addDataset(item.base, item.data, doc);
-        if (doc) toast(t('files.paired', { name: item.base }));
+        var ds = addDataset(item.base, item.data);
+        if (ds.doc) toast(t('files.paired', { name: item.base }));
         else toast(t('files.unpaired_bin', { name: item.base }), 'warn');
       });
       // a definition with no image yet is not an error, just a note
@@ -141,10 +172,104 @@
           toast(t('files.unpaired_xdf', { name: item.base }), 'warn');
         }
       });
+      // a freshly loaded .xdf may also complete an older dataset dropped earlier
+      relinkAll();
       refreshTables();
       renderAll();
     }).catch(function (e) {
       toast(String(e && e.message || e), 'error');
+    });
+  }
+
+  /* ---------- firmware library (onboard-logger's own /api/firmware) ---------- */
+
+  /* Empty stays same-origin -- exactly what this page fetches when it runs as
+     onboard-logger's own addon, so the discovery needs no address at all. */
+  function libBase() {
+    return (el.libUrl && el.libUrl.value || '').trim().replace(/\/+$/, '');
+  }
+
+  function libFetch(path) {
+    return fetch(libBase() + path, { cache: 'no-store' });
+  }
+
+  function fmtSize(n) {
+    n = Number(n) || 0;
+    if (n >= 1024 * 1024) return (n / (1024 * 1024)).toFixed(1) + ' MB';
+    if (n >= 1024) return Math.round(n / 1024) + ' KB';
+    return n + ' B';
+  }
+
+  function loadFromLibrary(name) {
+    var base = baseName(name);
+    if (datasetByName(base)) { toast(t('files.duplicate', { name: base })); return; }
+    libFetch('/api/firmware/files/' + encodeURIComponent(name)).then(function (r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.arrayBuffer();
+    }).then(function (buf) {
+      var ds = addDataset(base, buf);
+      refreshTables();
+      renderAll();
+      if (ds.doc) toast(t('files.paired', { name: base }));
+      else toast(t('files.unpaired_bin', { name: base }), 'warn');
+    }).catch(function (e) {
+      toast(t('lib.load_error', { name: name, err: String(e && e.message || e) }), 'error');
+    });
+  }
+
+  function renderLibList(files, err) {
+    var box = el.libList;
+    box.innerHTML = '';
+    if (err) {
+      box.hidden = false;
+      var p = document.createElement('p');
+      p.className = 'muted small';
+      p.textContent = err;
+      box.appendChild(p);
+      return;
+    }
+    if (!files || !files.length) {
+      // a silent auto-probe that finds nothing must not leave an empty box
+      // sitting in the sidebar -- only a request the rider actually made does
+      box.hidden = state.libAuto;
+      if (!box.hidden) {
+        var p2 = document.createElement('p');
+        p2.className = 'muted small';
+        p2.textContent = t('lib.empty');
+        box.appendChild(p2);
+      }
+      return;
+    }
+    box.hidden = false;
+    files.forEach(function (f) {
+      var loaded = !!datasetByName(baseName(f.name));
+      var row = document.createElement('div');
+      row.className = 'lib-item';
+      row.innerHTML =
+        '<span class="mono lib-name">' + esc(f.name) + '</span>' +
+        '<span class="mono muted lib-size">' + esc(fmtSize(f.size)) + '</span>' +
+        '<button class="ghost lib-load"' + (loaded ? ' disabled' : '') + '>' +
+          esc(loaded ? t('lib.loaded') : t('lib.load')) + '</button>';
+      row.querySelector('.lib-load').addEventListener('click', function () {
+        loadFromLibrary(f.name);
+      });
+      box.appendChild(row);
+    });
+  }
+
+  /* auto=true is a silent probe (page load, or a saved address): a board that
+     is not there right now must not throw an error at the rider every time. */
+  function scanLibrary(auto) {
+    state.libAuto = !!auto;
+    libFetch('/api/firmware').then(function (r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    }).then(function (data) {
+      var files = (data.files || []).filter(function (f) { return /\.bin$/i.test(f.name || ''); });
+      renderLibList(files, null);
+    }).catch(function (e) {
+      if (auto) { renderLibList(null, null); return; }
+      renderLibList(null, t('lib.error', { err: String(e && e.message || e) }));
     });
   }
 
@@ -465,12 +590,28 @@
     }
   }
 
-  function presetOptions(selected) {
-    var out = ['<option value="">' + esc(t('ds.preset_none')) + '</option>'];
+  /* The definition-picker for one dataset card: auto pairing first, then every
+     loaded .xdf by name (so several images can share one), then the built-in
+     presets as a last resort. */
+  function sourceOptions(ds) {
+    var src = ds.source || '';
+    var out = ['<option value=""' + (src === '' ? ' selected' : '') + '>' + esc(t('ds.source_auto')) + '</option>'];
+    var defNames = Object.keys(state.pendingDefs).sort();
+    if (defNames.length) {
+      out.push('<optgroup label="' + esc(t('ds.source_group_defs')) + '">');
+      defNames.forEach(function (name) {
+        out.push('<option value="' + esc(name) + '"' + (src === name ? ' selected' : '') + '>' +
+          esc(name) + '.xdf</option>');
+      });
+      out.push('</optgroup>');
+    }
+    out.push('<optgroup label="' + esc(t('ds.source_group_presets')) + '">');
     Presets.PLATFORMS.forEach(function (p) {
-      out.push('<option value="' + esc(p.id) + '"' + (p.id === selected ? ' selected' : '') + '>' +
+      var val = 'preset:' + p.id;
+      out.push('<option value="' + esc(val) + '"' + (src === val ? ' selected' : '') + '>' +
         esc(p.name) + ' · ' + hex(p.address) + '</option>');
     });
+    out.push('</optgroup>');
     return out.join('');
   }
 
@@ -492,21 +633,26 @@
       row.className = 'ds' + (ds.visible && !isBase ? '' : ' off') + (isBase ? ' is-base' : '');
       row.style.setProperty('--ds-color', ds.color);
 
-      var meta, missing = false;
-      if (!ds.doc) {
-        meta = '<select class="preset" aria-label="' + esc(t('ds.preset')) + '">' + presetOptions(ds.presetId) + '</select>';
-      } else if (grid) {
+      var stat, missing = false;
+      if (grid) {
         var range = Grid.extent(grid.z) || [0, 0];
-        meta = '<span class="mono">' + esc(t('stat.cells', {
+        stat = '<span class="mono">' + esc(t('stat.cells', {
           rows: grid.rows, cols: grid.cols, addr: hex(grid.address)
         })) + '</span><span class="mono val">' + esc(t('stat.range', {
           min: Viewer.fmt(range[0], grid.decimals), max: Viewer.fmt(range[1], grid.decimals)
         })) + '</span>';
-      } else {
+      } else if (ds.doc) {
         var err = ds.cache[state.tableKey + ':err'];
-        meta = '<span class="alert">' + esc(err ? t('ds.read_error', { err: err }) : t('ds.no_table')) + '</span>';
+        stat = '<span class="alert">' + esc(err ? t('ds.read_error', { err: err }) : t('ds.no_table')) + '</span>';
+        missing = true;
+      } else {
+        stat = '<span class="alert">' + esc(t('ds.no_def')) + '</span>';
         missing = true;
       }
+      // the source select stays available even when a table already draws --
+      // comparing firmware versions means pointing several images at one xdf
+      var meta = stat + '<select class="source" aria-label="' + esc(t('ds.preset')) + '">' +
+        sourceOptions(ds) + '</select>';
 
       // a map the definition does not carry is a dead card: say so loudly
       if (missing) row.classList.add('missing');
@@ -553,16 +699,13 @@
         renderAll();
       });
 
-      var preset = row.querySelector('.preset');
-      if (preset) {
-        preset.addEventListener('change', function (ev) {
-          ds.presetId = ev.target.value;
-          ds.doc = ds.presetId ? Presets.docFor(ds.presetId) : null;
-          ds.cache = {};
-          refreshTables();
-          renderAll();
-        });
-      }
+      row.querySelector('.source').addEventListener('change', function (ev) {
+        ds.source = ev.target.value;
+        ds.doc = resolveDoc(ds);
+        ds.cache = {};
+        refreshTables();
+        renderAll();
+      });
 
       list.appendChild(row);
     });
@@ -613,6 +756,9 @@
     });
     document.querySelectorAll('[data-i18n-title]').forEach(function (node) {
       node.title = t(node.getAttribute('data-i18n-title'));
+    });
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(function (node) {
+      node.placeholder = t(node.getAttribute('data-i18n-placeholder'));
     });
     if (el.langSel) {
       el.langSel.value = lang;
@@ -719,12 +865,24 @@
         else el.about.setAttribute('open', '');   // very old engines
       });
     }
+
+    // both optional: a stale cached index.html predating the library panel
+    // must keep working, just without it
+    if (el.btnLibScan) {
+      el.btnLibScan.addEventListener('click', function () { scanLibrary(false); });
+    }
+    if (el.libUrl) {
+      el.libUrl.addEventListener('change', function () {
+        try { localStorage.setItem('fwLibUrl', el.libUrl.value); } catch (e) { /* private mode */ }
+      });
+    }
   }
 
   function init() {
     ['file', 'drop', 'tableSel', 'dsList', 'plot', 'curve', 'empty', 'sliceWrap', 'slicePlot',
       'sliceSel', 'sliceRange', 'sliceValue', 'contours', 'opacity', 'baseSel', 'baseField',
-      'btnReset', 'btnPng', 'langSel', 'btnTheme', 'btnSide', 'btnInfo', 'about', 'toasts'].forEach(function (id) {
+      'btnReset', 'btnPng', 'langSel', 'btnTheme', 'btnSide', 'btnInfo', 'about', 'toasts',
+      'libUrl', 'btnLibScan', 'libList'].forEach(function (id) {
       el[id] = $(id);
     });
     // A stale cached index.html must not take the whole render down with it.
@@ -749,6 +907,13 @@
     state.theme = savedTheme;
     document.documentElement.setAttribute('data-theme', savedTheme);
     applyLang(savedLang);
+
+    if (el.libUrl) {
+      try { el.libUrl.value = localStorage.getItem('fwLibUrl') || ''; } catch (e) { /* private mode */ }
+    }
+    // same-origin by default, so this is a no-op unless the page runs as
+    // onboard-logger's own addon (or a saved address points at one)
+    if (el.libList) scanLibrary(true);
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);

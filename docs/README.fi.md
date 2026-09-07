@@ -85,6 +85,28 @@ pääkartalle ja akselit, jotka tämä ohjainlaiteperhe jakaa.
 Esiasetus on hätävara. Oma XDF on aina parempi: siinä ovat oikeat akselit, oikeat
 muunnoskaavat ja kaikki muut taulukot.
 
+### .xdf:n linkitys käsin
+
+Jokaisella kortilla on **Määrittely**-valitsin, ei vain niillä joilta se puuttuu. Se
+noudattaa oletuksena samannimistä parinmuodostusta, mutta sen voi kohdistaa mihin tahansa
+jo ladattuun `.xdf`-tiedostoon — myös sellaiseen, jota toinen kortti jo käyttää. Näin
+verrataan useita firmware-versioita yhtä määrittelyä vasten: pudota kuvat, pudota se yksi
+`.xdf`, ja valitse se sitten jokaisella kortilla sen sijaan, että kopioisit ja nimeäisit sen
+uudelleen jokaista versiota varten.
+
+## Firmware-kirjasto
+
+Kun tavoitettavissa on levy, jolla pyörii **onboard-logger**, sen firmware-kuvat latautuvat
+kopioimatta niitä ensin minnekään. Pudotusalueen yläpuolella oleva paneeli listaa, mitä
+kyseisen levyn `/api/firmware` sisältää, ja hakee `.bin`-tiedoston HTTP:llä, kun painat
+**Lataa** — tavut päätyvät korttiin aivan kuin pudotettu tiedosto, eikä kumpikaan puoli
+kirjoita mitään levylle.
+
+- Aja tätä sivua onboard-loggerin omana lisäosana (katso alta), niin listaa ei tarvitse
+  osoitetta: sama alkuperä, sama palvelin, se ilmestyy itsestään.
+- Levyn tavoittaminen verkon yli muualla palvellulta sivulta vaatii sen osoitteen — vaikkapa
+  `http://192.168.5.1:8123` — kirjoitettuna kenttään kerran; sen jälkeen sivu muistaa sen.
+
 ## Kartan valinta
 
 XDF sisältää kymmeniä taulukoita, joten **Kartta**-valikko on ryhmitelty:

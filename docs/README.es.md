@@ -84,6 +84,28 @@ encendido principal y los ejes que comparte esta familia de centralitas.
 El preajuste es el recurso de emergencia. Tu propio XDF siempre es mejor: trae los ejes
 reales, las fórmulas de conversión reales y todas las demás tablas.
 
+### Vincular un .xdf a mano
+
+Cada tarjeta lleva un selector de **Definición**, no solo las que carecen de una. Por
+defecto sigue el emparejamiento por el mismo nombre, pero puedes apuntarlo a cualquier
+`.xdf` ya cargado — incluido uno que ya esté usando otra tarjeta. Así es como se comparan
+varias versiones de firmware frente a una sola definición: suelta las imágenes, suelta el
+único `.xdf` y luego elígelo en cada tarjeta en vez de copiarlo y renombrarlo para cada
+versión.
+
+## Biblioteca de firmware
+
+Cuando una placa con **onboard-logger** en marcha está accesible, sus imágenes de firmware
+se cargan sin copiarlas antes a ningún sitio. El panel sobre la zona de soltar muestra lo
+que contiene el `/api/firmware` de esa placa y trae un `.bin` por HTTP al pulsar **Cargar**
+— los bytes acaban en una tarjeta igual que con un archivo soltado, y no se escribe nada en
+el disco de ninguno de los dos lados.
+
+- Ejecuta esta página como complemento propio de onboard-logger (ver más abajo) y la lista
+  no necesita ninguna dirección: mismo origen, mismo servidor, aparece sola.
+- Llegar a una placa por red desde una página servida en otro sitio necesita su dirección
+  — `http://192.168.5.1:8123`, por ejemplo — escrita una vez en el campo; luego se recuerda.
+
 ## Elegir un mapa
 
 Un XDF guarda decenas de tablas, así que el selector **Mapa** va agrupado:

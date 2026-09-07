@@ -84,6 +84,29 @@ Zündungs-Hauptkennfelds und die Achsen, die diese Steuergerätefamilie teilt.
 Die Vorgabe ist der Notnagel. Die eigene XDF ist immer besser: sie bringt die echten
 Achsen, die echten Umrechnungsformeln und alle übrigen Tabellen mit.
 
+### Eine .xdf von Hand verknüpfen
+
+Jede Karte trägt eine **Definition**-Auswahl, nicht nur die, denen eine fehlt. Sie folgt
+zunächst der Paarung nach gleichem Namen, lässt sich aber auf jede bereits geladene `.xdf`
+umstellen — auch auf eine, die schon eine andere Karte verwendet. So werden mehrere
+Firmware-Versionen gegen eine einzige Definition verglichen: die Abbilder ablegen, die eine
+`.xdf` ablegen, dann auf jeder Karte auswählen, statt sie für jede Version zu kopieren und
+umzubenennen.
+
+## Firmware-Bibliothek
+
+Ist ein Board mit laufendem **onboard-logger** erreichbar, laden dessen Firmware-Abbilder,
+ohne vorher irgendwohin kopiert zu werden. Das Feld über der Ablagezone listet auf, was das
+`/api/firmware` dieses Boards enthält, und holt eine `.bin` per HTTP, sobald **Laden** gedrückt
+wird — die Bytes landen in einer Firmware-Karte genau wie bei einer abgelegten Datei, und
+auf keiner Seite wird etwas auf die Festplatte geschrieben.
+
+- Läuft diese Seite als eigenes Addon von onboard-logger (siehe unten), braucht die Liste
+  keine Adresse: derselbe Ursprung, derselbe Server, sie erscheint von selbst.
+- Ein Board über das Netzwerk von einer anderswo bedienten Seite aus zu erreichen, braucht
+  seine Adresse — etwa `http://192.168.5.1:8123` — einmal ins Feld eingetragen; danach merkt
+  sie sich die Seite.
+
 ## Kennfeld wählen
 
 Eine XDF enthält Dutzende Tabellen, deshalb ist die Auswahl **Kennfeld** gruppiert:

@@ -82,6 +82,26 @@ které tato rodina jednotek sdílí.
 Předvolba je nouzové řešení. Vlastní XDF je vždy lepší: nese skutečné osy, skutečné
 přepočtové vzorce a všechny ostatní tabulky.
 
+### Ruční propojení s .xdf
+
+Každá karta má výběr **Definice**, ne jen ty bez ní. Ve výchozím stavu se řídí párováním
+podle stejného názvu, ale můžete ji namířit na kterýkoli již načtený `.xdf` — třeba i ten,
+který už používá jiná karta. Takhle se porovnává několik verzí firmwaru vůči jediné definici:
+pustíte obrazy, pustíte jeden `.xdf` a pak ho vyberete na každé kartě, místo abyste ho pro
+každou verzi kopírovali a přejmenovávali.
+
+## Knihovna firmwaru
+
+Když je dosažitelná deska s běžícím **onboard-logger**, její obrazy firmwaru se načtou bez
+kopírování kamkoli. Panel nad zónou pro pouštění zobrazuje, co obsahuje `/api/firmware` té
+desky, a po stisknutí **Načíst** stáhne `.bin` po HTTP — bajty skončí v datové sadě přesně
+jako u puštěného souboru a na žádné straně se nic nezapisuje na disk.
+
+- Spusťte tuto stránku jako vlastní doplněk (addon) onboard-logger (viz níže) a seznam
+  nepotřebuje žádnou adresu: stejný původ, stejný server, objeví se sám.
+- Dosažení desky po síti ze stránky obsluhované jinde potřebuje její adresu — třeba
+  `http://192.168.5.1:8123` — zadanou jednou do pole; pak si ji stránka pamatuje.
+
 ## Výběr mapy
 
 XDF obsahuje desítky tabulek, proto je nabídka **Mapa** rozdělená:

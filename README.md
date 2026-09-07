@@ -83,6 +83,27 @@ table and the axes this ECU family shares.
 A preset is the fallback. Your own XDF is always better: it carries the real axes, the
 real scaling formulas, and every other table.
 
+### Link an .xdf by hand
+
+Every card carries a **Definition** select, not just the ones missing one. It follows the
+same-name pairing by default, but you can point it at any `.xdf` already loaded — including
+one another card is already using. That is how several firmware versions get compared
+against a single definition: drop the images, drop the one `.xdf`, then pick it on every
+card instead of copying and renaming it for each version.
+
+## Firmware library
+
+When a board running **onboard-logger** is reachable, its firmware images load without
+copying them anywhere first. The panel above the drop zone lists what that board's
+`/api/firmware` holds and fetches a `.bin` over HTTP when you press **Load** — the bytes
+land in a dataset exactly like a dropped file would, and nothing is written to either
+side's disk.
+
+- Run this page as onboard-logger's own addon (see below) and the list needs no address:
+  same origin, same server, it appears on its own.
+- Reaching a board over the network from a page served elsewhere needs its address —
+  `http://192.168.5.1:8123`, say — typed into the field once; it is remembered after that.
+
 ## Pick a map
 
 An XDF holds dozens of tables, so the **Map** selector groups them:
@@ -166,7 +187,14 @@ on a board with no route to the internet:
 2. serve the directory statically (`main.py` already serves `/static/*` with
    `Cache-Control: no-cache`);
 3. the strings already follow that project's rules (`t(key)`, `data-i18n`) and eight of
-   the locales match it, so the keys move across as they are.
+   the locales match it, so the keys move across as they are;
+4. the firmware library panel then needs no address at all — same origin, same server —
+   so every image onboard-logger already holds shows up without being copied a second time.
+
+A separately hosted copy of this page can still reach that board: onboard-logger answers
+`GET /api/firmware` and `GET /api/firmware/files/{name}` across origins for exactly that
+reason, while every other route on its API — read, write, rename, delete — stays
+same-origin only.
 
 ## Layout
 

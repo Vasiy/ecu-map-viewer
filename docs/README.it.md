@@ -83,6 +83,29 @@ accensione principale e gli assi comuni a questa famiglia di centraline.
 Il preset è un ripiego. Il tuo XDF è sempre meglio: porta gli assi veri, le vere formule di
 conversione e tutte le altre tabelle.
 
+### Collegare un .xdf a mano
+
+Ogni scheda porta un selettore **Definizione**, non solo quelle che ne sono prive. Segue
+per default l'abbinamento per nome uguale, ma puoi puntarlo su qualsiasi `.xdf` già
+caricato — anche uno che un'altra scheda sta già usando. È così che si confrontano più
+versioni di firmware rispetto a un'unica definizione: rilascia le immagini, rilascia
+l'unico `.xdf`, poi selezionalo su ogni scheda invece di copiarlo e rinominarlo per ogni
+versione.
+
+## Libreria firmware
+
+Quando è raggiungibile una scheda con **onboard-logger** in esecuzione, le sue immagini di
+firmware si caricano senza copiarle prima da nessuna parte. Il pannello sopra la zona di
+rilascio elenca cosa contiene il `/api/firmware` di quella scheda e recupera un `.bin` via
+HTTP quando premi **Carica** — i byte finiscono in una scheda esattamente come un file
+rilasciato, e non viene scritto nulla sul disco di nessuna delle due parti.
+
+- Esegui questa pagina come addon proprio di onboard-logger (vedi sotto) e l'elenco non
+  richiede alcun indirizzo: stessa origine, stesso server, appare da solo.
+- Raggiungere una scheda in rete da una pagina servita altrove richiede il suo indirizzo —
+  `http://192.168.5.1:8123`, per esempio — digitato una volta nel campo; dopo viene
+  ricordato.
+
 ## Scegliere una mappa
 
 Un XDF contiene decine di tabelle, perciò il selettore **Mappa** è raggruppato:

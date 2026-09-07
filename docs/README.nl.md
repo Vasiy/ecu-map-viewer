@@ -85,6 +85,28 @@ hoofdontstekingsmap en de assen die deze ECU-familie deelt.
 De voorinstelling is de noodoplossing. Je eigen XDF is altijd beter: die bevat de echte
 assen, de echte omrekenformules en alle andere tabellen.
 
+### Een .xdf handmatig koppelen
+
+Elke kaart heeft een **Definitie**-keuzelijst, niet alleen die zonder definitie. Die volgt
+standaard de koppeling op gelijke naam, maar je kunt hem naar elke al geladen `.xdf` wijzen
+— ook een die een andere kaart al gebruikt. Zo vergelijk je meerdere firmwareversies tegen
+één definitie: laat de images vallen, laat de ene `.xdf` vallen, en kies die dan op elke
+kaart in plaats van hem voor elke versie te kopiëren en hernoemen.
+
+## Firmwarebibliotheek
+
+Als een board met een draaiende **onboard-logger** bereikbaar is, laden diens
+firmware-images zonder eerst ergens gekopieerd te worden. Het paneel boven de dropzone
+toont wat het `/api/firmware` van dat board bevat en haalt een `.bin` op via HTTP zodra je
+op **Laden** drukt — de bytes belanden in een kaart net als bij een gesleept bestand, en er
+wordt aan geen van beide kanten iets op schijf geschreven.
+
+- Draai deze pagina als eigen addon van onboard-logger (zie hieronder) en de lijst heeft
+  geen adres nodig: dezelfde herkomst, dezelfde server, hij verschijnt vanzelf.
+- Een board over het netwerk bereiken vanaf een elders bediende pagina vraagt om het adres
+  ervan — bijvoorbeeld `http://192.168.5.1:8123` — één keer ingevuld in het veld; daarna
+  onthoudt de pagina het.
+
 ## Een map kiezen
 
 Een XDF bevat tientallen tabellen, dus de keuzelijst **Map** is gegroepeerd:
