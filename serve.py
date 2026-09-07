@@ -142,13 +142,23 @@ class NoCacheHandler(SimpleHTTPRequestHandler):
         body = self.rfile.read(length)
         if len(body) != length:
             return self._json(400, {"error": "short read"})
-        os.makedirs(DATA_DIR, exist_ok=True)
         tmp = os.path.join(DATA_DIR, "." + name + ".part")
-        # written aside and renamed, so a half-received image never appears in
-        # the listing under its real name
-        with open(tmp, "wb") as fh:
-            fh.write(body)
-        os.replace(tmp, os.path.join(DATA_DIR, name))
+        try:
+            os.makedirs(DATA_DIR, exist_ok=True)
+            # written aside and renamed, so a half-received image never appears
+            # in the listing under its real name
+            with open(tmp, "wb") as fh:
+                fh.write(body)
+            os.replace(tmp, os.path.join(DATA_DIR, name))
+        except OSError as exc:
+            # a container whose library is mounted read-only, or owned by
+            # someone else, used to raise here and drop the connection: the
+            # client saw no status at all and could not say what went wrong
+            try:
+                os.unlink(tmp)
+            except OSError:
+                pass
+            return self._json(500, {"error": "write failed", "detail": str(exc)})
         return self._json(200, {"name": name, "size": len(body)})
 
     def do_DELETE(self):
@@ -162,9 +172,26 @@ class NoCacheHandler(SimpleHTTPRequestHandler):
         if not name:
             return self._json(400, {"error": "bad name"})
         full = os.path.join(DATA_DIR, name)
-        if os.path.isfile(full):
-            os.remove(full)
+        try:
+            if os.path.isfile(full):
+                os.remove(full)
+        except OSError as exc:
+            return self._json(500, {"error": "delete failed", "detail": str(exc)})
         return self._json(200, {"name": name})
+
+
+def writable(path):
+    """Can this process actually write there? Asked at start-up, because a
+    library that only fails on the first upload is a library that looks fine."""
+    probe = os.path.join(path, ".write-probe")
+    try:
+        os.makedirs(path, exist_ok=True)
+        with open(probe, "wb"):
+            pass
+        os.unlink(probe)
+        return True
+    except OSError:
+        return False
 
 
 def is_loopback(host):
@@ -201,8 +228,13 @@ def main():
     shown = "127.0.0.1" if host in ("0.0.0.0", "::") else host
     print("ECU map viewer on http://%s:%d/  (Ctrl+C to stop)" % (shown, port), flush=True)
     if DATA_DIR:
-        print("library: %s%s" % (DATA_DIR, "" if LOOPBACK or ALLOW_REMOTE_WRITES
-                                 else "  (read-only: not on a loopback address)"), flush=True)
+        if not (LOOPBACK or ALLOW_REMOTE_WRITES):
+            why = "  (read-only: not on a loopback address)"
+        elif not writable(DATA_DIR):
+            why = "  (read-only: %s is not writable by uid %d)" % (DATA_DIR, os.getuid())
+        else:
+            why = ""
+        print("library: %s%s" % (DATA_DIR, why), flush=True)
     try:
         server.serve_forever()
     except KeyboardInterrupt:

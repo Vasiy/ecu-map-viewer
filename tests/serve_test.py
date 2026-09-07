@@ -177,6 +177,40 @@ def t_remote_writes_refused():
     with_server(body, loopback=False, allow_remote=False)
 
 
+def t_an_unwritable_library_answers_instead_of_dropping_the_connection():
+    """The container case: the library is mounted, but this process cannot write
+    to it. That used to raise inside the handler and hand the client a dead
+    connection with no status at all."""
+    if os.getuid() == 0:
+        print("   (skipped: root ignores the mode bits)")
+        return
+
+    def body(srv, data):
+        os.chmod(data, 0o555)
+        try:
+            code, raw = srv.call("PUT", "/api/library/file/stage1.bin", b"xyz")
+            assert code == 500, code
+            assert b"write failed" in raw, raw
+            assert not os.path.exists(os.path.join(data, "stage1.bin"))
+            # nothing half-written is left lying about either
+            assert os.listdir(data) == [], os.listdir(data)
+        finally:
+            os.chmod(data, 0o755)
+    with_server(body)
+
+
+def t_writable_says_what_it_finds():
+    d = tempfile.mkdtemp(prefix="viewer-w-")
+    try:
+        assert serve.writable(d) is True
+        if os.getuid() != 0:
+            os.chmod(d, 0o555)
+            assert serve.writable(d) is False
+            os.chmod(d, 0o755)
+    finally:
+        shutil.rmtree(d, ignore_errors=True)
+
+
 def t_no_library_without_a_data_dir():
     serve.DATA_DIR = None
     serve.LOOPBACK = True
@@ -212,6 +246,9 @@ for name, fn in [
     ("a half-received upload is not listed", t_partial_upload_is_not_listed),
     ("an oversize body is refused before it lands", t_oversize_refused),
     ("writes are refused when the server is not on a loopback", t_remote_writes_refused),
+    ("an unwritable library answers instead of dropping the connection",
+     t_an_unwritable_library_answers_instead_of_dropping_the_connection),
+    ("the writability probe reports what it finds", t_writable_says_what_it_finds),
     ("without a data directory there is no library at all", t_no_library_without_a_data_dir),
     ("the static page is still served", t_static_still_served),
 ]:

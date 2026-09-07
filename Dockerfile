@@ -21,8 +21,16 @@ ENV HOST=0.0.0.0 \
 VOLUME /data
 RUN mkdir -p /data && chown nobody /data
 
+# su-exec drops to nobody after the entrypoint has made the mounted library
+# writable. Docker creates a missing bind-mount directory owned by root, and the
+# chown above sits *underneath* that mount -- so ownership has to be fixed once
+# the mount exists, which is the one thing that needs a moment of root.
+RUN apk add --no-cache su-exec
+COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
 EXPOSE 8123
-USER nobody
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
 
 HEALTHCHECK --interval=30s --timeout=3s --start-period=2s --retries=3 \
   CMD python3 -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8123/index.html').read(1)"

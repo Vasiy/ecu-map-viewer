@@ -75,6 +75,18 @@ it); **library** when `serve.py` was given a `--data` directory and holds both k
 apologise for -- the page has to keep working from `file://` and from any dumb static host,
 so a dead panel is hidden rather than shown broken.
 
+**The container drops to `nobody`, but only after the mounted library is its own.**
+Docker creates a missing bind-mount directory owned by root, and the image's `chown nobody
+/data` sits *underneath* that mount, so it does nothing for it -- the store came up read-only
+however `ALLOW_REMOTE_WRITES` was set, and this was found by running the thing rather than by
+reading it. `docker-entrypoint.sh` fixes the ownership once the mount exists and then
+`su-exec`s to `nobody`, so the server itself never runs privileged. A mount it may not chown
+(read-only, or deliberately owned otherwise) is left alone and *said out loud*: `serve.py`
+probes writability at start-up and prints `library: <dir>  (read-only: ...)`, because a library
+that only fails on the first upload is a library that looks fine. The failing write is an
+answer too -- an `OSError` in `do_PUT` used to escape the handler and hand the client a dropped
+connection with no status at all.
+
 **serve.py's library is off until a data directory is named, and will not be written to
 from off the machine.** The container binds `0.0.0.0` on purpose, and an open `PUT` would
 let anyone on the network replace a firmware image; writes need a loopback bind or an
