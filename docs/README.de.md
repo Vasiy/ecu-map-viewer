@@ -63,11 +63,25 @@ neben einem frischen `js/app.js` behalten.
 ## Firmware laden
 
 Ziehen Sie eine `.bin` samt `.xdf` in die linke Spalte oder klicken Sie **Dateien wählen**.
-**Beide Dateien brauchen denselben Namen** — `firmware.bin` + `firmware.xdf`. Es dürfen
+**Gleiche Namen finden sich von selbst** — `firmware.bin` + `firmware.xdf`. Es dürfen
 beliebig viele Paare sein; jedes wird zu einer Karte in der Liste mit eigener Farbe.
 
 Der Name auf der Karte ist direkt änderbar. Was dort steht, steht auch im Tooltip, in der
 Legende und an der Schnittkurve.
+
+### Eine Definition für mehrere Firmwares
+
+Gleiche Namen sind bequem, aber keine Vorschrift. Jede Karte trägt eine
+**Definitionsauswahl** mit allen in dieser Sitzung geladenen `.xdf` und den eingebauten
+Vorlagen; beliebig viele Karten dürfen auf dieselbe zeigen.
+
+So vergleicht man Versionen einer Kalibrierung am schnellsten: Legen Sie die Abbilder
+zusammen mit einer einzigen `.xdf` ab, deren Name zu keinem davon passt — sie wird allen
+auf einmal zugeteilt. Kein Kopieren der Definition je Abbild und kein Umbenennen mehr. Bei
+zwei oder mehr Definitionen auf einmal wird nichts angenommen; wählen Sie pro Karte.
+
+Die Auswahl wird pro Dateiname gemerkt, sodass dieselbe Firmware ihre Definition beim
+nächsten Laden wiederfindet.
 
 ### Eine .bin ohne ihre .xdf
 

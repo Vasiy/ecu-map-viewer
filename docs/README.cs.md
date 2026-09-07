@@ -60,12 +60,26 @@ vedle čerstvého `js/app.js`.
 
 ## Načtení firmwaru
 
-Přetáhněte `.bin` i jeho `.xdf` do levého panelu, nebo stiskněte **Vybrat soubory**. **Oba
-soubory musí mít stejný název** — `firmware.bin` + `firmware.xdf`. Dvojic můžete pustit
+Přetáhněte `.bin` i jeho `.xdf` do levého panelu, nebo stiskněte **Vybrat soubory**.
+**Shodná jména se spárují sama** — `firmware.bin` + `firmware.xdf`. Dvojic můžete pustit
 kolik chcete; z každé je karta v seznamu s vlastní barvou.
 
 Název na kartě se upravuje přímo na místě. Co napíšete, to se objeví v bublině pod
 kurzorem, v legendě i u křivky řezu.
+
+### Jedna definice pro více firmwarů
+
+Shodná jména jsou pohodlí, ne pravidlo. Každá karta nese **výběr definice** se všemi `.xdf`
+načtenými v této relaci a s vestavěnými předvolbami; na tutéž definici může ukazovat
+libovolně mnoho karet.
+
+Takhle se nejrychleji porovnávají verze jedné kalibrace: pusťte obrazy spolu s jedinou
+`.xdf`, jejíž název neodpovídá žádnému z nich, a dostanou ji všechny naráz — konec
+kopírování definice pro každý obraz a přejmenovávání kopií. Když pustíte dvě a více
+definic, nic se nepředpokládá; vyberte je kartu po kartě.
+
+Volby se pamatují podle názvu souboru, takže tentýž firmware svou definici příště zase
+najde.
 
 ### Soubor .bin bez svého .xdf
 

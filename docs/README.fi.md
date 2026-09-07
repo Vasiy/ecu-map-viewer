@@ -63,12 +63,27 @@ lukea.
 
 ## Firmwaren lataaminen
 
-Raahaa `.bin` ja sen `.xdf` vasempaan paneeliin tai paina **Valitse tiedostot**.
-**Tiedostoilla pitää olla sama nimi** — `firmware.bin` + `firmware.xdf`. Pareja saa
-pudottaa niin monta kuin haluaa; jokaisesta tulee listaan kortti omalla värillään.
+Raahaa `.bin` ja sen `.xdf` vasempaan paneeliin tai paina **Valitse tiedostot**. **Samat
+nimet parittuvat itsestään** — `firmware.bin` + `firmware.xdf`. Pareja saa pudottaa niin
+monta kuin haluaa; jokaisesta tulee listaan kortti omalla värillään.
 
 Kortin nimeä muokataan paikan päällä. Se, minkä kirjoitat, näkyy osoittimen alla olevassa
 vihjeessä, selitteessä ja leikkauskäyrän kohdalla.
+
+### Yksi määrittely usealle firmwarelle
+
+Samat nimet ovat mukavuus, eivät sääntö. Jokaisessa kortissa on **määrittelyn valinta**,
+jossa ovat kaikki istunnossa ladatut `.xdf` ja sisäänrakennetut esiasetukset; miten monta
+korttia tahansa saa osoittaa samaan.
+
+Näin vertaat nopeimmin saman kalibroinnin versioita: pudota vedokset yhdessä yhden
+sellaisen `.xdf`:n kanssa, jonka nimi ei vastaa yhtäkään niistä, niin se annetaan kaikille
+kerralla — enää ei tarvitse kopioida määrittelyä jokaista vedosta varten ja nimetä kopioita
+uudelleen. Jos pudotat kaksi tai useamman määrittelyn, mitään ei oleteta; valitse
+korttikohtaisesti.
+
+Valinnat muistetaan tiedostonimen mukaan, joten sama firmware löytää määrittelynsä ensi
+kerralla uudestaan.
 
 ### .bin ilman .xdf-tiedostoa
 

@@ -63,12 +63,26 @@ ancien `index.html` à côté d'un `js/app.js` tout neuf.
 ## Charger un firmware
 
 Faites glisser un `.bin` et son `.xdf` dans le panneau de gauche, ou cliquez sur **Choisir
-des fichiers**. **Les deux fichiers doivent porter le même nom** — `firmware.bin` +
-`firmware.xdf`. Déposez autant de paires que vous voulez : chacune devient une carte dans
-la liste, avec sa propre couleur.
+des fichiers**. **Des noms identiques s'apparient d'eux-mêmes** — `firmware.bin` +
+`firmware.xdf`. Déposez autant de paires que vous voulez : chacune devient une carte dans la
+liste, avec sa propre couleur.
 
 Le nom sur la carte se modifie sur place. Ce que vous y écrivez apparaît dans l'infobulle,
 dans la légende et sur la courbe de coupe.
+
+### Une définition pour plusieurs firmwares
+
+Des noms identiques, c'est pratique, pas obligatoire. Chaque carte porte un **sélecteur de
+définition** listant tous les `.xdf` chargés dans la session et les préréglages intégrés,
+et autant de cartes que vous voulez peuvent pointer vers le même.
+
+C'est la façon rapide de comparer des versions d'une même cartographie : déposez les images
+avec une seule `.xdf` dont le nom ne correspond à aucune d'elles, et elle leur est attribuée
+d'un coup — fini de copier la définition une fois par image et de renommer chaque copie. Si
+vous déposez deux définitions ou plus, rien n'est supposé : choisissez carte par carte.
+
+Vos choix sont retenus par nom de fichier : le même firmware retrouve sa définition au
+chargement suivant.
 
 ### Un .bin sans son .xdf
 

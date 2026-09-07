@@ -1,19 +1,25 @@
 /*
  * Wiring: files in, surfaces out.
  *
- * A dataset is one firmware image plus the definition that explains it. Images
- * and definitions are paired by file name (firmware.bin + firmware.xdf); an
- * image that arrives alone can borrow one of the built-in preset definitions.
+ * A dataset is one firmware image plus the definition that explains it. Matching
+ * file names (firmware.bin + firmware.xdf) still pair on their own, but that is
+ * a convenience, not the rule: a definition can be picked by hand per image, and
+ * one definition can explain any number of images -- which is the whole point
+ * when comparing several versions of one calibration. `js/links.js` decides who
+ * gets what and remembers the deliberate choices; an image that ends up with
+ * nothing can still borrow one of the built-in preset definitions.
  */
 (function () {
   'use strict';
 
   var t = window.I18N.t;
   var XDF = window.XDF, Grid = window.Grid, Presets = window.Presets, Viewer = window.Viewer;
+  var Links = window.Links;
 
   var state = {
     datasets: [],
-    pendingDefs: {},          // basename -> parsed xdf waiting for its image
+    defs: [],                 // every parsed definition, by arrival: {id,name,doc}
+    links: {},                // remembered image -> definition name (localStorage)
     tableKey: null,
     mode: 'surface',
     baseId: null,
@@ -22,7 +28,8 @@
     sliceAxis: 'off',
     sliceIndex: 0,
     theme: 'dark',
-    seq: 0
+    seq: 0,
+    defSeq: 0
   };
 
   var el = {};
@@ -38,6 +45,12 @@
 
   function baseName(fileName) {
     return fileName.replace(/\.[^.]+$/, '');
+  }
+
+  /* Reaching for localStorage throws outright in a browser told to block site
+     data, so the failure is handled here rather than at every call site. */
+  function store() {
+    try { return window.localStorage; } catch (e) { return null; }
   }
 
   var Roles = window.Roles;
@@ -89,17 +102,82 @@
     });
   }
 
+  /* A lone definition that matched no image by name is almost always the one
+     meant for all of them -- N versions of one calibration against one XDF is
+     exactly the case that used to need N renamed copies. Several definitions at
+     once are ambiguous, so those only report themselves and wait to be picked. */
+  function adoptOrphans(fresh) {
+    var claimed = function (def) {
+      return state.datasets.some(function (ds) { return ds.choice === 'def:' + def.id; });
+    };
+    if (fresh.length === 1 && !claimed(fresh[0])) {
+      var orphans = state.datasets.filter(function (ds) { return !ds.doc; });
+      if (orphans.length) {
+        orphans.forEach(function (ds) { setDef(ds, 'def:' + fresh[0].id, true); });
+        toast(t('files.linked_all', { name: fresh[0].name, count: orphans.length }));
+        return;
+      }
+    }
+    // a definition with no image yet is not an error, just a note
+    fresh.forEach(function (def) {
+      if (!claimed(def)) toast(t('files.unpaired_xdf', { name: def.name }), 'warn');
+    });
+  }
+
   function datasetByName(name) {
     return state.datasets.filter(function (d) { return d.file === name; })[0];
   }
 
-  function addDataset(name, buffer, doc) {
+  function defById(id) {
+    return state.defs.filter(function (d) { return d.id === id; })[0] || null;
+  }
+
+  /* Re-dropping a definition refreshes it in place: the id stays, so the links
+     already pointing at it keep pointing at the new parse. */
+  function addDef(name, doc) {
+    var existing = state.defs.filter(function (d) { return d.name === name; })[0];
+    if (existing) {
+      existing.doc = doc;
+      state.datasets.forEach(function (ds) {
+        if (ds.choice === 'def:' + existing.id) { ds.doc = doc; ds.cache = {}; }
+      });
+      return existing;
+    }
+    var def = { id: 'def' + (++state.defSeq), name: name, doc: doc };
+    state.defs.push(def);
+    return def;
+  }
+
+  /* The one place ds.doc is ever written. `choice` is the source of truth --
+     'def:<id>', 'preset:<id>' or '' -- and the cached grids belong to the
+     definition that produced them, so they go with it. */
+  function setDef(ds, choice, remember) {
+    ds.choice = choice || '';
+    var linkName = null, doc = null;
+    if (ds.choice.indexOf('def:') === 0) {
+      var def = defById(ds.choice.slice(4));
+      if (def) { doc = def.doc; linkName = def.name; }
+    } else if (ds.choice.indexOf('preset:') === 0) {
+      doc = Presets.docFor(ds.choice.slice(7));
+    }
+    ds.doc = doc;
+    ds.cache = {};
+    // presets are a fallback, not a link -- only a real definition is worth
+    // remembering, and picking one clears whatever was remembered before
+    if (remember) {
+      Links.remember(state.links, ds.file, linkName);
+      Links.save(store(), state.links);
+    }
+  }
+
+  function addDataset(name, buffer) {
     var ds = {
       id: 'ds' + (++state.seq),
       file: name,
       name: name,
       buffer: buffer,
-      doc: doc || null,
+      doc: null,
+      choice: '',
       visible: true,
       color: Viewer.colorFor(state.datasets.length, state.theme),
       cache: {}
@@ -117,30 +195,28 @@
       });
     });
     Promise.all(jobs).then(function (loaded) {
+      var fresh = [];
       loaded.forEach(function (item) {
-        if (item.isXdf) {
-          try {
-            state.pendingDefs[item.base] = XDF.parse(item.data);
-          } catch (e) {
-            toast(t('files.bad_xdf', { name: item.base, err: e.message }), 'error');
-          }
+        if (!item.isXdf) return;
+        try {
+          fresh.push(addDef(item.base, XDF.parse(item.data)));
+        } catch (e) {
+          toast(t('files.bad_xdf', { name: item.base, err: e.message }), 'error');
         }
       });
       loaded.forEach(function (item) {
         if (item.isXdf) return;
         if (datasetByName(item.base)) { toast(t('files.duplicate', { name: item.base })); return; }
-        var doc = state.pendingDefs[item.base] || null;
-        addDataset(item.base, item.data, doc);
-        if (doc) toast(t('files.paired', { name: item.base }));
-        else toast(t('files.unpaired_bin', { name: item.base }), 'warn');
-      });
-      // a definition with no image yet is not an error, just a note
-      loaded.forEach(function (item) {
-        if (!item.isXdf) return;
-        if (!datasetByName(item.base) && state.pendingDefs[item.base]) {
-          toast(t('files.unpaired_xdf', { name: item.base }), 'warn');
+        var ds = addDataset(item.base, item.data);
+        var def = Links.resolve(item.base, state.defs, state.links);
+        if (def) {
+          setDef(ds, 'def:' + def.id, false);
+          toast(t('files.paired', { name: item.base }));
+        } else {
+          toast(t('files.unpaired_bin', { name: item.base }), 'warn');
         }
       });
+      adoptOrphans(fresh);
       refreshTables();
       renderAll();
     }).catch(function (e) {
@@ -465,12 +541,24 @@
     }
   }
 
-  function presetOptions(selected) {
-    var out = ['<option value="">' + esc(t('ds.preset_none')) + '</option>'];
+  /* Loaded definitions first, then the built-in presets: two namespaces in one
+     control, so the value carries which one it came from. */
+  function defOptions(ds) {
+    var opt = function (value, label, extra) {
+      return '<option value="' + esc(value) + '"' + (ds.choice === value ? ' selected' : '') +
+        '>' + esc(label) + (extra ? ' · ' + esc(extra) : '') + '</option>';
+    };
+    var out = [opt('', t('ds.preset_none'))];
+    if (state.defs.length) {
+      out.push('<optgroup label="' + esc(t('ds.def_loaded')) + '">');
+      state.defs.forEach(function (d) { out.push(opt('def:' + d.id, d.name)); });
+      out.push('</optgroup>');
+    }
+    out.push('<optgroup label="' + esc(t('ds.def_preset')) + '">');
     Presets.PLATFORMS.forEach(function (p) {
-      out.push('<option value="' + esc(p.id) + '"' + (p.id === selected ? ' selected' : '') + '>' +
-        esc(p.name) + ' · ' + hex(p.address) + '</option>');
+      out.push(opt('preset:' + p.id, p.name, hex(p.address)));
     });
+    out.push('</optgroup>');
     return out.join('');
   }
 
@@ -492,19 +580,23 @@
       row.className = 'ds' + (ds.visible && !isBase ? '' : ' off') + (isBase ? ' is-base' : '');
       row.style.setProperty('--ds-color', ds.color);
 
-      var meta, missing = false;
+      // the picker stays on every card: which definition explains this image is
+      // a standing choice, not a one-off rescue for an unpaired drop
+      var meta = '<select class="defsel" aria-label="' + esc(t('ds.preset')) + '">' +
+        defOptions(ds) + '</select>';
+      var missing = false;
       if (!ds.doc) {
-        meta = '<select class="preset" aria-label="' + esc(t('ds.preset')) + '">' + presetOptions(ds.presetId) + '</select>';
+        /* nothing to report until this image has a definition */
       } else if (grid) {
         var range = Grid.extent(grid.z) || [0, 0];
-        meta = '<span class="mono">' + esc(t('stat.cells', {
+        meta += '<span class="mono">' + esc(t('stat.cells', {
           rows: grid.rows, cols: grid.cols, addr: hex(grid.address)
         })) + '</span><span class="mono val">' + esc(t('stat.range', {
           min: Viewer.fmt(range[0], grid.decimals), max: Viewer.fmt(range[1], grid.decimals)
         })) + '</span>';
       } else {
         var err = ds.cache[state.tableKey + ':err'];
-        meta = '<span class="alert">' + esc(err ? t('ds.read_error', { err: err }) : t('ds.no_table')) + '</span>';
+        meta += '<span class="alert">' + esc(err ? t('ds.read_error', { err: err }) : t('ds.no_table')) + '</span>';
         missing = true;
       }
 
@@ -553,16 +645,11 @@
         renderAll();
       });
 
-      var preset = row.querySelector('.preset');
-      if (preset) {
-        preset.addEventListener('change', function (ev) {
-          ds.presetId = ev.target.value;
-          ds.doc = ds.presetId ? Presets.docFor(ds.presetId) : null;
-          ds.cache = {};
-          refreshTables();
-          renderAll();
-        });
-      }
+      row.querySelector('.defsel').addEventListener('change', function (ev) {
+        setDef(ds, ev.target.value, true);
+        refreshTables();
+        renderAll();
+      });
 
       list.appendChild(row);
     });
@@ -739,6 +826,8 @@
 
     // no stored choice yet: follow the browser, fall back to English
     var savedTheme = 'dark', savedLang = window.I18N.preferred();
+    // outside the try below: a theme read that throws must not cost the links
+    state.links = Links.load(store());
     try {
       savedTheme = localStorage.getItem('theme') || savedTheme;
       savedLang = localStorage.getItem('lang') || savedLang;

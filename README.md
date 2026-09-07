@@ -61,12 +61,26 @@ http.server` sends no cache headers at all, and a browser can end up running a s
 
 ## Load a firmware
 
-Drag a `.bin` and its `.xdf` into the left panel, or press **Choose files**. **The two
-files must have the same name** — `firmware.bin` + `firmware.xdf`. Drop as many pairs
-as you like; each becomes a card in the list with its own colour.
+Drag a `.bin` and its `.xdf` into the left panel, or press **Choose files**. **Matching
+names pair on their own** — `firmware.bin` + `firmware.xdf`. Drop as many pairs as you like;
+each becomes a card in the list with its own colour.
 
 The name in the card is editable. Whatever you type is what the tooltip, the legend and
 the cross-section curve will call that firmware.
+
+### One definition, several firmwares
+
+Matching names are a convenience, not a rule. Every card carries a **definition picker**
+listing every `.xdf` loaded this session and the built-in presets, and any number of cards
+may point at the same one.
+
+That is the quick way to compare versions of one calibration: drop the images together with
+a single `.xdf` whose name matches none of them, and it is handed to all of them at once —
+no more copying the definition once per image and renaming each copy. Drop two or more
+definitions at once and nothing is assumed; pick them card by card.
+
+Your choices are remembered by file name, so the same firmware finds its definition again
+next time you load it.
 
 ### A .bin without its .xdf
 

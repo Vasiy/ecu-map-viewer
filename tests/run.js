@@ -16,6 +16,9 @@ var Grid = require(path.join(ROOT, 'js/grid.js'));
 var Presets = require(path.join(ROOT, 'js/presets.js'));
 var I18N = require(path.join(ROOT, 'js/i18n.js'));
 var Roles = require(path.join(ROOT, 'js/roles.js'));
+var Links = require(path.join(ROOT, 'js/links.js'));
+var Fixtures = require('./fixtures.js');
+var SAMPLE_XDF = Fixtures.SAMPLE_XDF, sampleImage = Fixtures.sampleImage;
 
 var passed = 0, failed = 0;
 function test(name, fn) {
@@ -95,31 +98,6 @@ test('binio refuses to read past the end of the image', function () {
 });
 
 /* ---------- xdf ---------- */
-var SAMPLE_XDF = [
-  '<XDFFORMAT version="1.50"><XDFHEADER><baseoffset>0</baseoffset>',
-  '<DEFAULTS datasizeinbits="16" signed="0" lsbfirst="1" float="0"/>',
-  '<CATEGORY index="0x0" name="Maps"/></XDFHEADER>',
-  '<XDFTABLE uniqueid="0x10"><title>TPS legend</title>',
-  '<XDFAXIS id="x"><indexcount>1</indexcount><MATH equation="X"/></XDFAXIS>',
-  '<XDFAXIS id="y"><indexcount>3</indexcount><MATH equation="X"/></XDFAXIS>',
-  '<XDFAXIS id="z"><EMBEDDEDDATA mmedtypeflags="0x02" mmedaddress="0x200" mmedelementsizebits="16" mmedrowcount="3"/>',
-  '<MATH equation="X/100"/></XDFAXIS></XDFTABLE>',
-  '<XDFTABLE uniqueid="0x20" flags="0x0"><title>Ignition Main advance</title>',
-  '<CATEGORYMEM index="0" category="1"/>',
-  '<XDFAXIS id="x"><indexcount>3</indexcount><embedinfo type="3" linkobjid="0x10"/><MATH equation="X"/></XDFAXIS>',
-  '<XDFAXIS id="y"><indexcount>2</indexcount><LABEL index="0" value="1000"/><LABEL index="1" value="2000"/><MATH equation="X"/></XDFAXIS>',
-  '<XDFAXIS id="z"><EMBEDDEDDATA mmedtypeflags="0x02" mmedaddress="0x100" mmedelementsizebits="16" mmedrowcount="2" mmedcolcount="3"/>',
-  '<decimalpl>1</decimalpl><units>deg</units><MATH equation="X/10"/></XDFAXIS></XDFTABLE></XDFFORMAT>'
-].join('');
-
-function sampleImage() {
-  var buf = new ArrayBuffer(0x1000);
-  var v = new DataView(buf);
-  [100, 200, 300, 400, 500, 600].forEach(function (n, i) { v.setUint16(0x100 + i * 2, n, true); });
-  [240, 500, 810].forEach(function (n, i) { v.setUint16(0x200 + i * 2, n, true); });
-  return buf;
-}
-
 test('xdf parses tables, categories and shape', function () {
   var doc = XDF.parse(SAMPLE_XDF);
   assert.strictEqual(doc.tables.length, 2);
@@ -276,6 +254,73 @@ test('every role carries a label that exists in English', function () {
     assert.ok(r.label in I18N.locales.en, r.key + ' has no label');
   });
   assert.strictEqual(Roles.listed().length, Roles.ROLES.length);
+});
+
+/* ---------- links ---------- */
+var DEFS = [
+  { id: 'd1', name: 'granpasso', doc: { tables: [] } },
+  { id: 'd2', name: 'shared', doc: { tables: [] } }
+];
+
+test('links pair an image with the definition of the same name', function () {
+  assert.strictEqual(Links.resolve('granpasso', DEFS, {}).id, 'd1');
+  assert.strictEqual(Links.resolve('nothing', DEFS, {}), null);
+});
+
+test('a remembered link wins over the name match', function () {
+  // the whole point: stage2.bin keeps pointing at shared.xdf even though a
+  // stage2.xdf would match it by name
+  var saved = { granpasso: 'shared' };
+  assert.strictEqual(Links.resolve('granpasso', DEFS, saved).id, 'd2');
+});
+
+test('a remembered link to a definition that is not loaded falls back to the name', function () {
+  var saved = { granpasso: 'gone' };
+  assert.strictEqual(Links.resolve('granpasso', DEFS, saved).id, 'd1');
+  assert.strictEqual(Links.resolve('stage2', DEFS, { stage2: 'gone' }), null);
+});
+
+test('one definition serves any number of images', function () {
+  var saved = { a: 'shared', b: 'shared', c: 'shared' };
+  var picked = ['a', 'b', 'c'].map(function (n) { return Links.resolve(n, DEFS, saved); });
+  assert.ok(picked.every(function (d) { return d === DEFS[1]; }));
+});
+
+test('remember stores and forgets one image at a time', function () {
+  var saved = {};
+  Links.remember(saved, 'a', 'shared');
+  Links.remember(saved, 'b', 'shared');
+  assert.deepStrictEqual(saved, { a: 'shared', b: 'shared' });
+  Links.remember(saved, 'a', null);
+  assert.deepStrictEqual(saved, { b: 'shared' });
+});
+
+test('a damaged store reads as no links at all', function () {
+  assert.deepStrictEqual(Links.decode('not json'), {});
+  assert.deepStrictEqual(Links.decode('[1,2]'), {});
+  assert.deepStrictEqual(Links.decode('null'), {});
+  assert.deepStrictEqual(Links.decode(''), {});
+  // a half-good object keeps the string entries and drops the rest
+  assert.deepStrictEqual(Links.decode('{"a":"x","b":7,"c":""}'), { a: 'x' });
+});
+
+test('links survive a round trip through the store', function () {
+  var bag = {};
+  var storage = {
+    getItem: function (k) { return bag[k]; },
+    setItem: function (k, v) { bag[k] = v; }
+  };
+  Links.save(storage, { stage2: 'shared' });
+  assert.deepStrictEqual(Links.load(storage), { stage2: 'shared' });
+});
+
+test('a storage that throws is not fatal', function () {
+  var storage = {
+    getItem: function () { throw new Error('blocked'); },
+    setItem: function () { throw new Error('blocked'); }
+  };
+  assert.deepStrictEqual(Links.load(storage), {});
+  Links.save(storage, { a: 'b' });   // must not throw
 });
 
 /* ---------- i18n ---------- */

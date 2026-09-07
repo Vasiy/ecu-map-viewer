@@ -60,12 +60,25 @@ gammal `index.html` bredvid en färsk `js/app.js`.
 
 ## Läsa in firmware
 
-Dra en `.bin` och dess `.xdf` till vänsterpanelen, eller tryck **Välj filer**. **Båda
-filerna måste ha samma namn** — `firmware.bin` + `firmware.xdf`. Släpp hur många par du
-vill; varje par blir ett kort i listan med egen färg.
+Dra en `.bin` och dess `.xdf` till vänsterpanelen, eller tryck **Välj filer**. **Lika namn
+paras ihop av sig själva** — `firmware.bin` + `firmware.xdf`. Släpp hur många par du vill;
+varje par blir ett kort i listan med egen färg.
 
 Namnet på kortet ändras på plats. Det du skriver är det som står i verktygstipset, i
 förklaringen och vid snittkurvan.
+
+### En definition för flera firmware
+
+Lika namn är bekvämt, inte ett krav. Varje kort har en **definitionsväljare** med alla
+`.xdf` som lästs in under sessionen och de inbyggda förvalen; hur många kort som helst får
+peka på samma.
+
+Det är det snabba sättet att jämföra versioner av samma kalibrering: släpp avbilderna
+tillsammans med en enda `.xdf` vars namn inte matchar någon av dem, så delas den ut till
+allihop på en gång — inget mer kopierande av definitionen per avbild och inget döpande om.
+Släpper du två eller fler definitioner antas ingenting; välj kort för kort.
+
+Dina val kommer ihåg per filnamn, så samma firmware hittar sin definition nästa gång.
 
 ### En .bin utan sin .xdf
 

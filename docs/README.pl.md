@@ -60,12 +60,25 @@ zostawić stary `index.html` obok świeżego `js/app.js`.
 
 ## Wczytanie firmware'u
 
-Przeciągnij `.bin` razem z jego `.xdf` na lewy panel albo naciśnij **Wybierz pliki**. **Oba
-pliki muszą mieć tę samą nazwę** — `firmware.bin` + `firmware.xdf`. Par może być dowolnie
+Przeciągnij `.bin` razem z jego `.xdf` na lewy panel albo naciśnij **Wybierz pliki**.
+**Zgodne nazwy łączą się same** — `firmware.bin` + `firmware.xdf`. Par może być dowolnie
 wiele; każda staje się kartą na liście, z własnym kolorem.
 
 Nazwę na karcie zmienia się na miejscu. To, co wpiszesz, trafia do podpowiedzi pod
 kursorem, do legendy i do krzywej przekroju.
+
+### Jedna definicja dla wielu firmware'ów
+
+Zgodne nazwy to wygoda, nie reguła. Każda karta ma **wybór definicji** z wszystkimi `.xdf`
+wczytanymi w tej sesji i wbudowanymi presetami; dowolnie wiele kart może wskazywać tę samą.
+
+To najszybszy sposób na porównanie wersji jednej kalibracji: upuść obrazy razem z jednym
+`.xdf`, którego nazwa nie pasuje do żadnego z nich, a trafi on od razu do wszystkich —
+koniec z kopiowaniem definicji dla każdego obrazu i zmienianiem nazw kopii. Po upuszczeniu
+dwóch lub więcej definicji nic nie jest zakładane; wybierz je karta po karcie.
+
+Wybory są zapamiętywane po nazwie pliku, więc ten sam firmware odnajdzie swoją definicję
+następnym razem.
 
 ### Plik .bin bez swojego .xdf
 

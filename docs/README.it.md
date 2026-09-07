@@ -61,12 +61,26 @@ http.server` non manda alcuna intestazione di cache, e il browser può tenersi u
 
 ## Caricare un firmware
 
-Trascina un `.bin` e il suo `.xdf` nel pannello di sinistra, oppure premi **Scegli i
-file**. **I due file devono avere lo stesso nome** — `firmware.bin` + `firmware.xdf`.
-Puoi lasciare quante coppie vuoi: ognuna diventa una scheda nell'elenco, con il suo colore.
+Trascina un `.bin` e il suo `.xdf` nel pannello di sinistra, oppure premi **Scegli i file**.
+**I nomi uguali si accoppiano da soli** — `firmware.bin` + `firmware.xdf`. Puoi lasciare
+quante coppie vuoi: ognuna diventa una scheda nell'elenco, con il suo colore.
 
 Il nome sulla scheda si modifica sul posto. Quello che scrivi finisce nel suggerimento
 sotto il puntatore, nella legenda e sulla curva della sezione.
+
+### Una definizione per più firmware
+
+Nomi uguali sono una comodità, non una regola. Ogni scheda ha un **selettore di
+definizione** con tutti gli `.xdf` caricati nella sessione e i preset integrati, e quante
+schede vuoi possono puntare allo stesso.
+
+È il modo rapido per confrontare versioni della stessa calibrazione: lascia le immagini
+insieme a un solo `.xdf` il cui nome non corrisponde a nessuna, e viene assegnato a tutte
+in una volta — basta copiare la definizione una volta per immagine e rinominare ogni copia.
+Se lasci due o più definizioni non si presume nulla: scegli scheda per scheda.
+
+Le scelte vengono ricordate per nome di file, così lo stesso firmware ritrova la sua
+definizione al caricamento successivo.
 
 ### Un .bin senza il suo .xdf
 

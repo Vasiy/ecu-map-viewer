@@ -63,12 +63,26 @@ naast een verse `js/app.js` houden.
 ## Firmware laden
 
 Sleep een `.bin` met de bijbehorende `.xdf` naar het linkerpaneel, of klik op **Bestanden
-kiezen**. **Beide bestanden moeten dezelfde naam hebben** — `firmware.bin` +
-`firmware.xdf`. Je mag zoveel paren neerzetten als je wilt; elk paar wordt een kaart in de
-lijst met een eigen kleur.
+kiezen**. **Gelijke namen koppelen zichzelf** — `firmware.bin` + `firmware.xdf`. Je mag
+zoveel paren neerzetten als je wilt; elk paar wordt een kaart in de lijst met een eigen
+kleur.
 
 De naam op de kaart pas je ter plekke aan. Wat je typt, staat ook in de tooltip, in de
 legenda en bij de doorsnedecurve.
+
+### Eén definitie voor meerdere firmwares
+
+Gelijke namen zijn gemak, geen regel. Elke kaart heeft een **definitiekeuze** met alle
+`.xdf` die deze sessie zijn geladen en de ingebouwde presets; willekeurig veel kaarten
+mogen naar dezelfde wijzen.
+
+Zo vergelijk je het snelst versies van één kalibratie: zet de images neer samen met één
+`.xdf` waarvan de naam bij geen enkele hoort, en die gaat in één keer naar allemaal — geen
+kopie van de definitie per image meer, en geen hernoemen. Zet je twee of meer definities
+neer, dan wordt niets aangenomen; kies per kaart.
+
+Je keuzes worden per bestandsnaam onthouden, dus dezelfde firmware vindt zijn definitie de
+volgende keer terug.
 
 ### Een .bin zonder .xdf
 

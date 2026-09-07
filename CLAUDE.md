@@ -13,7 +13,8 @@ tool is used belongs in all thirteen, or in none.
 ## Commands
 
 ```bash
-node tests/run.js                 # offline suite: xml, expr, binio, xdf, grid, i18n
+node tests/run.js                 # offline suite: xml, expr, binio, xdf, links, grid, i18n
+node tests/ui_links.js            # js/app.js in a node vm on tests/ui_sandbox.js
 python3 serve.py                  # serve the page (no-store headers) on 8123
 node -e "new Function(require('fs').readFileSync('js/app.js','utf8'))"   # JS syntax check
 node tests/browser.mjs            # browser checks (needs playwright + testdata/)
@@ -48,6 +49,21 @@ pl, sv, el, cs and fi are viewer-only. A new locale is one object in
 **Every module is UMD-ish on purpose.** `js/*.js` register on `window` in the
 browser and export through `module.exports` under node, so the offline suite runs
 the very same code the page runs — no build step, no test doubles.
+
+**A definition belongs to an image by choice, not by file name.** Matching base names
+still pair on their own, but `js/links.js` is what actually decides, and any number of
+images may share one parsed document -- comparing three versions of a calibration against
+one XDF used to mean three renamed copies of it. `ds.choice` ('def:<id>', 'preset:<id>' or
+'') is the source of truth and `setDef()` in `js/app.js` is the only place `ds.doc` is ever
+written; the grid cache belongs to the definition that filled it, so it goes when the
+choice does. Deliberate links are remembered in `localStorage` under `links`, keyed by the
+image's **base name** -- never by the card's display name, which is editable.
+
+**`js/app.js` is testable now.** It is an IIFE and exports nothing, so `tests/ui_sandbox.js`
+evaluates it in a node vm on a DOM stub and `tests/ui_links.js` drives it through the
+handlers it binds -- the same path a person takes. Nothing reaches inside; a behaviour that
+is not wired to a control cannot be tested here. Plotly and the canvas 2-D context are
+stubbed to no-ops.
 
 **A definition is data, not code.** Naming a table, fixing an address or changing a
 scale is an edit to the XDF, never to the parser. Equations go through
