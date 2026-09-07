@@ -4,3 +4,11 @@ node_modules/
 data/
 dist/
 __pycache__/
+
+# ECU firmware images and the definitions that explain them: private property,
+# and the repository is public. testdata/ and data/ are already out, but a stray
+# copy anywhere in the tree must not be committable either.
+*.bin
+*.xdf
+*.hex
+*.s19
