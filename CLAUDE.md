@@ -54,6 +54,13 @@ pl, sv, el, cs and fi are viewer-only. A new locale is one object in
 browser and export through `module.exports` under node, so the offline suite runs
 the very same code the page runs — no build step, no test doubles.
 
+**`VERSION` is tracked and bumped by hand.** `release-addon.sh` reads it, appends `-dirty`
+when the working tree is not clean, and stamps the result plus the short commit into
+`addon.json` — which is what Config → System shows beside the add-on's name. So a board
+saying `0.1.0-dirty` is telling you the archive was built from uncommitted work, and that
+is the point of the suffix. Cut a release by editing `VERSION`, committing it, then
+running the script.
+
 **Packed as an add-on it is content and nothing else.** `./release-addon.sh` puts
 `addon.json` beside `index.html`, `css/`, `js/` and `vendor/` in one tarball; onboard-logger
 unpacks the page into `addons/maps/web/` and keeps `addons/maps/data/` next to it for the

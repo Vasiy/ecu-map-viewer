@@ -212,10 +212,15 @@ the board, so the next press draws the maps straight away.
 | `js/binio.js` | reads cells from the image per the `EMBEDDEDDATA` geometry |
 | `js/xdf.js` | the XDF model: tables, axes, reading a table out of a firmware |
 | `js/presets.js` | built-in definitions for a `.bin` with no XDF |
+| `js/links.js` | which definition explains which image, and what is remembered |
+| `js/store.js` | where files come from: add-on, library, or drag and drop |
 | `js/roles.js` | title normalising, and matching a map across definitions |
 | `js/grid.js` | ranges, bilinear sampling, difference, cross-sections |
 | `js/viewer.js` | the Plotly layer: surfaces, contours, axis ranges |
-| `js/app.js` | file loading, datasets, modes |
+| `js/app.js` | file loading, datasets, modes, the library panel |
 | `js/i18n.js` | interface strings, 13 locales |
-| `serve.py` | local server with cache disabled |
+| `serve.py` | local server with cache disabled, and the `--data` library |
 | `Dockerfile` | the same server in a container |
+| `docker-entrypoint.sh` | makes the mounted library writable, then drops to `nobody` |
+| `release-addon.sh` | packs the page as an onboard-logger add-on |
+| `VERSION` | the release number, bumped by hand; `release-addon.sh` stamps it into `addon.json` |
