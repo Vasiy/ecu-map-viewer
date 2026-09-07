@@ -67,7 +67,9 @@ def t_args():
 
 def t_loopback():
     assert serve.is_loopback("127.0.0.1") and serve.is_loopback("::1")
-    assert not serve.is_loopback("0.0.0.0") and not serve.is_loopback("192.168.5.1")
+    # 203.0.113.x is the range reserved for documentation: any address that is
+    # not a loopback will do here, and a real one has no business in a test
+    assert not serve.is_loopback("0.0.0.0") and not serve.is_loopback("203.0.113.1")
 
 
 # ---------- a live server ----------
