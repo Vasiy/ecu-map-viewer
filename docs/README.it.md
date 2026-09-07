@@ -176,7 +176,10 @@ farfalla, `uint16 LE`, anticipo = `raw / 10`.
 ## Test
 
 ```bash
-node tests/run.js        # suite offline: XML, formule, lettura binaria, XDF, griglia, lingue
+node tests/run.js            # suite offline: XML, formule, lettura binaria, XDF, griglia, lingue
+node tests/ui_links.js       # app.js su un DOM finto: accoppiamento e collegamenti
+node tests/ui_library.js     # il pannello libreria
+python3 tests/serve_test.py  # l'API libreria di serve.py
 ```
 
 Le verifiche nel browser richiedono playwright e i firmware in `testdata/` (ignorato da
@@ -187,3 +190,20 @@ python3 serve.py &
 npm i playwright && npx playwright install chromium
 node tests/browser.mjs   # isolinee, intervalli degli assi, sezione, differenza, PNG
 ```
+
+## Come componente di onboard-logger
+
+Nessuna dipendenza, nessun passaggio di build e Plotly incluso in `vendor/`: la pagina gira su una
+scheda senza accesso a internet. `./release-addon.sh` la impacchetta come componente:
+
+```bash
+./release-addon.sh    # dist/ecu-map-viewer-addon-<versione>-<sha>.tar.gz
+```
+
+Quell'archivio si installa in onboard-logger da **Config → System → Componenti**. La scheda serve
+la pagina e tiene accanto un archivio per le definizioni: non esegue una riga di questo codice, e
+rimuovendo il componente se ne vanno i suoi file.
+
+La scheda Firmware mostra allora **Mostra mappa** accanto a *Diff 2 .bin*: spunta una o più
+immagini e si aprono qui, in una scheda riusata anziché duplicata. Lascia un `.xdf` una volta e
+resta sulla scheda, così la pressione successiva disegna subito.

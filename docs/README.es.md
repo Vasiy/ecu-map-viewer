@@ -177,7 +177,10 @@ acelerador, `uint16 LE`, avance = `raw / 10`.
 ## Pruebas
 
 ```bash
-node tests/run.js        # suite sin conexión: XML, fórmulas, lectura binaria, XDF, rejilla, idiomas
+node tests/run.js            # suite sin conexión: XML, fórmulas, lectura binaria, XDF, rejilla, idiomas
+node tests/ui_links.js       # app.js sobre un DOM simulado: emparejado y enlaces
+node tests/ui_library.js     # el panel de la biblioteca
+python3 tests/serve_test.py  # la API de biblioteca de serve.py
 ```
 
 Las comprobaciones en navegador necesitan playwright y firmwares en `testdata/` (ignorado
@@ -188,3 +191,20 @@ python3 serve.py &
 npm i playwright && npx playwright install chromium
 node tests/browser.mjs   # curvas de nivel, rangos de ejes, sección, diferencia, PNG
 ```
+
+## Como complemento de onboard-logger
+
+Sin dependencias, sin paso de compilación y con Plotly en `vendor/`, así que la página funciona en
+una placa sin salida a internet. `./release-addon.sh` la empaqueta como complemento:
+
+```bash
+./release-addon.sh    # dist/ecu-map-viewer-addon-<versión>-<sha>.tar.gz
+```
+
+Ese archivo se instala en onboard-logger desde **Config → System → Complementos**. La placa sirve
+la página y guarda un almacén al lado para las definiciones: no ejecuta ni una línea de este
+código, y al quitar el complemento se van sus archivos.
+
+Entonces la pestaña Firmware muestra **Ver mapa** junto a *Diff 2 .bin*: marca una o varias
+imágenes y se abren aquí, en una pestaña que se reutiliza en vez de duplicarse. Suelta un `.xdf`
+una vez y se queda en la placa, así que la siguiente pulsación dibuja los mapas de inmediato.

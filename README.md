@@ -172,7 +172,10 @@ angle = `raw / 10`.
 ## Tests
 
 ```bash
-node tests/run.js        # offline suite: xml, expressions, binary reads, xdf, grid, i18n
+node tests/run.js            # offline suite: xml, expressions, binary reads, xdf, grid, i18n
+node tests/ui_links.js       # app.js on a DOM stub: pairing and links
+node tests/ui_library.js     # the library panel
+python3 tests/serve_test.py  # serve.py's library API
 ```
 
 Browser checks need playwright and firmware images in `testdata/` (git-ignored):
@@ -183,16 +186,22 @@ npm i playwright && npx playwright install chromium
 node tests/browser.mjs   # contours, axis ranges, cross-section, difference, PNG
 ```
 
-## Using it inside onboard-logger
+## As an onboard-logger add-on
 
-No dependencies and no build step, and Plotly is vendored in `vendor/`, so the page works
-on a board with no route to the internet:
+No dependencies, no build step and Plotly vendored in `vendor/`, so the page runs on a board
+with no route to the internet. `./release-addon.sh` packs it as an add-on:
 
-1. copy `js/`, `css/`, `vendor/` and `index.html` into `app/static/maps/`;
-2. serve the directory statically (`main.py` already serves `/static/*` with
-   `Cache-Control: no-cache`);
-3. the strings already follow that project's rules (`t(key)`, `data-i18n`) and eight of
-   the locales match it, so the keys move across as they are.
+```bash
+./release-addon.sh    # dist/ecu-map-viewer-addon-<version>-<sha>.tar.gz
+```
+
+Install that archive in onboard-logger under **Config → System → Add-ons**. The board serves the
+page and keeps a store beside it for the definitions — it never runs a line of this code, and
+removing the add-on takes its files with it.
+
+The Firmware tab then shows **Show map** next to *Diff 2 .bin*: tick one or more images and they
+open here, in a tab that is reused rather than duplicated. Drop an `.xdf` in once and it stays on
+the board, so the next press draws the maps straight away.
 
 ## Layout
 

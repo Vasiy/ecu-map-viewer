@@ -174,7 +174,10 @@ Français, Italiano, Nederlands, Polski, Suomi, Svenska, Ελληνικά, Бъ�
 ## Тестове
 
 ```bash
-node tests/run.js        # офлайн набор: XML, формули, четене на двоичен файл, XDF, мрежа, езици
+node tests/run.js            # офлайн набор: XML, формули, четене на двоичен файл, XDF, мрежа, езици
+node tests/ui_links.js       # app.js върху DOM заместител: сдвояване и връзки
+node tests/ui_library.js     # панелът с библиотеката
+python3 tests/serve_test.py  # library API на serve.py
 ```
 
 Проверките в браузър искат playwright и фърмуери в `testdata/` (папката е извън git):
@@ -184,3 +187,20 @@ python3 serve.py &
 npm i playwright && npx playwright install chromium
 node tests/browser.mjs   # контури, обхвати на осите, сечение, разлика, PNG
 ```
+
+## Като добавка към onboard-logger
+
+Без зависимости, без стъпка за построяване и с Plotly в `vendor/` — страницата работи на платка
+без път към интернет. `./release-addon.sh` я пакетира като добавка:
+
+```bash
+./release-addon.sh    # dist/ecu-map-viewer-addon-<версия>-<sha>.tar.gz
+```
+
+Този архив се инсталира в onboard-logger през **Config → System → Добавки**. Платката раздава
+страницата и държи до нея хранилище за дефинициите — не изпълнява и ред от този код, а
+премахването на добавката отнася и файловете ѝ.
+
+Тогава разделът Firmware показва **Покажи картата** до *Diff 2 .bin*: отметнете един или няколко
+образа и те се отварят тук, в раздел, който се преизползва, а не се дублира. Пуснете `.xdf` веднъж
+и той остава на платката, така че следващото натискане рисува веднага.

@@ -177,7 +177,10 @@ Tämän perheen sytytyksen pääkartta on 32 kierroslukupistettä × 20 kaasulä
 ## Testit
 
 ```bash
-node tests/run.js        # offline-sarja: XML, kaavat, binäärin luku, XDF, hila, kielet
+node tests/run.js            # offline-sarja: XML, kaavat, binäärin luku, XDF, hila, kielet
+node tests/ui_links.js       # app.js DOM-tynkää vasten: parittaminen ja kytkennät
+node tests/ui_library.js     # kirjastopaneeli
+python3 tests/serve_test.py  # serve.py:n kirjasto-API
 ```
 
 Selaintarkistukset vaativat playwrightin ja firmwaret hakemistossa `testdata/` (ei gitissä):
@@ -187,3 +190,20 @@ python3 serve.py &
 npm i playwright && npx playwright install chromium
 node tests/browser.mjs   # korkeuskäyrät, akselien alueet, leikkaus, erotus, PNG
 ```
+
+## onboard-loggerin lisäosana
+
+Ei riippuvuuksia, ei käännösvaihetta ja Plotly mukana `vendor/`-hakemistossa, joten sivu toimii
+kortilla ilman yhteyttä internetiin. `./release-addon.sh` paketoi sen lisäosaksi:
+
+```bash
+./release-addon.sh    # dist/ecu-map-viewer-addon-<versio>-<sha>.tar.gz
+```
+
+Tuo paketti asennetaan onboard-loggeriin kohdasta **Config → System → Lisäosat**. Kortti tarjoilee
+sivun ja pitää sen vierellä varastoa määrittelyille — se ei suorita riviäkään tästä koodista, ja
+lisäosan poisto vie sen tiedostot mukanaan.
+
+Firmware-välilehdelle ilmestyy silloin **Näytä kartta** *Diff 2 .bin* -painikkeen viereen: rastita
+yksi tai useampi vedos, ja ne avautuvat tänne välilehteen, jota käytetään uudelleen eikä
+monisteta. Pudota `.xdf` kerran, niin se jää kortille ja seuraava painallus piirtää heti.

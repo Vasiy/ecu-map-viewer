@@ -334,6 +334,46 @@
     }
   }
 
+  /* Images named in the query string, in the order they were asked for.
+     onboard-logger's Firmware tab builds this when "Show map" is pressed, and
+     reuses one named tab -- so arriving here is also how a *second* press is
+     seen: the page simply loads again with a different selection. */
+  function queryBins(search) {
+    var out = [];
+    String(search || '').replace(/^\?/, '').split('&').forEach(function (pair) {
+      var i = pair.indexOf('=');
+      if (i < 0 || pair.slice(0, i) !== 'bin') return;
+      var name = decodeURIComponent(pair.slice(i + 1).replace(/\+/g, ' '));
+      if (name && out.indexOf(name) < 0) out.push(name);
+    });
+    return out;
+  }
+
+  /* Every stored definition first, then the images -- in one ingest, so a lone
+     definition adopts the whole selection instead of only the first file. */
+  function bootFromQuery(search) {
+    var names = queryBins(search);
+    if (!names.length || !state.store || state.store.kind === 'none') {
+      return Promise.resolve();
+    }
+    var defs = state.library.defs.map(function (d) {
+      return state.store.read('defs', d.name).then(function (text) {
+        return { name: d.name, base: baseName(d.name), isXdf: true, data: text };
+      }, function () { return null; });
+    });
+    var bins = names.map(function (n) {
+      return state.store.read('bins', n).then(function (data) {
+        return { name: n, base: baseName(n), isXdf: false, data: data };
+      }, function (e) {
+        toast(t('lib.load_failed', { name: n, err: e.message }), 'error');
+        return null;
+      });
+    });
+    return Promise.all(defs.concat(bins)).then(function (items) {
+      ingest(items.filter(Boolean), { save: false });
+    });
+  }
+
   /* ---------- tables ---------- */
 
   function tablesOf(ds) {
@@ -958,6 +998,8 @@
       state.store = st;
       renderLibrary();
       return loadLibrary();
+    }).then(function () {
+      return bootFromQuery(window.location && window.location.search);
     });
     state.theme = savedTheme;
     document.documentElement.setAttribute('data-theme', savedTheme);

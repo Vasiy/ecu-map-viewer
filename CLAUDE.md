@@ -19,6 +19,7 @@ node tests/ui_library.js          # the library panel, on the same stub
 python3 tests/serve_test.py       # serve.py's library API: names, size, write guard
 python3 serve.py                  # serve the page (no-store headers) on 8123
 python3 serve.py --data ~/firmware   # ...and keep a library of .bin/.xdf there
+./release-addon.sh                # pack the page as an onboard-logger add-on
 node -e "new Function(require('fs').readFileSync('js/app.js','utf8'))"   # JS syntax check
 node tests/browser.mjs            # browser checks (needs playwright + testdata/)
 
@@ -52,6 +53,17 @@ pl, sv, el, cs and fi are viewer-only. A new locale is one object in
 **Every module is UMD-ish on purpose.** `js/*.js` register on `window` in the
 browser and export through `module.exports` under node, so the offline suite runs
 the very same code the page runs — no build step, no test doubles.
+
+**Packed as an add-on it is content and nothing else.** `./release-addon.sh` puts
+`addon.json` beside `index.html`, `css/`, `js/` and `vendor/` in one tarball; onboard-logger
+unpacks the page into `addons/maps/web/` and keeps `addons/maps/data/` next to it for the
+definitions this page stores. No Python travels and none is asked for -- the board refuses to
+import anything out of an uploaded archive, and rightly. Arriving with `?bin=` in the query is
+how the logger's *Show map* hands over a selection: the images named there are fetched, every
+stored definition is loaded first so a lone one can adopt the whole set, and the whole lot goes
+through `ingest()` in a single call. That button reuses one named tab, so a second press simply
+loads this page again with a different query -- which is why the selection has to come from the
+URL rather than from anything held in memory.
 
 **Where files come from is detected, never configured.** `js/store.js` has one interface
 and three backends, and picks by what actually answers: **addon** when the page is served

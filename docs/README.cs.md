@@ -169,7 +169,10 @@ předstih = `raw / 10`.
 ## Testy
 
 ```bash
-node tests/run.js        # offline sada: XML, vzorce, čtení binárky, XDF, mřížka, jazyky
+node tests/run.js            # offline sada: XML, vzorce, čtení binárky, XDF, mřížka, jazyky
+node tests/ui_links.js       # app.js na DOM atrapě: párování a vazby
+node tests/ui_library.js     # panel knihovny
+python3 tests/serve_test.py  # library API v serve.py
 ```
 
 Kontroly v prohlížeči potřebují playwright a firmwary v `testdata/` (mimo git):
@@ -179,3 +182,20 @@ python3 serve.py &
 npm i playwright && npx playwright install chromium
 node tests/browser.mjs   # vrstevnice, rozsahy os, řez, rozdíl, PNG
 ```
+
+## Jako doplněk pro onboard-logger
+
+Žádné závislosti, žádný build a Plotly leží v `vendor/`, takže stránka běží na desce bez cesty na
+internet. `./release-addon.sh` ji zabalí jako doplněk:
+
+```bash
+./release-addon.sh    # dist/ecu-map-viewer-addon-<verze>-<sha>.tar.gz
+```
+
+Ten archiv se v onboard-loggeru instaluje přes **Config → System → Doplňky**. Deska stránku
+servíruje a vedle ní vede úložiště pro definice — nespustí ani řádek tohoto kódu, a odebrání
+doplňku odnese i jeho soubory.
+
+Karta Firmware pak ukáže **Zobrazit mapu** vedle *Diff 2 .bin*: zaškrtněte jeden nebo víc obrazů a
+otevřou se tady, v kartě, která se použije znovu místo aby se množila. Pusťte `.xdf` jednou a
+zůstane na desce, takže další stisk kreslí hned.

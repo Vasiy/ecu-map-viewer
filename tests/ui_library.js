@@ -64,6 +64,31 @@ function notFound() {
     text: () => Promise.resolve('{"error":"not found"}') });
 }
 
+/* The addon arrangement: images come from the logger's firmware API, stored
+   definitions from the addon's own data endpoint. */
+function addonFetch({ bins, defs }) {
+  return (url, init) => {
+    const method = (init && init.method) || 'GET';
+    if (url === '/api/firmware' && method === 'GET') {
+      return ok({ files: Object.keys(bins).map((n) => ({ name: n, size: bins[n].length })) });
+    }
+    if (url === '/api/addons/maps/data' && method === 'GET') {
+      return ok({ files: Object.keys(defs).map((n) => ({ name: n, size: defs[n].length })) });
+    }
+    let m = /^\/api\/firmware\/files\/(.+)$/.exec(url);
+    if (m) {
+      const name = decodeURIComponent(m[1]);
+      return bins[name] === undefined ? notFound() : ok(bins[name]);
+    }
+    m = /^\/api\/addons\/maps\/data\/(.+)$/.exec(url);
+    if (m) {
+      const name = decodeURIComponent(m[1]);
+      return defs[name] === undefined ? notFound() : ok(defs[name]);
+    }
+    return notFound();
+  };
+}
+
 const panel = (S) => S.document.getElementById('library');
 const libRows = (S) => S.document.getElementById('libList').children
   .filter((n) => n.className === 'library-row');
@@ -164,6 +189,72 @@ async function main() {
     assert.strictEqual(panel(S).hidden, false);
     const names = libRows(S).map((r) => /library-name">([^<]*)</.exec(r.innerHTML)[1]);
     assert.deepStrictEqual(names, ['stock.bin', 'shared.xdf']);
+  });
+
+  await test('arriving with ?bin= loads exactly those images', async () => {
+    // this is what "Show map" on the logger's Firmware tab produces
+    const S = makeSandbox({
+      pathname: '/addons/maps/',
+      search: '?bin=stock.bin&bin=stage2.bin',
+      fetch: addonFetch({
+        bins: { 'stock.bin': Buffer.from(sampleImage()),
+                'stage2.bin': Buffer.from(sampleImage(6)),
+                'unwanted.bin': Buffer.from(sampleImage(9)) },
+        defs: {},
+      }),
+    });
+    await settle();
+    const names = dsRows(S).map((r) => /ds-name" value="([^"]*)"/.exec(r.innerHTML)[1]);
+    assert.deepStrictEqual(names, ['stock', 'stage2'], 'only what was asked for');
+  });
+
+  await test('a stored definition is applied to the whole selection at once', async () => {
+    const S = makeSandbox({
+      pathname: '/addons/maps/',
+      search: '?bin=stock.bin&bin=stage2.bin&bin=stage3.bin',
+      fetch: addonFetch({
+        bins: { 'stock.bin': Buffer.from(sampleImage()),
+                'stage2.bin': Buffer.from(sampleImage(4)),
+                'stage3.bin': Buffer.from(sampleImage(8)) },
+        defs: { 'shared.xdf': SAMPLE_XDF },
+      }),
+    });
+    await settle();
+    const rows = dsRows(S);
+    assert.strictEqual(rows.length, 3);
+    assert.ok(rows.every((r) => chosen(r) === 'def:def1'),
+      'the definition the board was holding drew all three');
+  });
+
+  await test('a name with a space or an ampersand comes back whole', async () => {
+    const S = makeSandbox({
+      pathname: '/addons/maps/',
+      search: '?bin=my%20map%261.bin',
+      fetch: addonFetch({ bins: { 'my map&1.bin': Buffer.from(sampleImage()) }, defs: {} }),
+    });
+    await settle();
+    assert.strictEqual(dsRows(S).length, 1);
+  });
+
+  await test('an image the board no longer has says so instead of hanging', async () => {
+    const S = makeSandbox({
+      pathname: '/addons/maps/',
+      search: '?bin=gone.bin',
+      fetch: addonFetch({ bins: {}, defs: {} }),
+    });
+    await settle();
+    assert.strictEqual(dsRows(S).length, 0);
+    const said = S.document.getElementById('toasts').children.map((n) => n.textContent);
+    assert.ok(said.some((x) => /gone\.bin/.test(x)), said.join(' | '));
+  });
+
+  await test('no query string loads nothing by itself', async () => {
+    const S = makeSandbox({
+      pathname: '/addons/maps/',
+      fetch: addonFetch({ bins: { 'stock.bin': Buffer.from(sampleImage()) }, defs: {} }),
+    });
+    await settle();
+    assert.strictEqual(dsRows(S).length, 0, 'the library is listed, not loaded');
   });
 
   console.log('\n' + passed + ' passed, ' + failed + ' failed');

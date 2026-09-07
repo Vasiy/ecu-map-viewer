@@ -175,7 +175,10 @@ LE`, vervroeging = `raw / 10`.
 ## Tests
 
 ```bash
-node tests/run.js        # offline-suite: XML, formules, binair lezen, XDF, raster, talen
+node tests/run.js            # offline-suite: XML, formules, binair lezen, XDF, raster, talen
+node tests/ui_links.js       # app.js op een DOM-stub: koppelen en verwijzingen
+node tests/ui_library.js     # het bibliotheekpaneel
+python3 tests/serve_test.py  # de bibliotheek-API van serve.py
 ```
 
 De browsercontroles hebben playwright nodig en firmware in `testdata/` (staat niet in git):
@@ -185,3 +188,20 @@ python3 serve.py &
 npm i playwright && npx playwright install chromium
 node tests/browser.mjs   # contourlijnen, asbereiken, doorsnede, verschil, PNG
 ```
+
+## Als onboard-logger-add-on
+
+Geen afhankelijkheden, geen buildstap en Plotly in `vendor/`, dus de pagina draait op een board
+zonder route naar internet. `./release-addon.sh` verpakt hem als add-on:
+
+```bash
+./release-addon.sh    # dist/ecu-map-viewer-addon-<versie>-<sha>.tar.gz
+```
+
+Dat archief installeer je in onboard-logger via **Config → System → Add-ons**. Het board serveert
+de pagina en houdt er een opslag naast voor de definities — het draait geen regel van deze code, en
+het verwijderen van de add-on neemt zijn bestanden mee.
+
+Het tabblad Firmware toont dan **Map tonen** naast *Diff 2 .bin*: vink een of meer images aan en ze
+openen hier, in een tabblad dat hergebruikt wordt in plaats van gedupliceerd. Sleep één keer een
+`.xdf` erin en die blijft op het board, zodat de volgende druk meteen tekent.

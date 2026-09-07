@@ -175,7 +175,10 @@ Das Zündungs-Hauptkennfeld dieser Familie hat 32 Drehzahl- × 20 Drosselklappen
 ## Tests
 
 ```bash
-node tests/run.js        # Offline-Suite: XML, Formeln, Binärlesen, XDF, Gitter, Sprachen
+node tests/run.js            # Offline-Suite: XML, Formeln, Binärlesen, XDF, Gitter, Sprachen
+node tests/ui_links.js       # app.js auf einem DOM-Stub: Paarung und Verknüpfungen
+node tests/ui_library.js     # das Bibliotheksfeld
+python3 tests/serve_test.py  # die Bibliotheks-API von serve.py
 ```
 
 Die Browser-Prüfungen brauchen playwright und Firmware-Abzüge in `testdata/` (nicht im Git):
@@ -185,3 +188,21 @@ python3 serve.py &
 npm i playwright && npx playwright install chromium
 node tests/browser.mjs   # Höhenlinien, Achsenbereiche, Schnitt, Differenz, PNG
 ```
+
+## Als onboard-logger-Add-on
+
+Keine Abhängigkeiten, kein Build-Schritt, Plotly liegt in `vendor/` — die Seite läuft also auf
+einem Board ohne Weg ins Internet. `./release-addon.sh` packt sie als Add-on:
+
+```bash
+./release-addon.sh    # dist/ecu-map-viewer-addon-<version>-<sha>.tar.gz
+```
+
+Dieses Archiv wird in onboard-logger unter **Config → System → Add-ons** installiert. Das Board
+liefert die Seite aus und führt daneben einen Speicher für die Definitionen — es führt keine Zeile
+dieses Codes aus, und beim Entfernen gehen seine Dateien mit.
+
+Im Firmware-Reiter erscheint dann **Kennfeld zeigen** neben *Diff 2 .bin*: ein oder mehrere
+Abbilder anhaken, und sie öffnen sich hier, in einem Tab, der wiederverwendet statt verdoppelt
+wird. Eine `.xdf` einmal hineinziehen genügt — sie bleibt auf dem Board, und der nächste Druck
+zeichnet sofort.

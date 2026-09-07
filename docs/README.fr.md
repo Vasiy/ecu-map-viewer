@@ -180,7 +180,10 @@ points de papillon, `uint16 LE`, angle = `raw / 10`.
 ## Tests
 
 ```bash
-node tests/run.js        # suite hors ligne : XML, formules, lecture binaire, XDF, grille, langues
+node tests/run.js            # suite hors ligne : XML, formules, lecture binaire, XDF, grille, langues
+node tests/ui_links.js       # app.js sur un DOM factice : appariement et liens
+node tests/ui_library.js     # le panneau bibliothèque
+python3 tests/serve_test.py  # l'API bibliothèque de serve.py
 ```
 
 Les vérifications navigateur demandent playwright et des firmwares dans `testdata/`
@@ -191,3 +194,20 @@ python3 serve.py &
 npm i playwright && npx playwright install chromium
 node tests/browser.mjs   # courbes de niveau, plages d'axes, coupe, différence, PNG
 ```
+
+## En module onboard-logger
+
+Aucune dépendance, aucune étape de build et Plotly embarqué dans `vendor/` : la page tourne sur
+une carte sans accès à internet. `./release-addon.sh` l'empaquette en module :
+
+```bash
+./release-addon.sh    # dist/ecu-map-viewer-addon-<version>-<sha>.tar.gz
+```
+
+Cette archive s'installe dans onboard-logger via **Config → System → Modules**. La carte sert la
+page et tient un stockage à côté pour les définitions — elle n'exécute pas une ligne de ce code, et
+retirer le module emporte ses fichiers.
+
+L'onglet Firmware affiche alors **Voir la cartographie** à côté de *Diff 2 .bin* : cochez une ou
+plusieurs images et elles s'ouvrent ici, dans un onglet réutilisé plutôt que dupliqué. Déposez une
+`.xdf` une fois et elle reste sur la carte : la pression suivante dessine aussitôt.

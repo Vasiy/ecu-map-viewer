@@ -173,7 +173,10 @@ LE`, kąt = `raw / 10`.
 ## Testy
 
 ```bash
-node tests/run.js        # zestaw offline: XML, wzory, odczyt binariów, XDF, siatka, języki
+node tests/run.js            # zestaw offline: XML, wzory, odczyt binariów, XDF, siatka, języki
+node tests/ui_links.js       # app.js na atrapie DOM: parowanie i powiązania
+node tests/ui_library.js     # panel biblioteki
+python3 tests/serve_test.py  # API biblioteki w serve.py
 ```
 
 Testy w przeglądarce wymagają playwrighta i firmware'ów w `testdata/` (katalog poza gitem):
@@ -183,3 +186,20 @@ python3 serve.py &
 npm i playwright && npx playwright install chromium
 node tests/browser.mjs   # izolinie, zakresy osi, przekrój, różnica, PNG
 ```
+
+## Jako dodatek do onboard-logger
+
+Bez zależności, bez kroku budowania, Plotly leży w `vendor/` — strona działa na płytce bez drogi
+do internetu. `./release-addon.sh` pakuje ją jako dodatek:
+
+```bash
+./release-addon.sh    # dist/ecu-map-viewer-addon-<wersja>-<sha>.tar.gz
+```
+
+To archiwum instaluje się w onboard-logger przez **Config → System → Dodatki**. Płytka serwuje
+stronę i trzyma obok magazyn na definicje — nie wykonuje ani linijki tego kodu, a usunięcie dodatku
+zabiera jego pliki.
+
+Zakładka Firmware pokazuje wtedy **Pokaż mapę** obok *Diff 2 .bin*: zaznacz jeden lub kilka obrazów,
+a otworzą się tutaj, w karcie, która jest używana ponownie zamiast mnożona. Upuść `.xdf` raz i
+zostanie na płytce, więc następne naciśnięcie od razu rysuje mapy.

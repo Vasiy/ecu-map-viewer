@@ -167,7 +167,10 @@ Huvudkartan för tändning i den här familjen är 32 varvtalspunkter × 20 gass
 ## Tester
 
 ```bash
-node tests/run.js        # offlinesvit: XML, formler, binärläsning, XDF, rutnät, språk
+node tests/run.js            # offlinesvit: XML, formler, binärläsning, XDF, rutnät, språk
+node tests/ui_links.js       # app.js mot en DOM-stubbe: parning och länkar
+node tests/ui_library.js     # bibliotekspanelen
+python3 tests/serve_test.py  # biblioteks-API:t i serve.py
 ```
 
 Webbläsarkontrollerna kräver playwright och firmware i `testdata/` (ligger utanför git):
@@ -177,3 +180,20 @@ python3 serve.py &
 npm i playwright && npx playwright install chromium
 node tests/browser.mjs   # nivåkurvor, axelintervall, snitt, skillnad, PNG
 ```
+
+## Som onboard-logger-tillägg
+
+Inga beroenden, inget byggsteg och Plotly medskickat i `vendor/`, så sidan går på ett kort utan
+väg ut på internet. `./release-addon.sh` packar den som ett tillägg:
+
+```bash
+./release-addon.sh    # dist/ecu-map-viewer-addon-<version>-<sha>.tar.gz
+```
+
+Det arkivet installeras i onboard-logger under **Config → System → Tillägg**. Kortet serverar sidan
+och håller ett lager bredvid för definitionerna — det kör inte en rad av den här koden, och tar man
+bort tillägget följer dess filer med.
+
+Fliken Firmware visar då **Visa karta** intill *Diff 2 .bin*: kryssa i en eller flera avbilder så
+öppnas de här, i en flik som återanvänds i stället för att dubbleras. Släpp en `.xdf` en gång så
+blir den kvar på kortet, och nästa tryck ritar direkt.
