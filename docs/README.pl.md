@@ -80,6 +80,18 @@ dwóch lub więcej definicji nic nie jest zakładane; wybierz je karta po karcie
 Wybory są zapamiętywane po nazwie pliku, więc ten sam firmware odnajdzie swoją definicję
 następnym razem.
 
+### Pliki trzymane na urządzeniu
+
+Po wskazaniu katalogu danych — `python3 serve.py --data ~/firmware` — przeglądarka pokazuje
+też to, co już w nim leży, i wczytuje plik jednym kliknięciem: tych samych plików nie trzeba
+przeciągać za każdym razem. Upuszczony ręcznie `.xdf` zostaje tam zapisany, obrazy
+firmware'u nie — przeciągnięcie obrazu zwykle znaczy „obejrzeć”, a nie „odłożyć”.
+
+Kontener montuje w tym celu `./data`. Nasłuchuje na wszystkich interfejsach, więc zapis jest
+tam odrzucany, dopóki nie ustawi się `ALLOW_REMOTE_WRITES=1` — co `docker-compose.yml` robi
+jawnie. Bez katalogu danych nie ma żadnej biblioteki, a strona zachowuje się dokładnie jak
+wcześniej.
+
 ### Plik .bin bez swojego .xdf
 
 Karta proponuje wtedy gotową definicję platformy: wbudowany adres głównej mapy zapłonu i

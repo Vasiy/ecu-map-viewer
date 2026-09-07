@@ -19,7 +19,9 @@ function test(name, fn) {
 const bin = (name, bias) => file(name, Buffer.from(sampleImage(bias)));
 const xdf = (name) => file(name, SAMPLE_XDF);
 
-const rows = (S) => S.document.getElementById('dsList').children;
+/* the card list also holds a "nothing loaded" note, which is not a card */
+const rows = (S) => S.document.getElementById('dsList').children
+  .filter((n) => n.tagName === 'article');
 const toasts = (S) => S.document.getElementById('toasts').children.map((n) => n.textContent);
 /* which option the card's picker has selected -- '' when it has no definition */
 function chosen(row) {
@@ -104,6 +106,24 @@ async function main() {
     await drop(S, [xdf('shared.xdf')]);
     assert.strictEqual(rows(S).length, 1);
     assert.strictEqual(chosen(rows(S)[0]), 'def:def1', 'still the same definition id');
+  });
+
+  await test('a definition taken before any image still adopts what follows', async () => {
+    // through the library the files are clicked one at a time, so the XDF
+    // usually arrives with nothing to pair against yet
+    const S = makeSandbox();
+    await drop(S, [xdf('shared.xdf')]);
+    assert.strictEqual(rows(S).length, 0);
+    await drop(S, [bin('stage1.bin'), bin('stage2.bin', 6)]);
+    assert.ok(rows(S).every((r) => chosen(r) === 'def:def1'));
+  });
+
+  await test('a definition that named an image stays that image\'s business', async () => {
+    const S = makeSandbox();
+    await drop(S, [bin('granpasso.bin'), xdf('granpasso.xdf')]);
+    await drop(S, [bin('ducati.bin', 7)]);
+    assert.strictEqual(chosen(rows(S)[1]), '',
+      'a Granpasso definition is not quietly used to draw a Ducati');
   });
 
   await test('the same image is not loaded twice', async () => {

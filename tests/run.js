@@ -17,13 +17,21 @@ var Presets = require(path.join(ROOT, 'js/presets.js'));
 var I18N = require(path.join(ROOT, 'js/i18n.js'));
 var Roles = require(path.join(ROOT, 'js/roles.js'));
 var Links = require(path.join(ROOT, 'js/links.js'));
+var Store = require(path.join(ROOT, 'js/store.js'));
 var Fixtures = require('./fixtures.js');
 var SAMPLE_XDF = Fixtures.SAMPLE_XDF, sampleImage = Fixtures.sampleImage;
 
-var passed = 0, failed = 0;
+var passed = 0, failed = 0, pending = [];
 function test(name, fn) {
   try { fn(); passed++; console.log('ok   ' + name); }
   catch (e) { failed++; console.log('FAIL ' + name + ': ' + (e && e.message)); }
+}
+/* js/store.js answers over the network, so its checks settle later than the
+   rest; the summary waits for them. */
+function atest(name, fn) {
+  pending.push(Promise.resolve().then(fn).then(
+    function () { passed++; console.log('ok   ' + name); },
+    function (e) { failed++; console.log('FAIL ' + name + ': ' + (e && e.message)); }));
 }
 
 /* ---------- xml ---------- */
@@ -323,6 +331,137 @@ test('a storage that throws is not fatal', function () {
   Links.save(storage, { a: 'b' });   // must not throw
 });
 
+/* ---------- store ---------- */
+
+/* A fetch that answers from a table of routes and records what was asked. */
+function fakeFetch(routes) {
+  var calls = [];
+  var fn = function (url, init) {
+    calls.push({ url: url, method: (init && init.method) || 'GET', body: init && init.body });
+    var hit = routes[url];
+    if (hit === undefined) {
+      return Promise.resolve({ ok: false, status: 404, statusText: 'not found',
+        text: function () { return Promise.resolve('{"error":"not found"}'); } });
+    }
+    return Promise.resolve({
+      ok: true, status: 200,
+      json: function () { return Promise.resolve(hit); },
+      text: function () { return Promise.resolve(typeof hit === 'string' ? hit : JSON.stringify(hit)); },
+      arrayBuffer: function () { return Promise.resolve(hit); }
+    });
+  };
+  fn.calls = calls;
+  return fn;
+}
+
+atest('with nothing to talk to the store is drag and drop only', function () {
+  return Store.detect({}).then(function (st) {
+    assert.strictEqual(st.kind, 'none');
+    assert.strictEqual(st.writable('defs'), false);
+    return st.list();
+  }).then(function (l) {
+    assert.deepStrictEqual(l, { bins: [], defs: [] });
+  });
+});
+
+atest('a data directory makes it the library', function () {
+  var f = fakeFetch({ '/api/library': { bins: [], defs: [] } });
+  return Store.detect({ fetch: f, pathname: '/index.html' }).then(function (st) {
+    assert.strictEqual(st.kind, 'library');
+    assert.strictEqual(st.writable('bins'), true);
+  });
+});
+
+atest('being served under /addons/ makes it the addon, once confirmed', function () {
+  var f = fakeFetch({ '/api/addons/maps/data': { files: [] } });
+  return Store.detect({ fetch: f, pathname: '/addons/maps/' }).then(function (st) {
+    assert.strictEqual(st.kind, 'addon');
+    assert.strictEqual(st.addon, 'maps');
+    // the board owns the images; only definitions are the addon's to write
+    assert.strictEqual(st.writable('bins'), false);
+    assert.strictEqual(st.writable('defs'), true);
+  });
+});
+
+atest('a static copy sitting under /addons/ is not mistaken for one', function () {
+  // the path says addon but nothing answers, and neither does a library
+  var f = fakeFetch({});
+  return Store.detect({ fetch: f, pathname: '/addons/maps/' }).then(function (st) {
+    assert.strictEqual(st.kind, 'none');
+  });
+});
+
+atest('the addon lists the board images beside its own definitions', function () {
+  var f = fakeFetch({
+    '/api/firmware': { files: [
+      { name: 'stock.bin', size: 327680, mtime: 2, ident: { code: '23ECCLGPSMD' } },
+      { name: 'stock.bin.txt', size: 12, mtime: 1 }
+    ] },
+    '/api/addons/maps/data': { files: [{ name: 'shared.xdf', size: 110, mtime: 3 }] }
+  });
+  var st = Store.addonStore(f, 'maps');
+  return st.list().then(function (l) {
+    assert.deepStrictEqual(l.bins.map(function (b) { return b.name; }), ['stock.bin']);
+    assert.strictEqual(l.bins[0].ident.code, '23ECCLGPSMD');
+    assert.deepStrictEqual(l.defs.map(function (d) { return d.name; }), ['shared.xdf']);
+  });
+});
+
+atest('the addon refuses to write or delete a board image', function () {
+  var st = Store.addonStore(fakeFetch({}), 'maps');
+  return st.write('bins', 'stock.bin', new ArrayBuffer(4)).then(
+    function () { throw new Error('should have refused'); },
+    function (e) {
+      assert.strictEqual(e.message, 'read-only');
+      return st.remove('bins', 'stock.bin').then(
+        function () { throw new Error('should have refused'); },
+        function (e2) { assert.strictEqual(e2.message, 'read-only'); });
+    });
+});
+
+atest('the addon reads images from the logger and definitions from its own store', function () {
+  var f = fakeFetch({
+    '/api/firmware/files/stock.bin': new ArrayBuffer(8),
+    '/api/addons/maps/data/shared.xdf': '<XDFFORMAT/>'
+  });
+  var st = Store.addonStore(f, 'maps');
+  return st.read('bins', 'stock.bin').then(function (buf) {
+    assert.strictEqual(buf.byteLength, 8);
+    return st.read('defs', 'shared.xdf');
+  }).then(function (text) {
+    assert.strictEqual(text, '<XDFFORMAT/>');
+  });
+});
+
+atest('a library write and delete address the file endpoint', function () {
+  var f = fakeFetch({ '/api/library/file/a%20b.bin': { name: 'a b.bin' } });
+  var st = Store.libraryStore(f);
+  return st.write('bins', 'a b.bin', new ArrayBuffer(4)).then(function () {
+    return st.remove('bins', 'a b.bin');
+  }).then(function () {
+    assert.deepStrictEqual(f.calls.map(function (c) { return c.method; }), ['PUT', 'DELETE']);
+    assert.ok(f.calls.every(function (c) { return c.url === '/api/library/file/a%20b.bin'; }));
+  });
+});
+
+atest('an oversize body is refused before it is sent', function () {
+  var f = fakeFetch({});
+  var st = Store.libraryStore(f);
+  return st.write('bins', 'huge.bin', new ArrayBuffer(Store.MAX_UPLOAD + 1)).then(
+    function () { throw new Error('should have refused'); },
+    function (e) {
+      assert.strictEqual(e.message, 'too large');
+      assert.strictEqual(f.calls.length, 0, 'nothing went out');
+    });
+});
+
+atest('a refusal from the server carries its reason', function () {
+  var f = fakeFetch({});                       // every route 404s
+  return Store.libraryStore(f).list().then(
+    function () { throw new Error('should have failed'); },
+    function (e) { assert.ok(/404/.test(e.message), e.message); });
+});
+
 /* ---------- i18n ---------- */
 test('every locale carries the same keys as English', function () {
   var en = Object.keys(I18N.locales.en).sort();
@@ -353,5 +492,7 @@ test('browser language picks the closest locale', function () {
   assert.strictEqual(I18N.preferred([]), 'en');
 });
 
-console.log('\n' + passed + ' passed, ' + failed + ' failed');
-process.exit(failed ? 1 : 0);
+Promise.all(pending).then(function () {
+  console.log('\n' + passed + ' passed, ' + failed + ' failed');
+  process.exit(failed ? 1 : 0);
+});

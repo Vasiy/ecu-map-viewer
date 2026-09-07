@@ -82,6 +82,18 @@ definitions at once and nothing is assumed; pick them card by card.
 Your choices are remembered by file name, so the same firmware finds its definition again
 next time you load it.
 
+### Files kept on the device
+
+Started with a data directory — `python3 serve.py --data ~/firmware` — the viewer also
+lists what is already in it and loads a file with one click, so the same files need not be
+dragged in every time. An `.xdf` dropped by hand is saved there; firmware images are not,
+since dragging one in is usually a look rather than a deposit.
+
+The container mounts `./data` for the same purpose. It listens on every interface, so
+uploading is refused there unless `ALLOW_REMOTE_WRITES=1` is set — which
+`docker-compose.yml` does, in the open. Without a data directory there is no library at all
+and the page behaves exactly as it did before.
+
 ### A .bin without its .xdf
 
 The card offers a platform preset instead: the built-in address of the Ignition Main

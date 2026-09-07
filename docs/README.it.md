@@ -82,6 +82,18 @@ Se lasci due o più definizioni non si presume nulla: scegli scheda per scheda.
 Le scelte vengono ricordate per nome di file, così lo stesso firmware ritrova la sua
 definizione al caricamento successivo.
 
+### I file tenuti sul dispositivo
+
+Con una cartella dati — `python3 serve.py --data ~/firmware` — il visualizzatore elenca
+anche quello che c'è già dentro e carica un file con un clic: non serve più trascinare ogni
+volta gli stessi file. Un `.xdf` lasciato a mano viene salvato lì; le immagini del firmware
+no, perché trascinarne una di solito vuol dire guardarla, non depositarla.
+
+Il contenitore monta `./data` allo stesso scopo. Ascolta su tutte le interfacce, quindi lì
+la scrittura è rifiutata finché non si imposta `ALLOW_REMOTE_WRITES=1`, cosa che
+`docker-compose.yml` fa alla luce del sole. Senza cartella dati non c'è alcuna libreria e la
+pagina si comporta esattamente come prima.
+
 ### Un .bin senza il suo .xdf
 
 La scheda offre allora un preset di piattaforma: l'indirizzo integrato della mappa di

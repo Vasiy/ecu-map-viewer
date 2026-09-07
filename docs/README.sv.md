@@ -80,6 +80,17 @@ Släpper du två eller fler definitioner antas ingenting; välj kort för kort.
 
 Dina val kommer ihåg per filnamn, så samma firmware hittar sin definition nästa gång.
 
+### Filer som ligger kvar på enheten
+
+Med en datakatalog — `python3 serve.py --data ~/firmware` — listar visaren också det som
+redan finns där och läser in en fil med ett klick; samma filer behöver inte dras in varje
+gång. En `.xdf` som släpps för hand sparas dit, firmware-avbilder inte: att dra in en avbild
+betyder oftast att titta, inte att lämna kvar.
+
+Containern monterar `./data` för samma sak. Den lyssnar på alla gränssnitt, så skrivning
+avvisas där om inte `ALLOW_REMOTE_WRITES=1` är satt — vilket `docker-compose.yml` gör öppet.
+Utan datakatalog finns inget bibliotek alls, och sidan beter sig precis som förut.
+
 ### En .bin utan sin .xdf
 
 Kortet erbjuder då en plattformsförinställning: den inbyggda adressen till huvudkartan för

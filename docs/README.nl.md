@@ -84,6 +84,18 @@ neer, dan wordt niets aangenomen; kies per kaart.
 Je keuzes worden per bestandsnaam onthouden, dus dezelfde firmware vindt zijn definitie de
 volgende keer terug.
 
+### Bestanden die op het apparaat blijven
+
+Met een datamap — `python3 serve.py --data ~/firmware` — toont de viewer ook wat erin staat
+en laadt een bestand met één klik; dezelfde bestanden hoeven er niet elke keer in gesleept
+te worden. Een met de hand neergezette `.xdf` wordt daar bewaard, firmware-images niet: een
+image erin slepen is meestal kijken, geen afgeven.
+
+De container koppelt `./data` voor hetzelfde doel. Hij luistert op alle interfaces, dus
+schrijven wordt daar geweigerd tenzij `ALLOW_REMOTE_WRITES=1` staat — wat
+`docker-compose.yml` open en bloot doet. Zonder datamap is er helemaal geen bibliotheek en
+gedraagt de pagina zich precies als voorheen.
+
 ### Een .bin zonder .xdf
 
 De kaart biedt dan een platformvoorinstelling aan: het ingebouwde adres van de

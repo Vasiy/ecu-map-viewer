@@ -14,7 +14,7 @@
 
   var t = window.I18N.t;
   var XDF = window.XDF, Grid = window.Grid, Presets = window.Presets, Viewer = window.Viewer;
-  var Links = window.Links;
+  var Links = window.Links, Store = window.Store;
 
   var state = {
     datasets: [],
@@ -29,7 +29,9 @@
     sliceIndex: 0,
     theme: 'dark',
     seq: 0,
-    defSeq: 0
+    defSeq: 0,
+    store: null,              // where files come from besides drag and drop
+    library: { bins: [], defs: [] }
   };
 
   var el = {};
@@ -102,19 +104,31 @@
     });
   }
 
-  /* A lone definition that matched no image by name is almost always the one
-     meant for all of them -- N versions of one calibration against one XDF is
-     exactly the case that used to need N renamed copies. Several definitions at
-     once are ambiguous, so those only report themselves and wait to be picked. */
+  /* A definition that matched no image by name is almost always meant for all
+     of them -- N versions of one calibration against one XDF is exactly the
+     case that used to need N renamed copies. That verdict sticks to the
+     definition rather than to the batch it arrived in, because through the
+     library the files are clicked one at a time: the XDF is usually taken
+     before any image exists, and a batch-only rule left every one of them bare.
+     One that did match an image by name stays that image's business, so a
+     Granpasso definition is never quietly used to draw a Ducati. */
+  function markGeneric(fresh) {
+    fresh.forEach(function (def) {
+      def.generic = !datasetByName(def.name);
+    });
+  }
+
   function adoptOrphans(fresh) {
     var claimed = function (def) {
       return state.datasets.some(function (ds) { return ds.choice === 'def:' + def.id; });
     };
-    if (fresh.length === 1 && !claimed(fresh[0])) {
+    var generic = genericDefs();
+    // more than one candidate is ambiguous: those wait to be picked by hand
+    if (generic.length === 1) {
       var orphans = state.datasets.filter(function (ds) { return !ds.doc; });
       if (orphans.length) {
-        orphans.forEach(function (ds) { setDef(ds, 'def:' + fresh[0].id, true); });
-        toast(t('files.linked_all', { name: fresh[0].name, count: orphans.length }));
+        orphans.forEach(function (ds) { setDef(ds, 'def:' + generic[0].id, true); });
+        toast(t('files.linked_all', { name: generic[0].name, count: orphans.length }));
         return;
       }
     }
@@ -143,10 +157,14 @@
       });
       return existing;
     }
-    var def = { id: 'def' + (++state.defSeq), name: name, doc: doc };
+    var def = { id: 'def' + (++state.defSeq), name: name, doc: doc, generic: false };
     state.defs.push(def);
     return def;
   }
+
+  var genericDefs = function () {
+    return state.defs.filter(function (d) { return d.generic; });
+  };
 
   /* The one place ds.doc is ever written. `choice` is the source of truth --
      'def:<id>', 'preset:<id>' or '' -- and the cached grids belong to the
@@ -195,33 +213,125 @@
       });
     });
     Promise.all(jobs).then(function (loaded) {
-      var fresh = [];
-      loaded.forEach(function (item) {
-        if (!item.isXdf) return;
-        try {
-          fresh.push(addDef(item.base, XDF.parse(item.data)));
-        } catch (e) {
-          toast(t('files.bad_xdf', { name: item.base, err: e.message }), 'error');
-        }
-      });
-      loaded.forEach(function (item) {
-        if (item.isXdf) return;
-        if (datasetByName(item.base)) { toast(t('files.duplicate', { name: item.base })); return; }
-        var ds = addDataset(item.base, item.data);
-        var def = Links.resolve(item.base, state.defs, state.links);
-        if (def) {
-          setDef(ds, 'def:' + def.id, false);
-          toast(t('files.paired', { name: item.base }));
-        } else {
-          toast(t('files.unpaired_bin', { name: item.base }), 'warn');
-        }
-      });
-      adoptOrphans(fresh);
-      refreshTables();
-      renderAll();
+      ingest(loaded, { save: true });
     }).catch(function (e) {
       toast(String(e && e.message || e), 'error');
     });
+  }
+
+  /* The one way anything enters the page, whichever door it came through:
+     definitions first, so the images that follow can find them. */
+  function ingest(loaded, opts) {
+    opts = opts || {};
+    var fresh = [];
+    loaded.forEach(function (item) {
+      if (!item.isXdf) return;
+      try {
+        fresh.push(addDef(item.base, XDF.parse(item.data)));
+        if (opts.save) keepDefinition(item);
+      } catch (e) {
+        toast(t('files.bad_xdf', { name: item.base, err: e.message }), 'error');
+      }
+    });
+    loaded.forEach(function (item) {
+      if (item.isXdf) return;
+      if (datasetByName(item.base)) { toast(t('files.duplicate', { name: item.base })); return; }
+      var ds = addDataset(item.base, item.data);
+      var def = Links.resolve(item.base, state.defs, state.links);
+      if (def) {
+        setDef(ds, 'def:' + def.id, false);
+        toast(t('files.paired', { name: item.base }));
+      } else {
+        toast(t('files.unpaired_bin', { name: item.base }), 'warn');
+      }
+    });
+    markGeneric(fresh);       // after the images, so a name match can be seen
+    adoptOrphans(fresh);
+    refreshTables();
+    renderAll();
+  }
+
+  /* A definition dropped by hand is worth keeping where the device can find it
+     again -- that is the whole promise of the library. Images are not saved:
+     under the addon they belong to the logger, and a drag and drop of one is
+     usually a look, not a deposit. */
+  function keepDefinition(item) {
+    if (!state.store || !state.store.writable('defs')) return;
+    if (state.library.defs.some(function (d) { return d.name === item.name; })) return;
+    state.store.write('defs', item.name, item.data).then(function () {
+      toast(t('lib.saved', { name: item.name }));
+      loadLibrary();
+    }, function (e) {
+      toast(t('lib.save_failed', { name: item.name, err: e.message }), 'warn');
+    });
+  }
+
+  /* ---------- library ---------- */
+
+  function fmtSize(n) {
+    if (!(n > 0)) return '';
+    return n >= 1048576 ? (n / 1048576).toFixed(1) + ' MB'
+      : n >= 1024 ? Math.round(n / 1024) + ' kB' : n + ' B';
+  }
+
+  function loadLibrary() {
+    if (!state.store || state.store.kind === 'none') return Promise.resolve();
+    return state.store.list().then(function (l) {
+      state.library = { bins: l.bins || [], defs: l.defs || [] };
+      renderLibrary();
+    }, function (e) {
+      toast(t('lib.load_failed', { name: t('lib.title'), err: e.message }), 'warn');
+    });
+  }
+
+  /* Clicking a row is the same arrival as a drop, minus the file picker --
+     it goes through ingest() so pairing and links behave identically. */
+  function takeFromLibrary(kind, name) {
+    var isXdf = kind === 'defs';
+    if (!isXdf && datasetByName(baseName(name))) {
+      toast(t('files.duplicate', { name: baseName(name) }));
+      return;
+    }
+    state.store.read(kind, name).then(function (data) {
+      ingest([{ name: name, base: baseName(name), isXdf: isXdf, data: data }], { save: false });
+    }, function (e) {
+      toast(t('lib.load_failed', { name: name, err: e.message }), 'error');
+    });
+  }
+
+  function renderLibrary() {
+    var box = el.library, list = el.libList;
+    if (!box || !list) return;
+    var on = !!state.store && state.store.kind !== 'none';
+    box.hidden = !on;
+    if (!on) return;
+    list.innerHTML = '';
+    var groups = [['bins', t('lib.bins')], ['defs', t('lib.defs')]];
+    var any = false;
+    groups.forEach(function (g) {
+      var rows = state.library[g[0]];
+      if (!rows.length) return;
+      any = true;
+      var head = document.createElement('p');
+      head.className = 'library-group muted';
+      head.textContent = g[1];
+      list.appendChild(head);
+      rows.forEach(function (f) {
+        var row = document.createElement('button');
+        row.className = 'library-row';
+        row.type = 'button';
+        row.innerHTML = '<span class="library-name">' + esc(f.name) + '</span>' +
+          '<span class="mono muted">' + esc(fmtSize(f.size)) + '</span>';
+        row.addEventListener('click', function () { takeFromLibrary(g[0], f.name); });
+        list.appendChild(row);
+      });
+    });
+    if (!any) {
+      var p = document.createElement('p');
+      p.className = 'muted pad';
+      p.textContent = t('lib.empty');
+      list.appendChild(p);
+    }
   }
 
   /* ---------- tables ---------- */
@@ -675,6 +785,7 @@
   function renderAll() {
     renderBaseSelect();
     renderSidebar();
+    renderLibrary();          // its group headings are translated too
     renderPlot();
   }
 
@@ -781,6 +892,10 @@
       onNextFrame('slice', function () { renderSlice(lastItems); });
     });
 
+    if (el.libRefresh) {
+      el.libRefresh.addEventListener('click', function () { loadLibrary(); });
+    }
+
     el.btnReset.addEventListener('click', function () { Viewer.resetCamera(el.plot); });
 
     el.btnPng.addEventListener('click', function () {
@@ -809,7 +924,8 @@
   }
 
   function init() {
-    ['file', 'drop', 'tableSel', 'dsList', 'plot', 'curve', 'empty', 'sliceWrap', 'slicePlot',
+    ['file', 'drop', 'tableSel', 'dsList', 'library', 'libList', 'libRefresh',
+      'plot', 'curve', 'empty', 'sliceWrap', 'slicePlot',
       'sliceSel', 'sliceRange', 'sliceValue', 'contours', 'opacity', 'baseSel', 'baseField',
       'btnReset', 'btnPng', 'langSel', 'btnTheme', 'btnSide', 'btnInfo', 'about', 'toasts'].forEach(function (id) {
       el[id] = $(id);
@@ -835,6 +951,14 @@
 
     fillLangSelect();
     bind();
+    Store.detect({
+      fetch: typeof window.fetch === 'function' ? window.fetch.bind(window) : null,
+      pathname: window.location && window.location.pathname
+    }).then(function (st) {
+      state.store = st;
+      renderLibrary();
+      return loadLibrary();
+    });
     state.theme = savedTheme;
     document.documentElement.setAttribute('data-theme', savedTheme);
     applyLang(savedLang);

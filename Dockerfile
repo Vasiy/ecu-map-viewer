@@ -13,7 +13,13 @@ COPY vendor ./vendor
 # a container has to listen on every interface to be reachable from outside;
 # a local run stays on the loopback address (see serve.py)
 ENV HOST=0.0.0.0 \
-    PORT=8123
+    PORT=8123 \
+    DATA_DIR=/data
+
+# the library lives outside the image; without a volume it is a fresh empty
+# directory every time the container is recreated
+VOLUME /data
+RUN mkdir -p /data && chown nobody /data
 
 EXPOSE 8123
 USER nobody

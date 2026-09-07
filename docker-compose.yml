@@ -5,4 +5,11 @@ services:
     container_name: ecu-map-viewer
     ports:
       - "8123:8123"
+    volumes:
+      - ./data:/data
+    # the container listens on 0.0.0.0, so uploading and deleting are refused
+    # unless they are opted into here -- an open PUT would let anyone on the
+    # network replace a firmware image
+    environment:
+      ALLOW_REMOTE_WRITES: "1"
     restart: unless-stopped

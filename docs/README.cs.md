@@ -81,6 +81,17 @@ definic, nic se nepředpokládá; vyberte je kartu po kartě.
 Volby se pamatují podle názvu souboru, takže tentýž firmware svou definici příště zase
 najde.
 
+### Soubory, které zůstávají v zařízení
+
+Se zadaným datovým adresářem — `python3 serve.py --data ~/firmware` — prohlížeč ukáže i to,
+co v něm už leží, a soubor načte jedním kliknutím: tytéž soubory není nutné pokaždé
+přetahovat. Ručně puštěná `.xdf` se tam uloží, obrazy firmwaru ne — přetáhnout obraz obvykle
+znamená podívat se, ne odložit.
+
+Kontejner k tomu připojuje `./data`. Naslouchá na všech rozhraních, takže zápis je tam
+odmítnut, dokud není nastaveno `ALLOW_REMOTE_WRITES=1` — což `docker-compose.yml` dělá
+otevřeně. Bez datového adresáře žádná knihovna není a stránka se chová přesně jako dřív.
+
 ### Soubor .bin bez svého .xdf
 
 Karta pak nabídne předvolbu platformy: zabudovanou adresu hlavní mapy zapalování a osy,

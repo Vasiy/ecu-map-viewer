@@ -83,6 +83,18 @@ dos definiciones o más, no se supone nada: elígelas tarjeta a tarjeta.
 Tus elecciones se recuerdan por nombre de archivo, así que el mismo firmware vuelve a
 encontrar su definición la próxima vez.
 
+### Archivos guardados en el dispositivo
+
+Con un directorio de datos — `python3 serve.py --data ~/firmware` — el visor también lista
+lo que ya hay dentro y carga un archivo con un clic, así no hay que arrastrar los mismos
+archivos cada vez. Un `.xdf` soltado a mano se guarda ahí; las imágenes de firmware no,
+porque arrastrar una suele ser mirarla, no depositarla.
+
+El contenedor monta `./data` con el mismo fin. Escucha en todas las interfaces, así que
+allí la escritura se rechaza salvo que se ponga `ALLOW_REMOTE_WRITES=1`, cosa que
+`docker-compose.yml` hace a la vista. Sin directorio de datos no hay biblioteca alguna y la
+página se comporta igual que antes.
+
 ### Un .bin sin su .xdf
 
 La tarjeta ofrece entonces un preajuste de plataforma: la dirección incorporada del mapa de

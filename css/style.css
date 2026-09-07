@@ -202,6 +202,40 @@ main {
 .drop.over { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 8%, transparent); }
 .drop p { margin: 0; font-size: 12px; }
 
+/* the device's own files: only rendered when a backend answered */
+.library { display: flex; flex-direction: column; gap: .4rem; }
+.library-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .5rem;
+  font-size: 11px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.library-list { display: flex; flex-direction: column; gap: .15rem; max-height: 32vh; overflow-y: auto; }
+.library-group { margin: .35rem 0 .1rem; font-size: 11px; }
+.library-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: .6rem;
+  width: 100%;
+  padding: .35rem .45rem;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-size: 12px;
+  text-align: left;
+  cursor: pointer;
+}
+.library-row:hover { border-color: var(--line); background: var(--panel-2); }
+.library-row:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.library-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
 .field { display: flex; flex-direction: column; gap: .3rem; }
 .field label {
   font-size: 11px;

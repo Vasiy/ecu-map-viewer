@@ -83,6 +83,18 @@ zwei oder mehr Definitionen auf einmal wird nichts angenommen; wählen Sie pro K
 Die Auswahl wird pro Dateiname gemerkt, sodass dieselbe Firmware ihre Definition beim
 nächsten Laden wiederfindet.
 
+### Dateien, die auf dem Gerät liegen
+
+Mit einem Datenverzeichnis — `python3 serve.py --data ~/firmware` — zeigt der Viewer auch,
+was schon darin liegt, und lädt eine Datei mit einem Klick; dieselben Dateien müssen nicht
+jedes Mal hineingezogen werden. Eine von Hand abgelegte `.xdf` wird dort gespeichert,
+Firmware-Abbilder nicht: ein Abbild hineinzuziehen heißt meist hinsehen, nicht hinterlegen.
+
+Der Container bindet dafür `./data` ein. Er lauscht auf allen Schnittstellen, deshalb wird
+das Schreiben dort abgelehnt, solange `ALLOW_REMOTE_WRITES=1` nicht gesetzt ist — was
+`docker-compose.yml` offen tut. Ohne Datenverzeichnis gibt es gar keine Bibliothek, und die
+Seite verhält sich genau wie zuvor.
+
 ### Eine .bin ohne ihre .xdf
 
 Die Karte bietet stattdessen eine Plattform-Vorgabe an: die eingebaute Adresse des

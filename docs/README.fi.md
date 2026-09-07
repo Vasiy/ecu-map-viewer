@@ -85,6 +85,18 @@ korttikohtaisesti.
 Valinnat muistetaan tiedostonimen mukaan, joten sama firmware löytää määrittelynsä ensi
 kerralla uudestaan.
 
+### Laitteelle jäävät tiedostot
+
+Kun käynnistyksessä annetaan datahakemisto — `python3 serve.py --data ~/firmware` — katselin
+näyttää myös sen, mitä siellä jo on, ja lataa tiedoston yhdellä napsautuksella: samoja
+tiedostoja ei tarvitse raahata joka kerta. Käsin pudotettu `.xdf` tallennetaan sinne,
+firmware-vedokset eivät: vedoksen raahaaminen tarkoittaa yleensä katsomista, ei jättämistä.
+
+Kontti liittää samaan tarkoitukseen `./data`. Se kuuntelee kaikkia rajapintoja, joten
+kirjoitus torjutaan siellä, ellei `ALLOW_REMOTE_WRITES=1` ole asetettu — minkä
+`docker-compose.yml` tekee avoimesti. Ilman datahakemistoa kirjastoa ei ole lainkaan ja sivu
+käyttäytyy täsmälleen kuten ennen.
+
 ### .bin ilman .xdf-tiedostoa
 
 Kortti tarjoaa silloin alustan esiasetusta: sisäänrakennetun osoitteen sytytyksen

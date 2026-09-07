@@ -84,6 +84,19 @@ vous déposez deux définitions ou plus, rien n'est supposé : choisissez carte 
 Vos choix sont retenus par nom de fichier : le même firmware retrouve sa définition au
 chargement suivant.
 
+### Les fichiers gardés sur l'appareil
+
+Avec un répertoire de données — `python3 serve.py --data ~/firmware` — le visualiseur
+affiche aussi ce qui s'y trouve déjà et charge un fichier d'un clic : plus besoin d'y
+glisser les mêmes fichiers à chaque fois. Une `.xdf` déposée à la main y est enregistrée ;
+pas les images de firmware, car en déposer une, c'est généralement la regarder, pas la
+ranger.
+
+Le conteneur monte `./data` dans le même but. Il écoute sur toutes les interfaces, donc
+l'écriture y est refusée tant que `ALLOW_REMOTE_WRITES=1` n'est pas défini — ce que
+`docker-compose.yml` fait ouvertement. Sans répertoire de données, il n'y a aucune
+bibliothèque et la page se comporte exactement comme avant.
+
 ### Un .bin sans son .xdf
 
 La carte propose alors un préréglage de plateforme : l'adresse intégrée de la cartographie

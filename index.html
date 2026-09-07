@@ -34,6 +34,15 @@
       </label>
     </section>
 
+    <!-- only shown when something answers: a static host has no library -->
+    <section id="library" class="library" hidden>
+      <div class="library-head">
+        <span data-i18n="lib.title"></span>
+        <button id="libRefresh" class="ghost" data-i18n="lib.refresh"></button>
+      </div>
+      <div id="libList" class="library-list"></div>
+    </section>
+
     <section class="field">
       <label for="tableSel" data-i18n="table.label"></label>
       <select id="tableSel"></select>
@@ -117,6 +126,7 @@
 <script src="js/xdf.js"></script>
 <script src="js/presets.js"></script>
 <script src="js/links.js"></script>
+<script src="js/store.js"></script>
 <script src="js/roles.js"></script>
 <script src="js/grid.js"></script>
 <script src="js/i18n.js"></script>
