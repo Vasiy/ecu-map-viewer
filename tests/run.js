@@ -317,6 +317,22 @@ test('log replay does not require an X-channel mapping for a 1-D table', functio
   assert.deepStrictEqual(r.chart.predicted, [5, 15]);
 });
 
+test('log replay path carries each point\'s original row index, for scrubbing back to it later', function () {
+  var log = { time: [0, 1, 2, 3], channels: { rpm: [1000, null, 1500, 2000], tps: [0, 5, 5, 10] } };
+  var r = Log.replay(G, log, { x: 'tps', y: 'rpm' });
+  assert.deepStrictEqual(r.path.row, [0, 2, 3]);   // row 1 was skipped (null rpm)
+});
+
+test('log slices to a prefix of rows without touching the source arrays', function () {
+  var log = { columns: ['rpm', 'tps'], time: [0, 1, 2, 3], channels: { rpm: [1, 2, 3, 4], tps: [5, 6, 7, 8] } };
+  var s = Log.sliceTo(log, 2);
+  assert.strictEqual(s.rows, 2);
+  assert.deepStrictEqual(s.time, [0, 1]);
+  assert.deepStrictEqual(s.channels.rpm, [1, 2]);
+  assert.deepStrictEqual(s.channels.tps, [5, 6]);
+  assert.deepStrictEqual(log.time, [0, 1, 2, 3], 'the source log must be untouched');
+});
+
 test('log replay coverage reports the fraction of samples inside the axis extents', function () {
   var log = { time: [0, 1, 2, 3], channels: { rpm: [1000, 1000, 5000, 5000], tps: [0, 0, 0, 0] } };
   // G.y only spans 1000..2000, so half the samples (rpm=5000) fall outside

@@ -106,7 +106,7 @@
     var ys = (mapping.y && log.channels[mapping.y]) || [];
     var time = log.time || [];
     var predicted = [];
-    var path = { x: [], y: [], z: [] };
+    var path = { x: [], y: [], z: [], row: [] };
     var dwell = zeros(grid.rows, grid.cols);
     var diffs = [];
     for (var d = 1; d < time.length; d++) diffs.push(time[d] - time[d - 1]);
@@ -123,7 +123,7 @@
       total++;
       var v = Grid.sample(grid.x, grid.y, grid.z, xv, yv);
       predicted.push(v);
-      path.x.push(xv); path.y.push(yv); path.z.push(v);
+      path.x.push(xv); path.y.push(yv); path.z.push(v); path.row.push(i);
 
       if (xv >= grid.x[0] && xv <= grid.x[grid.x.length - 1] &&
           yv >= grid.y[0] && yv <= grid.y[grid.y.length - 1]) inside++;
@@ -143,11 +143,21 @@
     };
   }
 
+  /* The first n rows of a parsed log -- how the scrub slider replays only
+     what has "happened so far" through the same Log.replay(), with no
+     separate cumulative-dwell code path to keep in sync. */
+  function sliceTo(log, n) {
+    var channels = {};
+    Object.keys(log.channels).forEach(function (k) { channels[k] = log.channels[k].slice(0, n); });
+    return { columns: log.columns, time: log.time.slice(0, n), channels: channels, rows: n };
+  }
+
   return {
     parse: parse,
     defaultAxisChannels: defaultAxisChannels,
     defaultCompareChannel: defaultCompareChannel,
     ROLE_COMPARE: ROLE_COMPARE,
-    replay: replay
+    replay: replay,
+    sliceTo: sliceTo
   };
 });
