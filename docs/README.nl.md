@@ -150,6 +150,35 @@ als 2D-grafiek onder de scène. De schuif verplaatst beide.
 **PNG** bewaart het huidige beeld. De knop **i** rechtsboven geeft een korte beschrijving
 en een link naar deze repository.
 
+## Een rit-log afspelen
+
+Sleep een gedecodeerd logbestand van **onboard-logger** (`.csv`: `time` plus de kanalen die
+die rit vastlegde) naast een geladen firmware, of kies er — als add-on draaiend — een uit
+**Opgeslagen ritten** in het zijpaneel. Wijs twee van de kanalen toe aan de assen van de
+huidige map — toerental en gasklep worden geraden voor de hoofdmaps van ontsteking en
+brandstof wanneer de log beide bevat; elke andere tabel vraagt een handmatige keuze, want
+niets in een XDF zegt welke as wat betekent — en de log speelt zich af door de eigen
+opzoeking van de tabel, cel voor cel.
+
+Drie weergaven onder de scène:
+
+- **Afspelen** — de door de tabel voorspelde waarde in de tijd, naast wat de log er
+  werkelijk voor heeft gemeten (voorontsteking, inspuittijd…). Het verschil tussen beide is
+  elke correctie die de basismap niet toont; een nauwe overeenkomst bij rustig cruisen
+  bevestigt dat de toewijzing en de eenheden kloppen.
+- **Verblijftijd** — een heatmap in de vorm van de map, gekleurd naar hoe lang de rit in elke
+  cel doorbracht.
+- Een **pad** van punten op het vlak zelf, één per meting, aan- en uit te zetten met een
+  vinkje.
+
+Dit is eerlijk over stabiele maps en hun gebruikelijke correcties. Het toont geen tijdelijke
+verrijking bij een plotselinge gasstoot — die correctie draait in de echte firmware op de
+veranderingssnelheid en de toestand van de wandfilm, niet op een opzoeking, en een log die
+eens per seconde bemonstert kan sowieso geen paar honderd milliseconden oplossen.
+
+Afspelen loopt tegelijk tegen elke zichtbare firmware, zodat één rit kan tonen hoe twee
+kalibraties er elk op zouden hebben gereageerd.
+
 ## Taal en uiterlijk
 
 Dertien talen, te kiezen in de kop: English, Čeština, Deutsch, Español, Français, Italiano,

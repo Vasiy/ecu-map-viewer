@@ -148,6 +148,33 @@ firmware'u, i jako wykres 2-D pod sceną. Suwak przesuwa oba.
 **PNG** zapisuje bieżący widok. Przycisk **i** w prawym górnym rogu ma krótki opis i odnośnik
 do tego repozytorium.
 
+## Odtwarzanie dziennika jazdy
+
+Upuść zdekodowany dziennik z **onboard-logger** (`.csv`: `time` plus kanały, które ten
+przejazd zarejestrował) obok wczytanego firmware'u albo — działając jako dodatek — wybierz go
+z **Zapisane przejazdy** w panelu bocznym. Przypisz dwa jego kanały do osi bieżącej mapy —
+obroty i przepustnica są zgadywane dla głównych map zapłonu i paliwa, gdy dziennik niesie
+oba; każda inna tablica wymaga ręcznego wyboru, bo nic w XDF nie mówi, co znaczy która oś —
+i dziennik jest odtwarzany przez własne wyszukiwanie tablicy, komórka po komórce.
+
+Trzy widoki pod sceną:
+
+- **Odtwarzanie** — wartość przewidziana przez tablicę w czasie, obok tego, co dziennik
+  faktycznie dla niej zmierzył (wyprzedzenie, czas wtrysku…). Różnica między nimi to każda
+  korekta, której nie pokazuje mapa bazowa; bliska zgodność przy równej jeździe crusingowej
+  potwierdza, że przypisanie i jednostki są poprawne.
+- **Czas przebywania** — mapa cieplna w kształcie tablicy, kolorowana według tego, ile czasu
+  jazda spędziła w każdej komórce.
+- **Trasa** z punktów na samej powierzchni, po jednym na próbkę, włączana zaznaczeniem pola.
+
+To jest uczciwe wobec map w stanie ustalonym i ich zwykłych korekt. Nie pokazuje
+przejściowego wzbogacenia przy gwałtownym otwarciu przepustnicy — ta korekta w prawdziwym
+firmwarze liczy się na podstawie szybkości zmiany i stanu filmu paliwa na ściankach, a nie z
+tablicy, a dziennik próbkowany raz na sekundę i tak nie rozróżni kilkuset milisekund.
+
+Odtwarzanie działa jednocześnie na wszystkich widocznych firmware'ach, więc jeden przejazd
+może pokazać, jak zareagowałaby na niego każda z kalibracji.
+
 ## Język i wygląd
 
 Trzynaście języków, przełączane w nagłówku: English, Čeština, Deutsch, Español, Français,

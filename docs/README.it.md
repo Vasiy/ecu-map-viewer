@@ -150,6 +150,36 @@ firmware, e come grafico 2-D sotto la scena. Il cursore muove entrambi.
 **PNG** salva la vista corrente. Il pulsante **i**, in alto a destra, ha una breve
 descrizione e il link a questo repository.
 
+## Riprodurre un registro di guida
+
+Trascina un registro decodificato di **onboard-logger** (`.csv`: `time` più i canali che
+quell'uscita ha registrato) accanto a un firmware caricato, oppure, in esecuzione come
+componente, scegline uno da **Uscite registrate** nel pannello laterale. Assegna due dei suoi
+canali agli assi della mappa attuale — giri e farfalla vengono indovinati per le mappe
+principali di accensione e carburante quando il registro porta entrambi; ogni altra tabella
+richiede una scelta a mano, perché nulla in un XDF dice cosa significhi ciascun asse — e il
+registro viene riprodotto attraverso la ricerca della tabella stessa, cella per cella.
+
+Tre viste sotto la scena:
+
+- **Riproduzione** — il valore previsto dalla tabella nel tempo, accanto a quanto il
+  registro ha realmente misurato per essa (anticipo, tempo di iniezione…). Lo scarto tra i
+  due è ogni correzione che la mappa base non mostra; una corrispondenza stretta durante una
+  marcia costante conferma che l'assegnazione e le unità sono corrette.
+- **Tempo trascorso** — una heatmap a forma della mappa, colorata in base a quanto tempo la
+  guida ha trascorso in ogni cella.
+- Un **percorso** di punti sulla superficie stessa, uno per campione, attivabile con una
+  casella.
+
+Questo è onesto riguardo alle mappe in regime stazionario e alle loro correzioni consuete.
+Non mostra l'arricchimento transitorio su un colpo di gas improvviso — quella correzione
+gira sulla velocità di variazione e sullo stato del film di parete nel firmware reale, non su
+una ricerca, e un registro campionato una volta al secondo non può comunque risolvere poche
+centinaia di millisecondi.
+
+La riproduzione gira contro tutti i firmware visibili insieme, così una sola guida può
+mostrare come avrebbero risposto due calibrazioni ciascuna.
+
 ## Lingua e aspetto
 
 Tredici lingue, si scelgono nell'intestazione: English, Čeština, Deutsch, Español,

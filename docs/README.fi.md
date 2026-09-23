@@ -152,6 +152,34 @@ Leikkaus näkyy kahdesti: viivana itse pinnoilla, kukin oman firmwarensa värill
 **PNG** tallentaa nykyisen näkymän. Oikean ylänurkan **i**-painike avaa lyhyen kuvauksen ja
 linkin tähän repositorioon.
 
+## Ajolokin toisto
+
+Pudota purettu loki **onboard-loggerista** (`.csv`: `time` sekä kanavat, jotka kyseinen ajo
+tallensi) ladatun firmwaren viereen, tai — lisäosana ajettaessa — valitse yksi kohdasta
+**Tallennetut ajot** sivupaneelissa. Yhdistä kaksi sen kanavaa nykyisen kartan akseleihin —
+kierrosluku ja kaasuläppä arvataan sytytyksen ja polttoaineen pääkartoille, kun loki sisältää
+molemmat; jokainen muu taulukko vaatii käsin tehdyn valinnan, koska mikään XDF:ssä ei kerro,
+mitä kukin akseli tarkoittaa — ja loki toistetaan taulukon oman haun kautta, solu solulta.
+
+Kolme näkymää näkymän alla:
+
+- **Toisto** — taulukon ennustama arvo ajan mukaan, vieressä se, mitä loki todella mittasi
+  sille (ennakko, ruiskutusaika…). Näiden kahden ero on jokainen korjaus, jota peruskartta ei
+  näytä; läheinen yhteensopivuus tasaisella ajolla vahvistaa, että kanavavastaavuus ja
+  yksiköt ovat oikein.
+- **Vietetty aika** — kartan muotoinen lämpökartta, väritetty sen mukaan, kuinka kauan ajo
+  vietti kussakin solussa.
+- **Reitti** pisteistä itse pinnalla, yksi per näyte, päälle kytkettävä valintaruudulla.
+
+Tämä on rehellinen tasaisen kuormituksen kartoista ja niiden tavanomaisista korjauksista. Se
+ei näytä äkillisen kaasunavauksen tilapäistä rikastusta — tuo korjaus lasketaan oikeassa
+firmwaressa muutosnopeuden ja seinämäkalvon tilan perusteella, ei haulla taulukosta, eikä
+kerran sekunnissa näytteistävä loki pystyisi joka tapauksessa erottamaan muutamaa sataa
+millisekuntia.
+
+Toisto käy läpi kaikki näkyvät firmwaret yhtä aikaa, joten yksi ajo voi näyttää, miten kumpikin
+kalibrointi olisi siihen vastannut.
+
 ## Kieli ja ulkoasu
 
 Kolmetoista kieltä, valitaan ylätunnisteesta: English, Čeština, Deutsch, Español, Français,

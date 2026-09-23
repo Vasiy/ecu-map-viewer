@@ -154,6 +154,36 @@ de son firmware, et en graphique 2-D sous la scène. Le curseur déplace les deu
 **PNG** enregistre la vue courante. Le bouton **i**, en haut à droite, donne une courte
 description et le lien vers ce dépôt.
 
+## Rejouer un journal de conduite
+
+Déposez un journal décodé d'**onboard-logger** (`.csv` : `time` plus les canaux que ce trajet
+a enregistrés) à côté d'un firmware chargé, ou, en fonctionnement comme module, choisissez-en
+un dans **Trajets enregistrés** du panneau latéral. Associez deux de ses canaux aux axes de
+la cartographie actuelle — régime et papillon sont devinés pour les cartographies principales
+d'allumage et de carburant quand le journal porte les deux ; toute autre table demande un
+choix à la main, puisque rien dans une XDF ne dit ce que signifie chaque axe — et le journal
+est rejoué à travers la table elle-même, cellule par cellule.
+
+Trois vues sous la scène :
+
+- **Relecture** — la valeur que la table prédit dans le temps, à côté de ce que le journal a
+  réellement mesuré pour elle (avance, temps d'injection…). L'écart entre les deux est
+  chaque correction que la cartographie de base ne montre pas ; une correspondance étroite en
+  croisière stable confirme que l'association et les unités sont correctes.
+- **Temps passé** — une carte de chaleur à la forme de la cartographie, colorée selon le
+  temps passé par le trajet dans chaque cellule.
+- Un **trajet** de points sur la surface elle-même, un par échantillon, activé par une case à
+  cocher.
+
+Cela reste honnête sur les cartographies en régime stable et leurs corrections habituelles.
+Cela ne montre pas l'enrichissement transitoire d'un coup d'accélérateur — cette correction
+tourne sur la vitesse de variation et l'état du film de paroi dans le vrai firmware, pas sur
+une table, et un journal échantillonné une fois par seconde ne peut de toute façon pas
+résoudre quelques centaines de millisecondes.
+
+La relecture tourne contre tous les firmwares visibles à la fois, si bien qu'un seul trajet
+peut montrer comment deux calibrations y auraient chacune répondu.
+
 ## Langue et apparence
 
 Treize langues, au choix dans l'en-tête : English, Čeština, Deutsch, Español, Français,

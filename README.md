@@ -147,6 +147,33 @@ a 2-D chart below the scene. The slider moves both.
 **PNG** saves the current view. The **i** button, top right, has a short description and
 a link to this repository.
 
+## Replay a drive log
+
+Drop a decoded log from **onboard-logger** (`.csv`: `time` plus whichever channels that ride
+recorded) next to a loaded firmware, or, running as the add-on, pick one from **Recorded
+rides** in the sidebar. Map two of its channels onto the current map's axes — RPM and
+throttle are guessed for the ignition and fuel main maps when the log carries both; every
+other table needs a manual choice, since nothing in an XDF says which axis means what — and
+the log replays through the table's own lookup, cell by cell.
+
+Three views below the scene:
+
+- **Replay** — the table's predicted value over time next to what the log actually measured
+  for it (advance, injection period…). The gap between the two is every correction the base
+  map does not show; a close match during steady cruising confirms the mapping and the units
+  are right.
+- **Time spent** — a heatmap shaped like the map, coloured by how long the drive sat in each
+  cell.
+- A **path** of markers on the surface itself, one per sample, toggled by a checkbox.
+
+This is honest about steady-state maps and their usual corrections. It does not show
+transient enrichment on a snapped throttle — that correction runs on the rate of change and
+wall-wetting state in the real firmware, not a lookup, and a log sampled once a second cannot
+resolve a few hundred milliseconds anyway.
+
+Replay runs against every visible firmware at once, so one drive can show how two
+calibrations would each have answered it.
+
 ## Language and appearance
 
 Thirteen languages, picked in the header: English, Čeština, Deutsch, Español, Français,
@@ -216,6 +243,7 @@ the board, so the next press draws the maps straight away.
 | `js/store.js` | where files come from: add-on, library, or drag and drop |
 | `js/roles.js` | title normalising, and matching a map across definitions |
 | `js/grid.js` | ranges, bilinear sampling, difference, cross-sections |
+| `js/log.js` | parses a decoded drive log and replays it through a table's grid |
 | `js/viewer.js` | the Plotly layer: surfaces, contours, axis ranges |
 | `js/app.js` | file loading, datasets, modes, the library panel |
 | `js/i18n.js` | interface strings, 13 locales |

@@ -151,6 +151,36 @@ firmware, y como gráfico 2-D bajo la escena. El deslizador mueve los dos.
 **PNG** guarda la vista actual. El botón **i**, arriba a la derecha, trae una descripción
 corta y el enlace a este repositorio.
 
+## Reproducir un registro de conducción
+
+Suelta un registro decodificado de **onboard-logger** (`.csv`: `time` más los canales que esa
+salida grabó) junto a un firmware cargado, o, ejecutándose como complemento, elige uno de
+**Trayectos grabados** en el panel lateral. Asigna dos de sus canales a los ejes del mapa
+actual — RPM y acelerador se adivinan para los mapas principales de encendido y combustible
+cuando el registro trae ambos; cualquier otra tabla necesita una elección a mano, porque nada
+en un XDF dice qué significa cada eje — y el registro se reproduce a través de la propia
+consulta de la tabla, celda a celda.
+
+Tres vistas bajo la escena:
+
+- **Reproducción** — el valor que predice la tabla a lo largo del tiempo, junto a lo que el
+  registro realmente midió para ella (avance, tiempo de inyección…). La diferencia entre
+  ambos es cada corrección que el mapa base no muestra; una coincidencia cercana en crucero
+  estable confirma que la asignación y las unidades son correctas.
+- **Tiempo pasado** — un mapa de calor con la forma del mapa, coloreado según cuánto tiempo
+  pasó la conducción en cada celda.
+- Una **trayectoria** de puntos sobre la propia superficie, uno por muestra, activable con
+  una casilla.
+
+Esto es honesto sobre los mapas en régimen estable y sus correcciones habituales. No muestra
+el enriquecimiento transitorio de un acelerón brusco — esa corrección corre sobre la
+velocidad de cambio y el estado de la película de pared en el firmware real, no sobre una
+consulta, y un registro muestreado una vez por segundo no puede resolver unos pocos cientos
+de milisegundos de todas formas.
+
+La reproducción corre contra todos los firmwares visibles a la vez, así que una sola
+conducción puede mostrar cómo habría respondido cada calibración.
+
 ## Idioma y apariencia
 
 Trece idiomas, se eligen en la cabecera: English, Čeština, Deutsch, Español, Français,

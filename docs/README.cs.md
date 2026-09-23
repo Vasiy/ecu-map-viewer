@@ -144,6 +144,33 @@ Posuvník hýbe obojím.
 **PNG** uloží aktuální pohled. Tlačítko **i** vpravo nahoře nabízí krátký popis a odkaz na
 tento repozitář.
 
+## Přehrání záznamu jízdy
+
+Přetáhněte dekódovaný záznam z **onboard-logger** (`.csv`: `time` a kanály, které ta jízda
+zaznamenala) vedle načteného firmwaru, nebo si ho — při běhu jako doplněk — vyberte z
+**Uložené jízdy** v bočním panelu. Přiřaďte dva jeho kanály k osám aktuální mapy — otáčky a
+škrticí klapka se odhadují pro hlavní mapy zapalování a paliva, když záznam nese oba; každá
+jiná tabulka potřebuje ruční volbu, protože nic v XDF neříká, co která osa znamená — a
+záznam se přehrává přes vlastní vyhledávání tabulky, buňku po buňce.
+
+Tři pohledy pod scénou:
+
+- **Přehrávání** — hodnota, kterou tabulka předpovídá v čase, vedle toho, co pro ni záznam
+  skutečně naměřil (předstih, doba vstřiku…). Rozdíl mezi oběma je každá korekce, kterou
+  základní mapa neukazuje; těsná shoda při rovnoměrné jízdě potvrzuje, že přiřazení i
+  jednotky jsou správné.
+- **Strávený čas** — teplotní mapa ve tvaru tabulky, obarvená podle toho, kolik času jízda
+  strávila v každé buňce.
+- **Trasa** z bodů přímo na ploše, jeden na vzorek, zapínaná zaškrtávátkem.
+
+To je poctivé vůči mapám v ustáleném stavu a jejich obvyklým korekcím. Neukazuje přechodné
+obohacení při prudkém sešlápnutí plynu — tato korekce se ve skutečném firmwaru počítá podle
+rychlosti změny a stavu palivového filmu na stěnách, ne podle tabulky, a záznam vzorkovaný
+jednou za sekundu stejně nedokáže rozlišit pár set milisekund.
+
+Přehrávání běží proti všem viditelným firmwarům najednou, takže jedna jízda může ukázat, jak
+by na ni odpověděla každá ze dvou kalibrací.
+
 ## Jazyk a vzhled
 
 Třináct jazyků, přepínají se v záhlaví: English, Čeština, Deutsch, Español, Français,

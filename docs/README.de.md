@@ -149,6 +149,36 @@ Firmware, und als 2-D-Diagramm unter der Szene. Der Schieber bewegt beides.
 **PNG** sichert die aktuelle Ansicht. Der Knopf **i** oben rechts zeigt eine kurze
 Beschreibung und den Link zu diesem Repository.
 
+## Fahrprotokoll abspielen
+
+Ziehen Sie ein dekodiertes Protokoll von **onboard-logger** (`.csv`: `time` plus die Kanäle,
+die diese Fahrt aufgezeichnet hat) neben eine geladene Firmware, oder wählen Sie es — als
+Add-on gestartet — aus **Aufgezeichnete Fahrten** in der Seitenleiste. Ordnen Sie zwei seiner
+Kanäle den Achsen des aktuellen Kennfelds zu — Drehzahl und Drosselklappe werden für die
+Zündungs- und Kraftstoff-Hauptkennfelder geraten, wenn das Protokoll beide führt; jede andere
+Tabelle braucht eine Wahl von Hand, denn keine XDF sagt, welche Achse was bedeutet —, und das
+Protokoll läuft Zelle für Zelle durch den eigenen Nachschlag des Kennfelds.
+
+Drei Ansichten unter der Szene:
+
+- **Wiedergabe** — der vorhergesagte Wert des Kennfelds über die Zeit, daneben was das
+  Protokoll dafür tatsächlich gemessen hat (Zündwinkel, Einspritzzeit …). Der Abstand
+  zwischen beiden ist jede Korrektur, die das Grundkennfeld nicht zeigt; eine enge
+  Übereinstimmung bei ruhiger Fahrt bestätigt, dass Zuordnung und Einheiten stimmen.
+- **Verweildauer** — eine Heatmap in der Form des Kennfelds, gefärbt danach, wie lange die
+  Fahrt in jeder Zelle verbrachte.
+- Ein **Fahrweg** aus Punkten auf der Fläche selbst, einer je Messwert, per Häkchen ein- und
+  ausschaltbar.
+
+Das ist ehrlich über stationäre Kennfelder und ihre üblichen Korrekturen. Es zeigt keine
+Anreicherung bei einem plötzlichen Gasstoß — diese Korrektur läuft in der echten Firmware
+über die Änderungsrate und den Zustand des Wandfilms, nicht über einen Nachschlag, und ein
+einmal pro Sekunde abgetastetes Protokoll kann ohnehin keine paar hundert Millisekunden
+auflösen.
+
+Die Wiedergabe läuft gleichzeitig gegen jede sichtbare Firmware, sodass eine Fahrt zeigen
+kann, wie zwei Kalibrierungen jeweils darauf reagiert hätten.
+
 ## Sprache und Darstellung
 
 Dreizehn Sprachen, umschaltbar in der Kopfzeile: English, Čeština, Deutsch, Español,

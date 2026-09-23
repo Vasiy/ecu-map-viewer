@@ -143,6 +143,33 @@ gånger: som en linje på själva ytorna, var och en i sin firmwares färg, och 
 **PNG** sparar den aktuella vyn. Knappen **i** uppe till höger ger en kort beskrivning och
 en länk till detta arkiv.
 
+## Spela upp en körlogg
+
+Släpp en avkodad logg från **onboard-logger** (`.csv`: `time` plus de kanaler den körningen
+spelade in) bredvid en inläst firmware, eller — när den körs som tillägg — välj en från
+**Sparade körningar** i sidopanelen. Koppla två av dess kanaler till axlarna på den aktuella
+kartan — varvtal och gasspjäll gissas för huvudkartorna för tändning och bränsle när loggen
+har båda; varje annan tabell behöver ett val för hand, eftersom inget i en XDF säger vad
+varje axel betyder — och loggen spelas upp genom tabellens egen uppslagning, cell för cell.
+
+Tre vyer under scenen:
+
+- **Uppspelning** — tabellens förutsagda värde över tid, bredvid vad loggen faktiskt mätte
+  för den (förtändning, insprutningstid …). Skillnaden mellan de två är varje korrigering som
+  bas­kartan inte visar; en nära överensstämmelse vid jämn körning bekräftar att kopplingen
+  och enheterna stämmer.
+- **Tid i cellen** — en värmekarta formad som kartan, färgad efter hur lång tid körningen
+  tillbringade i varje cell.
+- En **körväg** av punkter på ytan själv, en per mätvärde, som slås på med en kryssruta.
+
+Det här är ärligt om kartor vid stabilt varvtal och deras vanliga korrigeringar. Det visar
+inte tillfällig anrikning vid ett tvärt gaspådrag — den korrigeringen räknas i den riktiga
+firmwaren på förändringstakten och väggfilmens tillstånd, inte på en uppslagning, och en logg
+som samplar en gång i sekunden kan ändå inte urskilja några hundra millisekunder.
+
+Uppspelningen körs mot alla synliga firmware samtidigt, så en enda körning kan visa hur två
+kalibreringar var för sig skulle ha svarat på den.
+
 ## Språk och utseende
 
 Tretton språk, valda i sidhuvudet: English, Čeština, Deutsch, Español, Français, Italiano,
