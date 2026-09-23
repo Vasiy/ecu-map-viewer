@@ -18,6 +18,7 @@ var I18N = require(path.join(ROOT, 'js/i18n.js'));
 var Roles = require(path.join(ROOT, 'js/roles.js'));
 var Links = require(path.join(ROOT, 'js/links.js'));
 var Store = require(path.join(ROOT, 'js/store.js'));
+var Log = require(path.join(ROOT, 'js/log.js'));
 var Fixtures = require('./fixtures.js');
 var SAMPLE_XDF = Fixtures.SAMPLE_XDF, sampleImage = Fixtures.sampleImage;
 
@@ -197,6 +198,123 @@ test('grid slice interpolates between rows', function () {
 test('grid padded range keeps a flat map visible', function () {
   var flat = Grid.padded([12, 12]);
   assert.ok(flat[1] > flat[0]);
+});
+
+/* ---------- log ---------- */
+
+test('log parses columns, elapsed time and numeric cells', function () {
+  var text = 'time,rpm,throttle\n' +
+    '2026-09-09T11:27:33.774,1000,5\n' +
+    '2026-09-09T11:27:34.774,1200,7\n';
+  var l = Log.parse(text);
+  assert.deepStrictEqual(l.columns, ['rpm', 'throttle']);
+  assert.strictEqual(l.rows, 2);
+  assert.deepStrictEqual(l.time, [0, 1]);
+  assert.deepStrictEqual(l.channels.rpm, [1000, 1200]);
+  assert.deepStrictEqual(l.channels.throttle, [5, 7]);
+});
+
+test('log turns a blank or non-numeric cell into null, never 0', function () {
+  var text = 'time,rpm,throttle\n2026-09-09T11:27:33.774,,5\n2026-09-09T11:27:34.774,x,6\n';
+  var l = Log.parse(text);
+  assert.strictEqual(l.channels.rpm[0], null);
+  assert.strictEqual(l.channels.rpm[1], null);
+  assert.strictEqual(l.channels.throttle[0], 5);
+});
+
+test('log drops a row with an unparsable timestamp', function () {
+  var text = 'time,rpm\n' +
+    '2026-09-09T11:27:33.774,1000\n' +
+    'not-a-date,1100\n' +
+    '2026-09-09T11:27:35.774,1200\n';
+  var l = Log.parse(text);
+  assert.strictEqual(l.rows, 2);
+  assert.deepStrictEqual(l.channels.rpm, [1000, 1200]);
+});
+
+test('log tolerates CRLF line endings', function () {
+  var text = 'time,rpm\r\n2026-09-09T11:27:33.774,1000\r\n2026-09-09T11:27:34.774,1100\r\n';
+  var l = Log.parse(text);
+  assert.strictEqual(l.rows, 2);
+  assert.deepStrictEqual(l.channels.rpm, [1000, 1100]);
+});
+
+test('log with only a header parses to zero rows', function () {
+  var l = Log.parse('time,rpm,throttle\n');
+  assert.strictEqual(l.rows, 0);
+  assert.deepStrictEqual(l.columns, ['rpm', 'throttle']);
+});
+
+test('log parses an empty file to zero rows and no columns', function () {
+  var l = Log.parse('');
+  assert.strictEqual(l.rows, 0);
+  assert.deepStrictEqual(l.columns, []);
+});
+
+test('log default-maps rpm/throttle onto the main maps when both are present', function () {
+  assert.deepStrictEqual(Log.defaultAxisChannels('@ign-main', ['rpm', 'throttle', 'coolant_t']),
+    { x: 'throttle', y: 'rpm' });
+  assert.deepStrictEqual(Log.defaultAxisChannels('@fuel-main', ['rpm', 'throttle']),
+    { x: 'throttle', y: 'rpm' });
+});
+
+test('log leaves axes unmapped when a main-map channel is missing or the table is a correction', function () {
+  assert.deepStrictEqual(Log.defaultAxisChannels('@ign-main', ['rpm']), { x: '', y: '' });
+  assert.deepStrictEqual(Log.defaultAxisChannels('@ign-air', ['rpm', 'throttle']), { x: '', y: '' });
+  assert.deepStrictEqual(Log.defaultAxisChannels(null, ['rpm', 'throttle']), { x: '', y: '' });
+});
+
+test('log prefers live advance2 over latched advance as the default ignition compare channel', function () {
+  assert.strictEqual(Log.defaultCompareChannel('@ign-main', ['advance', 'advance2']), 'advance2');
+  assert.strictEqual(Log.defaultCompareChannel('@ign-main', ['advance']), 'advance');
+  assert.strictEqual(Log.defaultCompareChannel('@ign-engine', ['advance2']), 'advance2');
+});
+
+test('log compares fuel roles against injector pulse width', function () {
+  assert.strictEqual(Log.defaultCompareChannel('@fuel-main', ['inj_period']), 'inj_period');
+  assert.strictEqual(Log.defaultCompareChannel('@fuel-warm', ['inj_period']), 'inj_period');
+});
+
+test('log gives the transient delta roles no default compare channel', function () {
+  assert.strictEqual(Log.defaultCompareChannel('@ign-delta', ['advance', 'advance2']), '');
+  assert.strictEqual(Log.defaultCompareChannel('@fuel-delta', ['inj_period']), '');
+});
+
+test('log replay predicts the same value Grid.sample would for each mapped row', function () {
+  var log = { time: [0, 1], channels: { rpm: [1000, 1500], tps: [0, 10] } };
+  var r = Log.replay(G, log, { x: 'tps', y: 'rpm' });
+  assert.strictEqual(r.chart.predicted[0], Grid.sample(G.x, G.y, G.z, 0, 1000));
+  assert.strictEqual(r.chart.predicted[1], Grid.sample(G.x, G.y, G.z, 10, 1500));
+});
+
+test('log replay skips a row with a missing channel value', function () {
+  var log = { time: [0, 1, 2], channels: { rpm: [1000, null, 1500], tps: [0, 5, 10] } };
+  var r = Log.replay(G, log, { x: 'tps', y: 'rpm' });
+  assert.strictEqual(r.chart.predicted[1], null);
+  assert.strictEqual(r.path.x.length, 2);   // the null row is excluded, not padded
+});
+
+test('log replay treats a channel missing from the log entirely as no data', function () {
+  var log = { time: [0, 1], channels: { rpm: [1000, 1100] } };   // no tps column at all
+  var r = Log.replay(G, log, { x: 'tps', y: 'rpm' });
+  assert.deepStrictEqual(r.chart.predicted, [null, null]);
+  assert.strictEqual(r.path.x.length, 0);
+  assert.strictEqual(r.coverage, null);
+});
+
+test('log replay dwell seconds sum to about the log\'s own sample spacing', function () {
+  var log = { time: [0, 1, 2, 3], channels: { rpm: [1000, 1000, 1000, 1000], tps: [0, 0, 0, 0] } };
+  var r = Log.replay(G, log, { x: 'tps', y: 'rpm' });
+  var total = 0;
+  r.dwell.seconds.forEach(function (row) { row.forEach(function (s) { total += s; }); });
+  assert.ok(Math.abs(total - 4) < 1e-9, total);
+});
+
+test('log replay coverage reports the fraction of samples inside the axis extents', function () {
+  var log = { time: [0, 1, 2, 3], channels: { rpm: [1000, 1000, 5000, 5000], tps: [0, 0, 0, 0] } };
+  // G.y only spans 1000..2000, so half the samples (rpm=5000) fall outside
+  var r = Log.replay(G, log, { x: 'tps', y: 'rpm' });
+  assert.strictEqual(r.coverage, 0.5);
 });
 
 /* ---------- roles ---------- */
