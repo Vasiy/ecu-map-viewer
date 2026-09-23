@@ -183,8 +183,8 @@ await page.evaluate(async () => {
   document.getElementById('drop').dispatchEvent(new DragEvent('drop', { dataTransfer: dt, bubbles: true }));
 });
 await page.waitForTimeout(1200);
-report.presetSelects = await page.locator('.ds .preset').count();
-await page.locator('.ds .preset').first().selectOption('mts1100');
+report.presetSelects = await page.locator('.ds .defsel').count();
+await page.locator('.ds .defsel').first().selectOption('preset:mts1100');
 await page.waitForTimeout(900);
 report.tracesAfterPreset = await page.evaluate(() =>
   document.getElementById('plot').data.filter((d) => d.type === 'surface').length);
