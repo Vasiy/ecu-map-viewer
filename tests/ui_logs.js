@@ -143,19 +143,28 @@ async function main() {
     assert.strictEqual(S.Plotly.counts.react, 0);
   });
 
-  await test('the 3-D canvas resizes when the log panel appears, so a stale canvas cannot cover its controls', async () => {
+  await test('#logWrap is already the right size before the scene draws into it, not resized after', async () => {
+    // a resize() fired once the container had already shrunk -- after
+    // Viewer.draw() ran at the OLD size -- broke the gl3d scene's own
+    // drag-to-orbit handling for the rest of the session, on every Plotly
+    // version this was tried against, and no relayout or second react()
+    // afterward brought it back. #logWrap's hidden state is decided before
+    // draw() runs instead, so draw() lays out at the real final size in one
+    // pass and no corrective resize is needed for this transition at all.
     const S = makeSandbox();
     await settle();
+    assert.strictEqual(S.document.getElementById('logWrap').hidden, true);
     await drop(S, [file('granpasso.bin', Buffer.from(sampleImage())), file('granpasso.xdf', SAMPLE_XDF)]);
     await settle();
+    assert.strictEqual(S.document.getElementById('logWrap').hidden, true, 'no log loaded yet');
     S.Plotly.counts.resize = 0;
     await drop(S, [file('ride.csv', RIDE_CSV)]);
     await settle();
-    assert.ok(S.Plotly.counts.resize > 0, 'no resize when the log panel first appeared');
-    S.Plotly.counts.resize = 0;
+    assert.strictEqual(S.document.getElementById('logWrap').hidden, false);
+    assert.strictEqual(S.Plotly.counts.resize, 0, 'draw() alone should size it, not a follow-up resize');
     S.document.getElementById('logClear').fire('click');
     await settle();
-    assert.ok(S.Plotly.counts.resize > 0, 'no resize when the log panel disappeared');
+    assert.strictEqual(S.document.getElementById('logWrap').hidden, true);
   });
 
   await test('hiding a dataset on the dwell tab drops its stale heatmap instead of leaving it behind', async () => {

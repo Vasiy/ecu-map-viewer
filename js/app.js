@@ -372,7 +372,14 @@
   /* Moves the shared timeline without rebuilding anything: the playhead line
      restyles, the path highlight restyles, and only the dwell panel -- which
      has no per-trace restyle of its own -- redraws, and only while it is the
-     one actually on screen. */
+     one actually on screen.
+
+     The path highlight is skipped while the user has a mouse or touch down on
+     the scene: a restyle mid-drag does not just jitter the camera, it kills
+     the drag outright -- Plotly's gl3d orbit control never sees the rest of
+     the gesture, so a ride playing back left the 3-D view impossible to
+     rotate, pan or zoom for as long as play kept ticking. The highlight
+     simply catches up on release. */
   function updateLogScrub() {
     if (!state.log.doc) return;
     var t0 = state.log.doc.time[state.log.scrub];
@@ -380,7 +387,7 @@
     if (el.logChart && el.logChart.data && el.logChart.data.length) {
       Viewer.setReplayPlayhead(el.logChart, t0, { theme: state.theme });
     }
-    Viewer.setPathHighlight(el.plot, lastItems, state.log.scrub, { theme: state.theme });
+    if (!plotInteracting) Viewer.setPathHighlight(el.plot, lastItems, state.log.scrub, { theme: state.theme });
     if (state.log.view === 'dwell') renderLogDwellPanels(lastItems);
   }
 
@@ -505,17 +512,13 @@
   }
 
   /* One shared panel below the stage, toggled between the replay chart and
-     the dwell heatmaps -- both at once does not fit next to the 3-D scene. */
+     the dwell heatmaps -- both at once does not fit next to the 3-D scene.
+     Its own hidden state is already settled in renderPlot(), before draw(),
+     so #plot lays out at its real final size in one pass -- see the comment
+     there for why. This only fills in the panel's content. */
   function renderLogChartPanel(items) {
     if (!el.logWrap) return;
-    var wasHidden = el.logWrap.hidden;
-    var ready = items.some(function (i) { return i.replay; });
-    el.logWrap.hidden = !ready;
-    // #plot's canvas keeps whatever pixel size Plotly last gave it; appearing
-    // or disappearing changes how much height is left for the 3-D scene, and
-    // only a resize call makes the canvas catch up -- otherwise a stale,
-    // oversized canvas sits on top of this panel's own controls
-    if (el.logWrap.hidden !== wasHidden) window.Plotly.Plots.resize(el.plot);
+    var ready = !el.logWrap.hidden;
     if (!ready) return;
     if (state.log.scrub > state.log.doc.rows - 1) state.log.scrub = state.log.doc.rows - 1;
     el.logScrub.max = String(Math.max(0, state.log.doc.rows - 1));
@@ -862,6 +865,7 @@
   var lastItems = [];
   var curveMode = false;
   var playTimer = null;   // the scrub timeline's play/pause interval, if running
+  var plotInteracting = false;   // true while the mouse/touch is down on #plot
 
   /* A table with a single column is a curve, not a surface: plot it as one. */
   function isCurve(items) {
@@ -889,6 +893,19 @@
     el.empty.textContent = state.mode === 'diff' && items.length === 0
       ? t('plot.diff_need_base')
       : t('plot.empty');
+
+    // #logWrap's own share of the stage is settled before draw(), not after:
+    // a Plotly.react() that runs while the container is still the OLD size,
+    // followed by a resize() once it catches up, left the gl3d scene's own
+    // drag-to-orbit handling broken for the rest of the session on every
+    // Plotly version this was tried against -- no relayout or second react()
+    // afterward brought it back. Deciding the box size first and letting
+    // draw() lay out into the size it will actually have sidesteps it
+    // instead of trying to recover from it.
+    if (el.logWrap) {
+      var logReady = items.some(function (i) { return i.replay; });
+      el.logWrap.hidden = !logReady;
+    }
 
     if (curveMode) {
       el.plot.hidden = true;
@@ -1235,6 +1252,23 @@
     el.tableSel.addEventListener('change', function (ev) {
       state.tableKey = ev.target.value;
       renderAll();
+    });
+
+    // mouseup/touchend go on document, not #plot -- a drag released past the
+    // canvas edge (easy to do while orbiting) must still clear the flag
+    el.plot.addEventListener('mousedown', function () { plotInteracting = true; });
+    el.plot.addEventListener('touchstart', function () { plotInteracting = true; });
+    ['mouseup', 'touchend'].forEach(function (evt) {
+      document.addEventListener(evt, function () {
+        if (!plotInteracting) return;
+        plotInteracting = false;
+        // deferred, not called from inside the mouseup handler itself: a
+        // restyle fired synchronously on release raced Plotly's own mouseup
+        // handling and discarded the rotation the drag had just produced --
+        // the exact same interruption the play-tick guard exists to avoid,
+        // just triggered by the release instead of a tick
+        onNextFrame('logScrub', updateLogScrub);
+      });
     });
 
     el.modeBtns.forEach(function (btn) {
