@@ -194,15 +194,18 @@ function makeSandbox(opts = {}) {
     navigator: { languages: ['en'] },
     matchMedia: () => ({ matches: false, addEventListener() {}, addListener() {} }),
     fetch: opts.fetch || (() => Promise.reject(new Error('offline'))),
-    Plotly: {
-      counts: { react: 0, update: 0, restyle: 0 },
-      react() { this.counts.react++; return Promise.resolve(); },
-      update() { this.counts.update++; return Promise.resolve(); },
-      restyle() { this.counts.restyle++; return Promise.resolve(); },
-      relayout: () => Promise.resolve(),
-      downloadImage: () => Promise.resolve(),
-      Plots: { resize: () => {} },
-    },
+    Plotly: (() => {
+      const counts = { react: 0, update: 0, restyle: 0, resize: 0 };
+      return {
+        counts,
+        react: () => { counts.react++; return Promise.resolve(); },
+        update: () => { counts.update++; return Promise.resolve(); },
+        restyle: () => { counts.restyle++; return Promise.resolve(); },
+        relayout: () => Promise.resolve(),
+        downloadImage: () => Promise.resolve(),
+        Plots: { resize: () => { counts.resize++; } },
+      };
+    })(),
   };
   sandbox.window = sandbox;
   sandbox.self = sandbox;

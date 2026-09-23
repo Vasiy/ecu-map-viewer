@@ -447,8 +447,14 @@
      the dwell heatmaps -- both at once does not fit next to the 3-D scene. */
   function renderLogChartPanel(items) {
     if (!el.logWrap) return;
+    var wasHidden = el.logWrap.hidden;
     var ready = items.some(function (i) { return i.replay; });
     el.logWrap.hidden = !ready;
+    // #plot's canvas keeps whatever pixel size Plotly last gave it; appearing
+    // or disappearing changes how much height is left for the 3-D scene, and
+    // only a resize call makes the canvas catch up -- otherwise a stale,
+    // oversized canvas sits on top of this panel's own controls
+    if (el.logWrap.hidden !== wasHidden) window.Plotly.Plots.resize(el.plot);
     if (!ready) return;
     var showReplay = state.log.view !== 'dwell';
     el.logChart.hidden = !showReplay;

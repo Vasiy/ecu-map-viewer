@@ -135,12 +135,27 @@ async function main() {
     await settle();
     await drop(S, [file('ride.csv', RIDE_CSV)]);
     await settle();
-    S.Plotly.counts = { react: 0, update: 0, restyle: 0 };
+    Object.assign(S.Plotly.counts, { react: 0, update: 0, restyle: 0 });
     S.document.getElementById('dsList').children[0].querySelector('.vis').fire('change',
       { target: { checked: false } });
     await settle();
     assert.strictEqual(S.Plotly.counts.update, 1);
     assert.strictEqual(S.Plotly.counts.react, 0);
+  });
+
+  await test('the 3-D canvas resizes when the log panel appears, so a stale canvas cannot cover its controls', async () => {
+    const S = makeSandbox();
+    await settle();
+    await drop(S, [file('granpasso.bin', Buffer.from(sampleImage())), file('granpasso.xdf', SAMPLE_XDF)]);
+    await settle();
+    S.Plotly.counts.resize = 0;
+    await drop(S, [file('ride.csv', RIDE_CSV)]);
+    await settle();
+    assert.ok(S.Plotly.counts.resize > 0, 'no resize when the log panel first appeared');
+    S.Plotly.counts.resize = 0;
+    S.document.getElementById('logClear').fire('click');
+    await settle();
+    assert.ok(S.Plotly.counts.resize > 0, 'no resize when the log panel disappeared');
   });
 
   console.log('\n' + passed + ' passed, ' + failed + ' failed');
