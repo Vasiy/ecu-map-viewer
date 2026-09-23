@@ -199,7 +199,7 @@ function makeSandbox(opts = {}) {
   sandbox.self = sandbox;
   vm.createContext(sandbox);
   for (const src of ['js/xml.js', 'js/expr.js', 'js/binio.js', 'js/xdf.js',
-    'js/presets.js', 'js/links.js', 'js/store.js', 'js/roles.js', 'js/grid.js', 'js/i18n.js',
+    'js/presets.js', 'js/links.js', 'js/store.js', 'js/roles.js', 'js/grid.js', 'js/log.js', 'js/i18n.js',
     'js/viewer.js', 'js/app.js']) {
     vm.runInContext(read(src), sandbox, { filename: path.basename(src) });
   }

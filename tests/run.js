@@ -310,6 +310,13 @@ test('log replay dwell seconds sum to about the log\'s own sample spacing', func
   assert.ok(Math.abs(total - 4) < 1e-9, total);
 });
 
+test('log replay does not require an X-channel mapping for a 1-D table', function () {
+  var oneCol = { rows: 2, cols: 1, x: [0], y: [1000, 2000], z: [[5], [15]] };
+  var log = { time: [0, 1], channels: { rpm: [1000, 2000] } };
+  var r = Log.replay(oneCol, log, { x: '', y: 'rpm' });
+  assert.deepStrictEqual(r.chart.predicted, [5, 15]);
+});
+
 test('log replay coverage reports the fraction of samples inside the axis extents', function () {
   var log = { time: [0, 1, 2, 3], channels: { rpm: [1000, 1000, 5000, 5000], tps: [0, 0, 0, 0] } };
   // G.y only spans 1000..2000, so half the samples (rpm=5000) fall outside
@@ -549,6 +556,37 @@ atest('the addon reads images from the logger and definitions from its own store
   }).then(function (text) {
     assert.strictEqual(text, '<XDFFORMAT/>');
   });
+});
+
+atest('the addon lists decoded logs newest first', function () {
+  var f = fakeFetch({
+    '/api/logs?kind=decoded': { files: [
+      { name: '09-09-2026/kline-dec-a.csv', day: '09-09-2026', size: 10, mtime: 1 },
+      { name: '10-09-2026/kline-dec-b.csv', day: '10-09-2026', size: 20, mtime: 5 }
+    ] }
+  });
+  var st = Store.addonStore(f, 'maps');
+  return st.logs.list().then(function (files) {
+    assert.deepStrictEqual(files.map(function (x) { return x.name; }),
+      ['10-09-2026/kline-dec-b.csv', '09-09-2026/kline-dec-a.csv']);
+  });
+});
+
+atest('a decoded log keeps its day-folder slash but percent-encodes the file name', function () {
+  var f = fakeFetch({
+    '/api/logs/09-09-2026/kline-dec-a%20b.csv/data': { name: '09-09-2026/kline-dec-a b.csv', text: 'time,rpm\n' }
+  });
+  var st = Store.addonStore(f, 'maps');
+  return st.logs.read({ name: '09-09-2026/kline-dec-a b.csv' }).then(function (text) {
+    assert.strictEqual(text, 'time,rpm\n');
+    assert.deepStrictEqual(f.calls.map(function (c) { return c.url; }),
+      ['/api/logs/09-09-2026/kline-dec-a%20b.csv/data']);
+  });
+});
+
+atest('the library and drag-and-drop stores offer no logs accessor', function () {
+  assert.strictEqual(Store.libraryStore(fakeFetch({})).logs, null);
+  assert.strictEqual(Store.noneStore().logs, null);
 });
 
 atest('a library write and delete address the file endpoint', function () {

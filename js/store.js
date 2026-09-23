@@ -59,7 +59,8 @@
       list: function () { return Promise.resolve({ bins: [], defs: [] }); },
       read: readOnly,
       write: readOnly,
-      remove: readOnly
+      remove: readOnly,
+      logs: null
     };
   }
 
@@ -80,7 +81,10 @@
       },
       remove: function (kind, name) {
         return fetch(file(name), { method: 'DELETE' }).then(asJson);
-      }
+      },
+      // onboard-logger's own drive-log API has no equivalent on a plain static
+      // server -- standalone log loading is drag-and-drop only
+      logs: null
     };
   }
 
@@ -118,6 +122,20 @@
       remove: function (kind, file) {
         if (kind !== 'defs') return readOnly();
         return fetch(data(file), { method: 'DELETE' }).then(asJson);
+      },
+      // decoded drive logs: onboard-logger's own /api/logs*, read-only here.
+      // A log's name is "<day>/<file>" -- encoding the whole string would
+      // %2F the slash and 404, so each segment is encoded on its own.
+      logs: {
+        list: function () {
+          return fetch('/api/logs?kind=decoded').then(asJson).then(function (r) {
+            return (r.files || []).slice().sort(function (a, b) { return (b.mtime || 0) - (a.mtime || 0); });
+          });
+        },
+        read: function (entry) {
+          var path = String(entry.name).split('/').map(enc).join('/');
+          return fetch('/api/logs/' + path + '/data').then(asJson).then(function (r) { return r.text; });
+        }
       }
     };
   }

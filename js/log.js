@@ -99,7 +99,10 @@
      path overlay would plot. mapping = { x, y } -- the log channels driving
      the table's two axes. */
   function replay(grid, log, mapping) {
-    var xs = (mapping.x && log.channels[mapping.x]) || [];
+    // a 1-D table's single X breakpoint is what Grid.sample clamps to no
+    // matter what is passed in, so a curve-mode table needs no X mapping
+    var oneX = grid.x.length === 1;
+    var xs = oneX ? null : ((mapping.x && log.channels[mapping.x]) || []);
     var ys = (mapping.y && log.channels[mapping.y]) || [];
     var time = log.time || [];
     var predicted = [];
@@ -112,7 +115,7 @@
     var inside = 0, total = 0;
 
     for (var i = 0; i < time.length; i++) {
-      var xv = xs[i], yv = ys[i];
+      var xv = oneX ? grid.x[0] : xs[i], yv = ys[i];
       if (xv === null || xv === undefined || yv === null || yv === undefined || isNaN(xv) || isNaN(yv)) {
         predicted.push(null);
         continue;
