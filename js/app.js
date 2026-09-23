@@ -14,7 +14,7 @@
 
   var t = window.I18N.t;
   var XDF = window.XDF, Grid = window.Grid, Presets = window.Presets, Viewer = window.Viewer;
-  var Links = window.Links, Store = window.Store;
+  var Links = window.Links, Store = window.Store, Log = window.Log;
 
   var state = {
     datasets: [],
@@ -31,7 +31,15 @@
     seq: 0,
     defSeq: 0,
     store: null,              // where files come from besides drag and drop
-    library: { bins: [], defs: [] }
+    library: { bins: [], defs: [] },
+    log: {
+      doc: null,               // { name, columns, time, channels, rows } | null
+      mapping: {},              // tableKey -> { x, y, compare, seeded }
+      showPath: true,           // the 3-D path-marker toggle
+      view: 'replay',           // 'replay' | 'dwell' -- which panel #logWrap shows
+      available: [],            // addon mode: [{name, day, file, size, mtime}]
+      warnKey: null             // dedupe key for the out-of-range toast
+    }
   };
 
   var el = {};
@@ -206,7 +214,13 @@
 
   function handleFiles(fileList) {
     var files = Array.prototype.slice.call(fileList);
-    var jobs = files.map(function (f) {
+    // a log is neither a dataset nor a definition -- it never reaches ingest()
+    var csv = files.filter(function (f) { return /\.csv$/i.test(f.name); });
+    var rest = files.filter(function (f) { return !/\.csv$/i.test(f.name); });
+    if (csv.length > 1) toast(t('log.multiple_csv'), 'warn');
+    if (csv.length) loadLogFile(csv[0]);
+    if (!rest.length) return;
+    var jobs = rest.map(function (f) {
       var isXdf = /\.xdf$/i.test(f.name);
       return readFile(f, isXdf).then(function (data) {
         return { name: f.name, base: baseName(f.name), isXdf: isXdf, data: data };
@@ -263,6 +277,242 @@
       loadLibrary();
     }, function (e) {
       toast(t('lib.save_failed', { name: item.name, err: e.message }), 'warn');
+    });
+  }
+
+  /* ---------- drive log ---------- */
+
+  function loadLogFile(file) {
+    readFile(file, true).then(function (text) {
+      applyLogText(text, file.name);
+    }).catch(function (e) {
+      toast(String(e && e.message || e), 'error');
+    });
+  }
+
+  function takeLogFromStore(entry) {
+    state.store.logs.read(entry).then(function (text) {
+      applyLogText(text, entry.name);
+    }, function (e) {
+      toast(t('log.read_error', { name: entry.name, err: e.message }), 'error');
+    });
+  }
+
+  function applyLogText(text, name) {
+    var doc;
+    try {
+      doc = Log.parse(text);
+    } catch (e) {
+      toast(t('log.bad_file', { name: name, err: e.message }), 'error');
+      return;
+    }
+    if (!doc.rows) { toast(t('log.empty', { name: name }), 'warn'); return; }
+    doc.name = name;
+    state.log.doc = doc;
+    // a fresh log starts unmapped -- a stale channel choice from a previous
+    // log could silently point at a column this one does not have
+    state.log.mapping = {};
+    state.log.warnKey = null;
+    toast(t('log.loaded', { name: name, rows: doc.rows }));
+    renderAll();
+  }
+
+  function clearLog() {
+    state.log.doc = null;
+    state.log.warnKey = null;
+    renderAll();
+  }
+
+  function mappingFor(tableKey) {
+    return state.log.mapping[tableKey] ||
+      (state.log.mapping[tableKey] = { x: '', y: '', compare: '', seeded: false });
+  }
+
+  /* Only the two main maps have a documented RPM x TPS axis convention, and
+     only until a manual choice is made -- seeded once per table key, never
+     overwritten again so a deliberate blank ("no compare channel") sticks. */
+  function updateLogMapping() {
+    if (!state.log.doc || !state.tableKey) return;
+    var m = mappingFor(state.tableKey);
+    if (m.seeded) return;
+    var axes = Log.defaultAxisChannels(state.tableKey, state.log.doc.columns);
+    m.x = axes.x;
+    m.y = axes.y;
+    m.compare = Log.defaultCompareChannel(state.tableKey, state.log.doc.columns);
+    m.seeded = true;
+  }
+
+  /* param.<key> names a logged channel for display; a raw, unmapped RLI
+     column (r53, r6a...) simply shows its own key, via t()'s own fallback. */
+  function channelLabel(key) {
+    var s = t('param.' + key);
+    return s === 'param.' + key ? key : s;
+  }
+
+  /* Replays the log through every item's own grid, and warns once if most of
+     it falls outside this table's axes -- the sign of a wrong channel or a
+     unit mismatch, not just a drive that did not visit every corner. */
+  function attachLogData(items) {
+    var m = state.log.doc ? state.log.mapping[state.tableKey] : null;
+    var warned = false;
+    items.forEach(function (item) {
+      var oneX = item.grid.x.length === 1;
+      var ready = !!(m && m.y && (m.x || oneX));
+      item.replay = ready ? Log.replay(item.grid, state.log.doc, m) : null;
+      item.path = item.replay ? item.replay.path : null;
+      if (!warned && item.replay && item.replay.coverage !== null && item.replay.coverage < 0.5) {
+        var key = state.tableKey + '|' + m.x + '|' + m.y;
+        if (state.log.warnKey !== key) {
+          warned = true;
+          state.log.warnKey = key;
+          toast(t('log.warn_out_of_range'), 'warn');
+        }
+      }
+    });
+  }
+
+  function fillChannelSelect(sel, columns, value, allowNone) {
+    sel.innerHTML = '';
+    var blank = document.createElement('option');
+    blank.value = '';
+    blank.textContent = allowNone ? t('log.compare_none') : t('log.axis_pick');
+    sel.appendChild(blank);
+    columns.forEach(function (c) {
+      var o = document.createElement('option');
+      o.value = c;
+      o.textContent = channelLabel(c);
+      sel.appendChild(o);
+    });
+    sel.value = value || '';
+  }
+
+  function renderLogInfo() {
+    var box = el.logInfo;
+    if (!box) return;
+    var on = !!state.log.doc;
+    box.hidden = !on;
+    if (!on) return;
+    el.logName.textContent = state.log.doc.name;
+    var m = mappingFor(state.tableKey || '');
+    var cols = state.log.doc.columns;
+    fillChannelSelect(el.logAxisY, cols, m.y, false);
+    fillChannelSelect(el.logAxisX, cols, m.x, false);
+    fillChannelSelect(el.logCompareSel, cols, m.compare, true);
+    el.logShowPath.checked = state.log.showPath;
+  }
+
+  /* The addon's own list of decoded logs -- same visual language as the
+     bins/defs library, shown only while that capability actually answers. */
+  function renderLogPanel() {
+    var box = el.logPanel, list = el.logList;
+    if (!box || !list) return;
+    var on = !!(state.store && state.store.logs);
+    box.hidden = !on;
+    if (!on) return;
+    list.innerHTML = '';
+    if (!state.log.available.length) {
+      var p = document.createElement('p');
+      p.className = 'muted pad';
+      p.textContent = t('log.list_empty');
+      list.appendChild(p);
+      return;
+    }
+    state.log.available.forEach(function (f) {
+      var row = document.createElement('button');
+      row.className = 'library-row';
+      row.type = 'button';
+      row.innerHTML = '<span class="library-name">' + esc(f.name) + '</span>' +
+        '<span class="mono muted">' + esc(fmtSize(f.size)) + '</span>';
+      row.addEventListener('click', function () { takeLogFromStore(f); });
+      list.appendChild(row);
+    });
+  }
+
+  function loadLogListFromStore() {
+    if (!state.store || !state.store.logs) {
+      state.log.available = [];
+      renderLogPanel();
+      return Promise.resolve();
+    }
+    return state.store.logs.list().then(function (files) {
+      state.log.available = files;
+      renderLogPanel();
+    }, function () {
+      state.log.available = [];
+      renderLogPanel();
+    });
+  }
+
+  /* One shared panel below the stage, toggled between the replay chart and
+     the dwell heatmaps -- both at once does not fit next to the 3-D scene. */
+  function renderLogChartPanel(items) {
+    if (!el.logWrap) return;
+    var ready = items.some(function (i) { return i.replay; });
+    el.logWrap.hidden = !ready;
+    if (!ready) return;
+    var showReplay = state.log.view !== 'dwell';
+    el.logChart.hidden = !showReplay;
+    el.logDwellList.hidden = showReplay;
+    if (showReplay) renderLogReplayChart(items); else renderLogDwellPanels(items);
+  }
+
+  /* One predicted line per dataset, always emitted (hidden ones included) so
+     a dataset toggle can restyle a single trace instead of a rebuild -- the
+     same reason the surfaces and the cross-section line do this. */
+  function renderLogReplayChart(items) {
+    var m = state.log.mapping[state.tableKey];
+    var predicted = items.map(function (i) {
+      return {
+        name: t('log.predicted_suffix', { name: i.name }),
+        color: i.color,
+        visible: i.visible && !!i.replay,
+        values: i.replay ? i.replay.chart.predicted : []
+      };
+    });
+    var actual = null;
+    if (m && m.compare && state.log.doc.channels[m.compare]) {
+      actual = {
+        name: t('log.actual_suffix', { name: channelLabel(m.compare) }),
+        values: state.log.doc.channels[m.compare]
+      };
+    }
+    var context = [];
+    if (m && m.y && state.log.doc.channels[m.y]) {
+      context.push({ name: channelLabel(m.y), values: state.log.doc.channels[m.y] });
+    }
+    if (m && m.x && state.log.doc.channels[m.x]) {
+      context.push({ name: channelLabel(m.x), values: state.log.doc.channels[m.x] });
+    }
+    Viewer.drawReplay(el.logChart, {
+      theme: state.theme,
+      time: state.log.doc.time,
+      predicted: predicted,
+      actual: actual,
+      context: context,
+      xTitle: t('log.axis_time'),
+      yTitle: zTitle()
+    });
+  }
+
+  /* Not slider-driven, so a full redraw per dataset is fine -- one small
+     heatmap per visible dataset, since firmwares rarely share breakpoints. */
+  function renderLogDwellPanels(items) {
+    var box = el.logDwellList;
+    box.innerHTML = '';
+    items.filter(function (i) { return i.visible && i.replay; }).forEach(function (item) {
+      var wrap = document.createElement('div');
+      wrap.className = 'log-dwell';
+      var name = document.createElement('p');
+      name.className = 'log-dwell-name';
+      name.textContent = item.name;
+      var plot = document.createElement('div');
+      plot.className = 'log-dwell-plot';
+      wrap.appendChild(name);
+      wrap.appendChild(plot);
+      box.appendChild(wrap);
+      Viewer.drawDwell(plot, {
+        x: item.grid.x, y: item.grid.y, seconds: item.replay.dwell.seconds
+      }, { theme: state.theme, color: item.color });
     });
   }
 
@@ -548,6 +798,7 @@
 
   function renderPlot() {
     var items = buildItems();
+    attachLogData(items);
     lastItems = items;
     var visible = items.filter(function (i) { return i.visible; });
     var wasCurve = curveMode;
@@ -584,6 +835,7 @@
         diff: state.mode === 'diff',
         zTitle: zTitle(),
         slice: sliceSpec(items),
+        showPath: state.log.showPath,
         camera: Viewer.currentCamera(el.plot)
       });
       // only worth a resize when the stage swapped renderers; a plain redraw
@@ -591,6 +843,7 @@
       if (wasCurve) window.Plotly.Plots.resize(el.plot);
     }
     renderSlice(items);
+    renderLogChartPanel(items);
   }
 
   /* The cut the slider currently points at, or null when it is off. */
@@ -773,9 +1026,11 @@
         if (idx >= 0) {
           // toggle in place, then rescale the axis to the visible maps only
           Viewer.setVisible(el.plot, lastItems, idx, ds.visible, {
-            theme: state.theme, slice: sliceSpec(lastItems)
+            theme: state.theme, slice: sliceSpec(lastItems), showPath: state.log.showPath
           });
           renderSlice(lastItems);
+          // a single-trace restyle on the small chart, never a rebuild
+          Viewer.setReplayVisible(el.logChart, idx, ds.visible && !!lastItems[idx].replay);
           var stillVisible = lastItems.some(function (i) { return i.visible; });
           el.empty.hidden = stillVisible;
         } else {
@@ -823,9 +1078,12 @@
   }
 
   function renderAll() {
+    updateLogMapping();
     renderBaseSelect();
     renderSidebar();
     renderLibrary();          // its group headings are translated too
+    renderLogPanel();
+    renderLogInfo();
     renderPlot();
   }
 
@@ -936,6 +1194,36 @@
       el.libRefresh.addEventListener('click', function () { loadLibrary(); });
     }
 
+    if (el.logRefresh) {
+      el.logRefresh.addEventListener('click', function () { loadLogListFromStore(); });
+    }
+
+    el.logClear.addEventListener('click', clearLog);
+
+    ['logAxisY', 'logAxisX'].forEach(function (id, i) {
+      el[id].addEventListener('change', function (ev) {
+        mappingFor(state.tableKey)[i === 0 ? 'y' : 'x'] = ev.target.value;
+        renderPlot();
+      });
+    });
+    el.logCompareSel.addEventListener('change', function (ev) {
+      mappingFor(state.tableKey).compare = ev.target.value;
+      renderLogChartPanel(lastItems);
+    });
+
+    el.logShowPath.addEventListener('change', function (ev) {
+      state.log.showPath = ev.target.checked;
+      renderPlot();
+    });
+
+    el.logViewBtns.forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        state.log.view = btn.dataset.logview;
+        el.logViewBtns.forEach(function (b) { b.setAttribute('aria-pressed', String(b === btn)); });
+        renderLogChartPanel(lastItems);
+      });
+    });
+
     el.btnReset.addEventListener('click', function () { Viewer.resetCamera(el.plot); });
 
     el.btnPng.addEventListener('click', function () {
@@ -965,6 +1253,8 @@
 
   function init() {
     ['file', 'drop', 'tableSel', 'dsList', 'library', 'libList', 'libRefresh',
+      'logPanel', 'logList', 'logRefresh', 'logInfo', 'logName', 'logClear',
+      'logAxisY', 'logAxisX', 'logCompareSel', 'logShowPath', 'logWrap', 'logChart', 'logDwellList',
       'plot', 'curve', 'empty', 'sliceWrap', 'slicePlot',
       'sliceSel', 'sliceRange', 'sliceValue', 'contours', 'opacity', 'baseSel', 'baseField',
       'btnReset', 'btnPng', 'langSel', 'btnTheme', 'btnSide', 'btnInfo', 'about', 'toasts'].forEach(function (id) {
@@ -979,6 +1269,7 @@
       el.plot.parentNode.insertBefore(el.curve, el.plot.nextSibling);
     }
     el.modeBtns = Array.prototype.slice.call(document.querySelectorAll('[data-mode]'));
+    el.logViewBtns = Array.prototype.slice.call(document.querySelectorAll('[data-logview]'));
 
     // no stored choice yet: follow the browser, fall back to English
     var savedTheme = 'dark', savedLang = window.I18N.preferred();
@@ -997,7 +1288,8 @@
     }).then(function (st) {
       state.store = st;
       renderLibrary();
-      return loadLibrary();
+      renderLogPanel();
+      return Promise.all([loadLibrary(), loadLogListFromStore()]);
     }).then(function () {
       return bootFromQuery(window.location && window.location.search);
     });

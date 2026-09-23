@@ -28,8 +28,9 @@
   <aside id="side" class="side">
     <section id="drop" class="drop">
       <p class="muted" data-i18n="files.hint"></p>
+      <p class="muted small" data-i18n="log.hint"></p>
       <label class="btn">
-        <input type="file" id="file" accept=".bin,.xdf" multiple hidden>
+        <input type="file" id="file" accept=".bin,.xdf,.csv" multiple hidden>
         <span data-i18n="files.browse"></span>
       </label>
     </section>
@@ -43,9 +44,42 @@
       <div id="libList" class="library-list"></div>
     </section>
 
+    <!-- only shown running as the addon: onboard-logger's own decoded logs -->
+    <section id="logPanel" class="library" hidden>
+      <div class="library-head">
+        <span data-i18n="log.list_title"></span>
+        <button id="logRefresh" class="ghost" data-i18n="lib.refresh"></button>
+      </div>
+      <div id="logList" class="library-list"></div>
+    </section>
+
     <section class="field">
       <label for="tableSel" data-i18n="table.label"></label>
       <select id="tableSel"></select>
+    </section>
+
+    <!-- only shown once a log (dropped or picked) has been parsed -->
+    <section id="logInfo" class="library" hidden>
+      <div class="library-head">
+        <span id="logName" class="mono"></span>
+        <button id="logClear" class="icon" data-i18n-title="log.clear" aria-label="Clear log">×</button>
+      </div>
+      <section class="field">
+        <label for="logAxisY" data-i18n="log.axis_y"></label>
+        <select id="logAxisY"></select>
+      </section>
+      <section class="field only3d">
+        <label for="logAxisX" data-i18n="log.axis_x"></label>
+        <select id="logAxisX"></select>
+      </section>
+      <section class="field">
+        <label for="logCompareSel" data-i18n="log.compare"></label>
+        <select id="logCompareSel"></select>
+      </section>
+      <label class="inline check">
+        <input type="checkbox" id="logShowPath" checked>
+        <span data-i18n="log.show_path"></span>
+      </label>
     </section>
 
     <section id="dsList" class="ds-list"></section>
@@ -100,6 +134,15 @@
       </div>
       <div id="slicePlot" class="slice-plot"></div>
     </div>
+
+    <div id="logWrap" class="slice" hidden>
+      <div class="seg" role="group">
+        <button data-logview="replay" aria-pressed="true" data-i18n="log.replay_title"></button>
+        <button data-logview="dwell" aria-pressed="false" data-i18n="log.dwell_title"></button>
+      </div>
+      <div id="logChart" class="slice-plot"></div>
+      <div id="logDwellList" class="log-dwell-list" hidden></div>
+    </div>
   </section>
 </main>
 
@@ -129,6 +172,7 @@
 <script src="js/store.js"></script>
 <script src="js/roles.js"></script>
 <script src="js/grid.js"></script>
+<script src="js/log.js"></script>
 <script src="js/i18n.js"></script>
 <script src="js/viewer.js"></script>
 <script src="js/app.js"></script>

@@ -172,6 +172,12 @@ function makeSandbox(opts = {}) {
 
   const sandbox = {
     console,
+    // vm.createContext makes a new realm with its own ArrayBuffer/DataView;
+    // file()'s buffers come from the host realm, and both the `instanceof
+    // ArrayBuffer` check in binio.js and the DataView constructor's own brand
+    // check fail across realms unless the two share the same constructors.
+    ArrayBuffer,
+    DataView,
     document,
     created,
     location: { protocol: 'http:', host: '127.0.0.1:8123',
@@ -189,8 +195,11 @@ function makeSandbox(opts = {}) {
     matchMedia: () => ({ matches: false, addEventListener() {}, addListener() {} }),
     fetch: opts.fetch || (() => Promise.reject(new Error('offline'))),
     Plotly: {
-      react: () => Promise.resolve(), update: () => Promise.resolve(),
-      restyle: () => Promise.resolve(), relayout: () => Promise.resolve(),
+      counts: { react: 0, update: 0, restyle: 0 },
+      react() { this.counts.react++; return Promise.resolve(); },
+      update() { this.counts.update++; return Promise.resolve(); },
+      restyle() { this.counts.restyle++; return Promise.resolve(); },
+      relayout: () => Promise.resolve(),
       downloadImage: () => Promise.resolve(),
       Plots: { resize: () => {} },
     },

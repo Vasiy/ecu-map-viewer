@@ -224,6 +224,39 @@
     return r ? (r[1] - r[0]) * 0.004 : 0;
   }
 
+  /*
+   * A logged drive's samples at (x-channel, y-channel, replayed table value),
+   * lifted the same way the cross-section line is. Markers, not a line: the
+   * log is not dense enough (roughly 1 Hz) to imply continuous motion between
+   * points. Emitted for every item, visible or not, for the same reason the
+   * slice line is -- trace indices stay parallel and a checkbox restyles
+   * rather than rebuilds.
+   */
+  function pathTrace(item, opts) {
+    var on = !!(item.path && item.path.x.length && item.visible && opts.showPath);
+    var lift = opts.pathLift || 0;
+    var unit = item.units ? ' ' + item.units : '';
+    return {
+      type: 'scatter3d',
+      mode: 'markers',
+      name: item.name,
+      x: on ? item.path.x : [],
+      y: on ? item.path.y : [],
+      z: on ? item.path.z.map(function (v) { return v + lift; }) : [],
+      visible: on,
+      showlegend: false,
+      marker: {
+        size: 3,
+        color: mix(item.color, opts.theme === 'light' ? '#101318' : '#ffffff', 0.22)
+      },
+      hovertemplate: '<b>' + item.name + '</b><br>' +
+        t('axis.rpm') + ': %{y:.0f}<br>' +
+        t('axis.tps') + ': %{x}<br>' +
+        t('axis.value') + ': %{z:.' + (item.digits === undefined ? 1 : item.digits) + 'f}' + unit +
+        '<extra></extra>'
+    };
+  }
+
   var CONFIG = {
     displaylogo: false,
     responsive: true,
@@ -260,8 +293,10 @@
 
   function draw(el, items, opts) {
     if (opts.slice) opts.slice.lift = sliceLift(items);
+    var pathOpts = Object.assign({}, opts, { pathLift: sliceLift(items) });
     var traces = items.map(function (i) { return surfaceTrace(i, opts); })
-      .concat(items.map(function (i) { return sliceTrace(i, opts); }));
+      .concat(items.map(function (i) { return sliceTrace(i, opts); }))
+      .concat(items.map(function (i) { return pathTrace(i, pathOpts); }));
     if (!traces.length) traces = [seedTrace()];   // keep the scene warm
     // a single visible surface can afford a colour bar; several would fight
     var vis = items.filter(function (i) { return i.visible; });
@@ -288,22 +323,26 @@
    */
   function setVisible(el, items, index, visible, opts) {
     items[index].visible = visible;
-    var lineIndex = items.length + index;
+    var n = items.length;
+    var lineIndex = n + index;
+    var pathIndex = n * 2 + index;
     var slice = opts && opts.slice;
     var lineOn = visible && !!slice;
-    var style = { visible: [visible, lineOn] };
+    var item = items[index];
+    var pathOn = visible && !!(opts && opts.showPath) && !!(item.path && item.path.x.length);
+    var style = { visible: [visible, lineOn, pathOn] };
     if (lineOn) {
-      var geom = sliceGeometry(items[index], {
+      var geom = sliceGeometry(item, {
         axis: slice.axis, value: slice.value, lift: sliceLift(items)
       });
-      style.x = [undefined, geom.x];
-      style.y = [undefined, geom.y];
-      style.z = [undefined, geom.z];
+      style.x = [undefined, geom.x, undefined];
+      style.y = [undefined, geom.y, undefined];
+      style.z = [undefined, geom.z, undefined];
     }
     return window.Plotly.update(el,
       style,
       { 'scene.zaxis.range': visibleRange(items) },
-      [index, lineIndex]);
+      [index, lineIndex, pathIndex]);
   }
 
   /*
@@ -313,8 +352,11 @@
    */
   function updateSlice(el, items, slice, opts) {
     if (!el || !el.data) return Promise.resolve();
-    // turning an already-off cross-section off again costs a full restyle
-    if (!slice && !el.data.some(function (d) { return d.type === 'scatter3d' && d.visible; })) {
+    var n = items.length;
+    // turning an already-off cross-section off again costs a full restyle.
+    // Scoped to just the slice-line block: path markers are scatter3d too
+    // now, and a visible one must not defeat this short-circuit.
+    if (!slice && !el.data.slice(n, n * 2).some(function (d) { return d.visible; })) {
       return Promise.resolve();
     }
     var indices = [], x = [], y = [], z = [], vis = [];
@@ -322,7 +364,7 @@
     items.forEach(function (item, i) {
       var on = !!slice && item.visible;
       var geom = on ? sliceGeometry(item, { axis: slice.axis, value: slice.value, lift: lift }) : { x: [], y: [], z: [] };
-      indices.push(items.length + i);
+      indices.push(n + i);
       x.push(geom.x); y.push(geom.y); z.push(geom.z); vis.push(on);
     });
     if (!indices.length) return Promise.resolve();
@@ -399,6 +441,92 @@
     return window.Plotly.react(el, traces, layout, { displaylogo: false, responsive: true, displayModeBar: false });
   }
 
+  /*
+   * The replay chart: one line per dataset (predicted table value, all
+   * emitted so a dataset toggle is a single-trace restyle), the log's own
+   * measured channel as a dashed reference, and the two raw channels driving
+   * the lookup as thin context on a secondary, unlabelled axis -- RPM and a
+   * few tens of degrees cannot share one sensible scale.
+   * opts = { theme, time, predicted:[{name,color,visible,values}],
+   *          actual:{name,values}|null, context:[{name,values}], xTitle, yTitle }
+   */
+  function drawReplay(el, opts) {
+    var c = themeTokens(opts.theme);
+    var predicted = (opts.predicted || []).map(function (s) {
+      return {
+        type: 'scatter', mode: 'lines', name: s.name,
+        x: opts.time, y: s.values, visible: s.visible,
+        line: { color: s.color, width: 2 },
+        hovertemplate: '<b>' + s.name + '</b><br>%{y:.2f}<extra></extra>'
+      };
+    });
+    var actual = {
+      type: 'scatter', mode: 'lines', name: opts.actual ? opts.actual.name : '',
+      x: opts.time, y: opts.actual ? opts.actual.values : [],
+      visible: !!opts.actual,
+      line: { color: c.ink, width: 1.5, dash: 'dot' },
+      hovertemplate: '<b>' + (opts.actual ? opts.actual.name : '') + '</b><br>%{y:.2f}<extra></extra>'
+    };
+    var context = (opts.context || []).map(function (s) {
+      return {
+        type: 'scatter', mode: 'lines', name: s.name,
+        x: opts.time, y: s.values, yaxis: 'y2',
+        opacity: 0.35,
+        line: { color: c.muted, width: 1 },
+        hoverinfo: 'skip'
+      };
+    });
+    var layout = {
+      paper_bgcolor: c.paper,
+      plot_bgcolor: c.paper,
+      margin: { l: 48, r: 40, t: 10, b: 34 },
+      showlegend: true,
+      legend: { orientation: 'h', font: { size: 10, color: c.muted } },
+      font: { family: 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace', size: 11, color: c.muted },
+      xaxis: { title: { text: opts.xTitle, font: { size: 11 } }, gridcolor: c.grid, zerolinecolor: c.zero, color: c.muted },
+      yaxis: { title: { text: opts.yTitle, font: { size: 11 } }, gridcolor: c.grid, zerolinecolor: c.zero, color: c.muted },
+      yaxis2: { overlaying: 'y', side: 'right', showgrid: false, showticklabels: false },
+      hovermode: 'x unified'
+    };
+    return window.Plotly.react(el, predicted.concat([actual]).concat(context), layout,
+      { displaylogo: false, responsive: true, displayModeBar: false });
+  }
+
+  /* Toggle one dataset's predicted line without touching the rest -- the
+     replay chart's own version of setOpacity's single-trace restyle. */
+  function setReplayVisible(el, index, visible) {
+    if (!el || !el.data) return Promise.resolve();
+    return window.Plotly.restyle(el, { visible: [visible] }, [index]);
+  }
+
+  /* Dwell: how many seconds the log spent in each cell of one table, shaped
+     exactly like the table itself. Not slider-driven, so a full react per
+     change is fine -- the same cost Viewer.draw() already pays on those. */
+  function drawDwell(el, grid, opts) {
+    var c = themeTokens(opts.theme);
+    var trace = {
+      type: 'heatmap',
+      x: grid.x, y: grid.y, z: grid.seconds,
+      colorscale: ramp(opts.color || '#3987e5', opts.theme),
+      colorbar: {
+        title: { text: t('log.dwell_seconds'), font: { size: 10 } },
+        thickness: 10, tickfont: { size: 10, color: c.muted }
+      },
+      hovertemplate: t('axis.rpm') + ': %{y:.0f}<br>' + t('axis.tps') + ': %{x}<br>' +
+        t('log.dwell_seconds') + ': %{z:.1f}<extra></extra>'
+    };
+    var layout = {
+      paper_bgcolor: c.paper,
+      plot_bgcolor: c.paper,
+      margin: { l: 44, r: 8, t: 6, b: 30 },
+      font: { family: 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace', size: 10, color: c.muted },
+      xaxis: { title: { text: t('axis.tps'), font: { size: 10 } }, color: c.muted },
+      yaxis: { title: { text: t('axis.rpm'), font: { size: 10 } }, color: c.muted }
+    };
+    return window.Plotly.react(el, [trace], layout,
+      { displaylogo: false, responsive: true, displayModeBar: false });
+  }
+
   function toPng(el, name) {
     return window.Plotly.downloadImage(el, {
       format: 'png', scale: 2, width: el.clientWidth * 1.5, height: el.clientHeight * 1.5,
@@ -407,9 +535,9 @@
   }
 
   return {
-    draw: draw, drawSlice: drawSlice,
+    draw: draw, drawSlice: drawSlice, drawReplay: drawReplay, drawDwell: drawDwell,
     setVisible: setVisible, updateSlice: updateSlice, toPng: toPng,
-    setOpacity: setOpacity,
+    setOpacity: setOpacity, setReplayVisible: setReplayVisible,
     colorFor: colorFor, ramp: ramp, mix: mix, visibleRange: visibleRange,
     currentCamera: currentCamera, resetCamera: resetCamera, fmt: fmt, SERIES: SERIES
   };

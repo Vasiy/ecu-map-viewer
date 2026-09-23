@@ -201,6 +201,7 @@ main {
 }
 .drop.over { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 8%, transparent); }
 .drop p { margin: 0; font-size: 12px; }
+.drop p.small { font-size: 11px; }
 
 /* the device's own files: only rendered when a backend answered */
 .library { display: flex; flex-direction: column; gap: .4rem; }
@@ -532,6 +533,13 @@ body.curve-mode .only3d { display: none; }
 .slice-head input[type="range"] { flex: 1 1 auto; width: auto; }
 .slice-head output { min-width: 6rem; text-align: right; color: var(--fg); }
 .slice-plot { height: 168px; }
+
+/* one small heatmap per visible dataset -- breakpoints rarely match across
+   firmwares, so they cannot share one grid the way surfaces share a scene */
+.log-dwell-list { display: flex; flex-wrap: wrap; gap: .6rem; }
+.log-dwell { flex: 1 1 220px; min-width: 180px; }
+.log-dwell-plot { height: 168px; }
+.log-dwell-name { font-size: 11px; color: var(--muted); margin: 0 0 .2rem; }
 
 /* ---------- toasts ---------- */
 
