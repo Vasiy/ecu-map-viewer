@@ -28,6 +28,30 @@ const zRange = (page) => page.evaluate(() => {
   return gd._fullLayout.scene.zaxis.range.map((v) => Math.round(v * 100) / 100);
 });
 
+/* A decoded log needs no committed fixture -- unlike the .bin/.xdf pairs,
+   the CSV is built in the page itself, in onboard-logger's own shape. */
+const dropText = async (page, name, text) => {
+  await page.evaluate(({ name, text }) => {
+    const dt = new DataTransfer();
+    dt.items.add(new File([text], name, { type: 'text/csv' }));
+    document.getElementById('drop').dispatchEvent(new DragEvent('drop', { dataTransfer: dt, bubbles: true }));
+  }, { name, text });
+  await page.waitForTimeout(600);
+};
+
+function syntheticRideLog() {
+  const rows = ['time,rpm,throttle,advance2'];
+  const t0 = Date.parse('2026-09-09T11:00:00.000Z');
+  for (let i = 0; i < 40; i++) {
+    const ts = new Date(t0 + i * 1000).toISOString().replace('Z', '');
+    const rpm = 1500 + i * 120;
+    const throttle = (2.5 + i * 0.15).toFixed(1);
+    const advance = (10 + i * 0.3).toFixed(1);
+    rows.push(ts + ',' + rpm + ',' + throttle + ',' + advance);
+  }
+  return rows.join('\n') + '\n';
+}
+
 const browser = await chromium.launch();
 const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
 page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
@@ -120,6 +144,35 @@ report.diffRange = await zRange(page);
 await page.screenshot({ path: shots + '/shot-4-diff.png' });
 await page.locator('[data-mode="surface"]').click();
 await page.waitForTimeout(400);
+
+// drive-log replay: rpm/throttle auto-map onto @ign-main, and the 2N
+// surface+slice trace layout must extend to 3N with the path markers
+await dropText(page, 'ride.csv', syntheticRideLog());
+report.logMapping = {
+  y: await page.locator('#logAxisY').inputValue(),
+  x: await page.locator('#logAxisX').inputValue()
+};
+report.logTraces = await page.evaluate(() => {
+  const data = document.getElementById('plot').data;
+  const datasets = document.querySelectorAll('.ds').length;
+  return {
+    total: data.length,
+    expected3N: datasets * 3,
+    pathMarkers: data.filter((d) => d.type === 'scatter3d' && d.mode === 'markers').length
+  };
+});
+report.logChartTraces = await page.evaluate(() => {
+  const gd = document.getElementById('logChart');
+  return gd && gd.data ? gd.data.length : null;
+});
+await page.screenshot({ path: shots + '/shot-7-log-replay.png' });
+
+await page.locator('[data-logview="dwell"]').click();
+await page.waitForTimeout(500);
+report.logDwellPanels = await page.locator('#logDwellList .log-dwell').count();
+await page.screenshot({ path: shots + '/shot-8-log-dwell.png' });
+await page.locator('[data-logview="replay"]').click();
+await page.waitForTimeout(300);
 
 // a lone .bin must fall back to a preset definition. The bytes are one of the
 // images already here, handed over under a name no .xdf matches.
