@@ -85,7 +85,12 @@ function makeSandbox(opts = {}) {
         (this.handlers[type] || []).forEach((fn) => fn(ev || { target: this,
           preventDefault() {}, stopPropagation() {} }));
       },
-      setAttribute(k, v) { this.attrs[k] = v; },
+      // real DOM mirrors data-foo-bar onto .dataset.fooBar automatically;
+      // app.js reads button.dataset.mode/.logview straight off static markup
+      setAttribute(k, v) {
+        this.attrs[k] = v;
+        if (k.startsWith('data-')) this.dataset[k.slice(5).replace(/-(\w)/g, (_, ch) => ch.toUpperCase())] = v;
+      },
       getAttribute(k) { return this.attrs[k]; },
       appendChild(c) { c.parentNode = this; this.children.push(c); return c; },
       insertBefore(c, ref) {
@@ -165,10 +170,22 @@ function makeSandbox(opts = {}) {
       return byId.get(id);
     },
     querySelector(sel) { return body.querySelector(sel); },
-    querySelectorAll() { return []; },
+    querySelectorAll(sel) { return body.querySelectorAll(sel); },
     createElement(tag) { return el(tag); },
     addEventListener() {}, removeEventListener() {},
   };
+
+  // Static markup this stub never parses from index.html, but app.js finds by
+  // querySelectorAll rather than by id -- the seg-toggle buttons.
+  [['data-mode', 'surface', 'view.surface'], ['data-mode', 'diff', 'view.diff'],
+    ['data-logview', 'replay', 'log.replay_title'], ['data-logview', 'dwell', 'log.dwell_title']]
+    .forEach(([attr, value, i18nKey], i) => {
+      const b = el('button');
+      b.setAttribute(attr, value);
+      b.setAttribute('data-i18n', i18nKey);
+      b.setAttribute('aria-pressed', String(i % 2 === 0));
+      body.appendChild(b);
+    });
 
   const sandbox = {
     console,

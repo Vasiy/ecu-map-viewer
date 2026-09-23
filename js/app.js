@@ -1037,6 +1037,10 @@
           renderSlice(lastItems);
           // a single-trace restyle on the small chart, never a rebuild
           Viewer.setReplayVisible(el.logChart, idx, ds.visible && !!lastItems[idx].replay);
+          // the dwell heatmap has no per-trace restyle (one Plotly div per
+          // dataset), so a hidden or newly-shown one only leaves a stale
+          // panel behind if this does not redraw it
+          if (state.log.view === 'dwell') renderLogDwellPanels(lastItems);
           var stillVisible = lastItems.some(function (i) { return i.visible; });
           el.empty.hidden = stillVisible;
         } else {

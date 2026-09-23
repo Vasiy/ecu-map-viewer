@@ -158,6 +158,23 @@ async function main() {
     assert.ok(S.Plotly.counts.resize > 0, 'no resize when the log panel disappeared');
   });
 
+  await test('hiding a dataset on the dwell tab drops its stale heatmap instead of leaving it behind', async () => {
+    const S = makeSandbox();
+    await settle();
+    await drop(S, [file('granpasso.bin', Buffer.from(sampleImage())), file('granpasso.xdf', SAMPLE_XDF)]);
+    await settle();
+    await drop(S, [file('ride.csv', RIDE_CSV)]);
+    await settle();
+    S.document.querySelector('[data-logview="dwell"]').fire('click');
+    await settle();
+    assert.strictEqual(S.document.getElementById('logDwellList').children.length, 1);
+    S.document.getElementById('dsList').children[0].querySelector('.vis').fire('change',
+      { target: { checked: false } });
+    await settle();
+    assert.strictEqual(S.document.getElementById('logDwellList').children.length, 0,
+      'the hidden dataset\'s heatmap should not still be shown');
+  });
+
   console.log('\n' + passed + ' passed, ' + failed + ' failed');
   process.exit(failed ? 1 : 0);
 }
