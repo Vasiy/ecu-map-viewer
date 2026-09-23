@@ -136,6 +136,11 @@
     </div>
 
     <div id="logWrap" class="slice" hidden>
+      <div class="slice-head">
+        <button id="logPlay" class="icon" type="button">▶</button>
+        <input type="range" id="logScrub" min="0" max="0" value="0">
+        <output id="logScrubValue" class="mono"></output>
+      </div>
       <div class="seg" role="group">
         <button data-logview="replay" aria-pressed="true" data-i18n="log.replay_title"></button>
         <button data-logview="dwell" aria-pressed="false" data-i18n="log.dwell_title"></button>

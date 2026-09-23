@@ -499,6 +499,53 @@
     return window.Plotly.restyle(el, { visible: [visible] }, [index]);
   }
 
+  /* A vertical line at the scrub position on the replay chart. null clears it. */
+  function setReplayPlayhead(el, timeValue, opts) {
+    if (!el) return Promise.resolve();
+    var c = themeTokens(opts && opts.theme);
+    var shapes = timeValue === null || timeValue === undefined ? [] : [{
+      type: 'line', xref: 'x', yref: 'paper',
+      x0: timeValue, x1: timeValue, y0: 0, y1: 1,
+      line: { color: c.accent, width: 1.5, dash: 'dot' }
+    }];
+    return window.Plotly.relayout(el, { shapes: shapes });
+  }
+
+  /* The path point at or just before a scrub row -- path.row is sparse
+     (dropout rows are skipped), so "at this row" means the nearest one not
+     past it, falling back to the first point for a row before the log starts
+     mapping anything. */
+  function nearestPathIndex(pathRow, rowIndex) {
+    var n = pathRow.length;
+    if (!n) return -1;
+    if (rowIndex <= pathRow[0]) return 0;
+    if (rowIndex >= pathRow[n - 1]) return n - 1;
+    var lo = 0, hi = n - 1;
+    while (hi - lo > 1) {
+      var mid = (lo + hi) >> 1;
+      if (pathRow[mid] <= rowIndex) lo = mid; else hi = mid;
+    }
+    return lo;
+  }
+
+  /* Marks one point per dataset's path as "here" on the scrub timeline --
+     per-point marker arrays restyled in place, no new trace. */
+  function setPathHighlight(el, items, rowIndex, opts) {
+    if (!el || !el.data) return Promise.resolve();
+    var n = items.length;
+    var indices = [], sizes = [], colors = [];
+    items.forEach(function (item, i) {
+      if (!item.path || !item.path.x.length) return;
+      indices.push(n * 2 + i);
+      var hit = nearestPathIndex(item.path.row, rowIndex);
+      var base = mix(item.color, opts && opts.theme === 'light' ? '#101318' : '#ffffff', 0.22);
+      sizes.push(item.path.x.map(function (_, k) { return k === hit ? 9 : 3; }));
+      colors.push(item.path.x.map(function (_, k) { return k === hit ? item.color : base; }));
+    });
+    if (!indices.length) return Promise.resolve();
+    return window.Plotly.restyle(el, { 'marker.size': sizes, 'marker.color': colors }, indices);
+  }
+
   /* Dwell: how many seconds the log spent in each cell of one table, shaped
      exactly like the table itself. Not slider-driven, so a full react per
      change is fine -- the same cost Viewer.draw() already pays on those. */
@@ -538,6 +585,7 @@
     draw: draw, drawSlice: drawSlice, drawReplay: drawReplay, drawDwell: drawDwell,
     setVisible: setVisible, updateSlice: updateSlice, toPng: toPng,
     setOpacity: setOpacity, setReplayVisible: setReplayVisible,
+    setReplayPlayhead: setReplayPlayhead, setPathHighlight: setPathHighlight,
     colorFor: colorFor, ramp: ramp, mix: mix, visibleRange: visibleRange,
     currentCamera: currentCamera, resetCamera: resetCamera, fmt: fmt, SERIES: SERIES
   };

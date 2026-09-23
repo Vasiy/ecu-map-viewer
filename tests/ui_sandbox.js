@@ -207,6 +207,10 @@ function makeSandbox(opts = {}) {
     },
     // toasts auto-dismiss on a timer that would keep node alive past the asserts
     setTimeout: () => 0, clearTimeout: () => {},
+    // real timers: the log-play button needs a working setInterval to tick.
+    // Nothing here awaits a real tick -- process.exit() at the end of a test
+    // file's main() cleans up whatever is still pending.
+    setInterval: (...a) => setInterval(...a), clearInterval: (...a) => clearInterval(...a),
     requestAnimationFrame: (fn) => { fn(); return 0; },
     navigator: { languages: ['en'] },
     matchMedia: () => ({ matches: false, addEventListener() {}, addListener() {} }),

@@ -38,7 +38,9 @@
       showPath: true,           // the 3-D path-marker toggle
       view: 'replay',           // 'replay' | 'dwell' -- which panel #logWrap shows
       available: [],            // addon mode: [{name, day, file, size, mtime}]
-      warnKey: null             // dedupe key for the out-of-range toast
+      warnKey: null,             // dedupe key for the out-of-range toast
+      scrub: 0,                  // row index into log.doc.time -- the shared timeline
+      playing: false
     }
   };
 
@@ -308,19 +310,78 @@
     }
     if (!doc.rows) { toast(t('log.empty', { name: name }), 'warn'); return; }
     doc.name = name;
+    stopLogPlay();
     state.log.doc = doc;
     // a fresh log starts unmapped -- a stale channel choice from a previous
     // log could silently point at a column this one does not have
     state.log.mapping = {};
     state.log.warnKey = null;
+    // start at the end: the whole ride shown, same as today's picture, until
+    // the scrub slider is actually touched
+    state.log.scrub = Math.max(0, doc.rows - 1);
     toast(t('log.loaded', { name: name, rows: doc.rows }));
     renderAll();
   }
 
   function clearLog() {
+    stopLogPlay();
     state.log.doc = null;
     state.log.warnKey = null;
     renderAll();
+  }
+
+  function fmtElapsed(seconds) {
+    var s = Math.max(0, Math.round(seconds || 0));
+    var m = Math.floor(s / 60);
+    var r = s % 60;
+    return m + ':' + (r < 10 ? '0' : '') + r;
+  }
+
+  function updatePlayLabel() {
+    if (!el.logPlay) return;
+    el.logPlay.textContent = state.log.playing ? '⏸' : '▶';
+    var label = t(state.log.playing ? 'log.pause' : 'log.play');
+    el.logPlay.title = label;
+    el.logPlay.setAttribute('aria-label', label);
+  }
+
+  function stopLogPlay() {
+    if (playTimer) { window.clearInterval(playTimer); playTimer = null; }
+    state.log.playing = false;
+    updatePlayLabel();
+  }
+
+  /* Compressed into a fixed-length animation regardless of how long the ride
+     actually was -- scrubbing through an hour of riding one row at a time,
+     in real time, would not get watched. */
+  function startLogPlay() {
+    if (!state.log.doc || state.log.doc.rows < 2) return;
+    if (state.log.scrub >= state.log.doc.rows - 1) state.log.scrub = 0;
+    state.log.playing = true;
+    updatePlayLabel();
+    var tickMs = 80, totalMs = 15000;
+    var perTick = Math.max(1, Math.ceil((state.log.doc.rows - 1) * tickMs / totalMs));
+    playTimer = window.setInterval(function () {
+      state.log.scrub = Math.min(state.log.doc.rows - 1, state.log.scrub + perTick);
+      el.logScrub.value = String(state.log.scrub);
+      updateLogScrub();
+      if (state.log.scrub >= state.log.doc.rows - 1) stopLogPlay();
+    }, tickMs);
+  }
+
+  /* Moves the shared timeline without rebuilding anything: the playhead line
+     restyles, the path highlight restyles, and only the dwell panel -- which
+     has no per-trace restyle of its own -- redraws, and only while it is the
+     one actually on screen. */
+  function updateLogScrub() {
+    if (!state.log.doc) return;
+    var t0 = state.log.doc.time[state.log.scrub];
+    el.logScrubValue.textContent = fmtElapsed(t0) + ' / ' + fmtElapsed(state.log.doc.time[state.log.doc.rows - 1]);
+    if (el.logChart && el.logChart.data && el.logChart.data.length) {
+      Viewer.setReplayPlayhead(el.logChart, t0, { theme: state.theme });
+    }
+    Viewer.setPathHighlight(el.plot, lastItems, state.log.scrub, { theme: state.theme });
+    if (state.log.view === 'dwell') renderLogDwellPanels(lastItems);
   }
 
   function mappingFor(tableKey) {
@@ -456,10 +517,16 @@
     // oversized canvas sits on top of this panel's own controls
     if (el.logWrap.hidden !== wasHidden) window.Plotly.Plots.resize(el.plot);
     if (!ready) return;
+    if (state.log.scrub > state.log.doc.rows - 1) state.log.scrub = state.log.doc.rows - 1;
+    el.logScrub.max = String(Math.max(0, state.log.doc.rows - 1));
+    el.logScrub.value = String(state.log.scrub);
+    el.logScrubValue.textContent = fmtElapsed(state.log.doc.time[state.log.scrub]) + ' / ' +
+      fmtElapsed(state.log.doc.time[state.log.doc.rows - 1]);
     var showReplay = state.log.view !== 'dwell';
     el.logChart.hidden = !showReplay;
     el.logDwellList.hidden = showReplay;
     if (showReplay) renderLogReplayChart(items); else renderLogDwellPanels(items);
+    Viewer.setPathHighlight(el.plot, items, state.log.scrub, { theme: state.theme });
   }
 
   /* One predicted line per dataset, always emitted (hidden ones included) so
@@ -489,22 +556,28 @@
     if (m && m.x && state.log.doc.channels[m.x]) {
       context.push({ name: channelLabel(m.x), values: state.log.doc.channels[m.x] });
     }
+    var doc = state.log.doc;
     Viewer.drawReplay(el.logChart, {
       theme: state.theme,
-      time: state.log.doc.time,
+      time: doc.time,
       predicted: predicted,
       actual: actual,
       context: context,
       xTitle: t('log.axis_time'),
       yTitle: zTitle()
+    }).then(function () {
+      Viewer.setReplayPlayhead(el.logChart, doc.time[state.log.scrub], { theme: state.theme });
     });
   }
 
-  /* Not slider-driven, so a full redraw per dataset is fine -- one small
-     heatmap per visible dataset, since firmwares rarely share breakpoints. */
+  /* Cumulative up to the scrub position, via the same Log.replay() the full
+     picture uses -- a prefix of the log in, the matching prefix of dwell out,
+     no separate running-total bookkeeping to keep in sync with it. */
   function renderLogDwellPanels(items) {
     var box = el.logDwellList;
     box.innerHTML = '';
+    var m = state.log.mapping[state.tableKey];
+    var upTo = Log.sliceTo(state.log.doc, state.log.scrub + 1);
     items.filter(function (i) { return i.visible && i.replay; }).forEach(function (item) {
       var wrap = document.createElement('div');
       wrap.className = 'log-dwell';
@@ -516,8 +589,9 @@
       wrap.appendChild(name);
       wrap.appendChild(plot);
       box.appendChild(wrap);
+      var dwell = Log.replay(item.grid, upTo, m).dwell;
       Viewer.drawDwell(plot, {
-        x: item.grid.x, y: item.grid.y, seconds: item.replay.dwell.seconds
+        x: item.grid.x, y: item.grid.y, seconds: dwell.seconds
       }, { theme: state.theme, color: item.color });
     });
   }
@@ -787,6 +861,7 @@
 
   var lastItems = [];
   var curveMode = false;
+  var playTimer = null;   // the scrub timeline's play/pause interval, if running
 
   /* A table with a single column is a curve, not a surface: plot it as one. */
   function isCurve(items) {
@@ -1126,6 +1201,7 @@
       el.langSel.title = t('lang.label');
     }
     el.btnTheme.textContent = state.theme === 'dark' ? t('theme.light') : t('theme.dark');
+    updatePlayLabel();
     try { localStorage.setItem('lang', lang); } catch (e) { /* private mode */ }
     refreshTables();
     renderAll();
@@ -1234,6 +1310,16 @@
       });
     });
 
+    el.logPlay.addEventListener('click', function () {
+      if (state.log.playing) stopLogPlay(); else startLogPlay();
+    });
+
+    el.logScrub.addEventListener('input', function (ev) {
+      stopLogPlay();
+      state.log.scrub = Number(ev.target.value);
+      onNextFrame('logScrub', updateLogScrub);
+    });
+
     el.btnReset.addEventListener('click', function () { Viewer.resetCamera(el.plot); });
 
     el.btnPng.addEventListener('click', function () {
@@ -1265,6 +1351,7 @@
     ['file', 'drop', 'tableSel', 'dsList', 'library', 'libList', 'libRefresh',
       'logPanel', 'logList', 'logRefresh', 'logInfo', 'logName', 'logClear',
       'logAxisY', 'logAxisX', 'logCompareSel', 'logShowPath', 'logWrap', 'logChart', 'logDwellList',
+      'logPlay', 'logScrub', 'logScrubValue',
       'plot', 'curve', 'empty', 'sliceWrap', 'slicePlot',
       'sliceSel', 'sliceRange', 'sliceValue', 'contours', 'opacity', 'baseSel', 'baseField',
       'btnReset', 'btnPng', 'langSel', 'btnTheme', 'btnSide', 'btnInfo', 'about', 'toasts'].forEach(function (id) {

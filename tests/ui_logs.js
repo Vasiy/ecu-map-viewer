@@ -175,6 +175,41 @@ async function main() {
       'the hidden dataset\'s heatmap should not still be shown');
   });
 
+  await test('the scrub slider starts at the end of the log with an elapsed/total label', async () => {
+    const S = makeSandbox();
+    await settle();
+    await drop(S, [file('granpasso.bin', Buffer.from(sampleImage())), file('granpasso.xdf', SAMPLE_XDF)]);
+    await settle();
+    await drop(S, [file('ride.csv', RIDE_CSV)]);
+    await settle();
+    assert.strictEqual(S.document.getElementById('logScrub').max, '1');   // RIDE_CSV has 2 rows
+    assert.strictEqual(S.document.getElementById('logScrub').value, '1');
+    assert.strictEqual(S.document.getElementById('logScrubValue').textContent, '0:01 / 0:01');
+  });
+
+  await test('scrubbing back on the dwell tab re-renders it, and play toggles its own label', async () => {
+    const S = makeSandbox();
+    await settle();
+    await drop(S, [file('granpasso.bin', Buffer.from(sampleImage())), file('granpasso.xdf', SAMPLE_XDF)]);
+    await settle();
+    await drop(S, [file('ride.csv', RIDE_CSV)]);
+    await settle();
+    S.document.querySelector('[data-logview="dwell"]').fire('click');
+    await settle();
+    S.Plotly.counts.react = 0;
+    S.document.getElementById('logScrub').fire('input', { target: { value: '0' } });
+    await settle();
+    assert.strictEqual(S.document.getElementById('logScrubValue').textContent, '0:00 / 0:01');
+    assert.ok(S.Plotly.counts.react > 0, 'dwell panel should redraw when scrubbed');
+
+    const play = S.document.getElementById('logPlay');
+    const before = play.textContent;
+    play.fire('click');
+    assert.notStrictEqual(play.textContent, before, 'play should flip to a pause label');
+    play.fire('click');
+    assert.strictEqual(play.textContent, before, 'clicking again should stop it');
+  });
+
   console.log('\n' + passed + ' passed, ' + failed + ' failed');
   process.exit(failed ? 1 : 0);
 }

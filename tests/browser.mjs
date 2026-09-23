@@ -170,9 +170,38 @@ await page.screenshot({ path: shots + '/shot-7-log-replay.png' });
 await page.locator('[data-logview="dwell"]').click();
 await page.waitForTimeout(500);
 report.logDwellPanels = await page.locator('#logDwellList .log-dwell').count();
+const dwellFullTotal = await page.evaluate(() => {
+  const el = document.querySelectorAll('#logDwellList .log-dwell-plot')[0];
+  return el.data[0].z.flat().reduce((a, b) => a + b, 0);
+});
 await page.screenshot({ path: shots + '/shot-8-log-dwell.png' });
+
+// the shared scrub timeline: dragging it back should shrink the dwell total
+// and move the replay chart's playhead, without rebuilding the 3-D scene
+await page.locator('#logScrub').fill('5');
+await page.locator('#logScrub').dispatchEvent('input');
+await page.waitForTimeout(500);
+report.dwellShrunkOnScrub = await page.evaluate(() => {
+  const el = document.querySelectorAll('#logDwellList .log-dwell-plot')[0];
+  return el.data[0].z.flat().reduce((a, b) => a + b, 0);
+}) < dwellFullTotal;
+report.pathHighlight = await page.evaluate(() => {
+  const trace = document.getElementById('plot').data.find((d) => d.type === 'scatter3d' && d.mode === 'markers');
+  return trace ? { sizes: [...new Set(trace.marker.size)].sort(), highlighted: trace.marker.size.filter((s) => s === 9).length } : null;
+});
 await page.locator('[data-logview="replay"]').click();
 await page.waitForTimeout(300);
+report.playhead = await page.evaluate(() => (document.getElementById('logChart').layout.shapes || []).length);
+
+// play should advance the slider on its own and stop at the end
+await page.locator('#logPlay').click();
+await page.waitForTimeout(2000);
+report.playAdvanced = Number(await page.locator('#logScrub').inputValue()) > 5;
+await page.waitForTimeout(16000);
+report.playStoppedAtEnd = await page.evaluate(() => {
+  const s = document.getElementById('logScrub');
+  return Number(s.value) === Number(s.max) && document.getElementById('logPlay').textContent === '▶';
+});
 
 // a lone .bin must fall back to a preset definition. The bytes are one of the
 // images already here, handed over under a name no .xdf matches.
