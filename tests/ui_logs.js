@@ -143,14 +143,17 @@ async function main() {
     assert.strictEqual(S.Plotly.counts.react, 0);
   });
 
-  await test('#logWrap is already the right size before the scene draws into it, not resized after', async () => {
-    // a resize() fired once the container had already shrunk -- after
-    // Viewer.draw() ran at the OLD size -- broke the gl3d scene's own
-    // drag-to-orbit handling for the rest of the session, on every Plotly
-    // version this was tried against, and no relayout or second react()
-    // afterward brought it back. #logWrap's hidden state is decided before
-    // draw() runs instead, so draw() lays out at the real final size in one
-    // pass and no corrective resize is needed for this transition at all.
+  await test('#logWrap appearing resizes the canvas exactly once, after its hidden state (and the reflow) settle first', async () => {
+    // Viewer.draw() (Plotly.react()) only updates trace/layout config -- it
+    // does not itself resize the <canvas> element to match a container that
+    // just changed size. Confirmed by inspecting the real DOM: #plot's own
+    // box shrinks immediately when #logWrap appears, but the canvas inside
+    // it does not, and keeps overflowing into #logWrap underneath -- which
+    // swallowed every click meant for the panel's own controls (the play
+    // button among them). Only Plotly.Plots.resize() touches the canvas, so
+    // it still has to run -- but #logWrap's hidden state (and a forced
+    // reflow) are settled before draw() runs, so the resize afterward reads
+    // the real final size on the first try instead of the stale one.
     const S = makeSandbox();
     await settle();
     assert.strictEqual(S.document.getElementById('logWrap').hidden, true);
@@ -161,10 +164,12 @@ async function main() {
     await drop(S, [file('ride.csv', RIDE_CSV)]);
     await settle();
     assert.strictEqual(S.document.getElementById('logWrap').hidden, false);
-    assert.strictEqual(S.Plotly.counts.resize, 0, 'draw() alone should size it, not a follow-up resize');
+    assert.strictEqual(S.Plotly.counts.resize, 1, 'exactly one resize for this transition');
+    S.Plotly.counts.resize = 0;
     S.document.getElementById('logClear').fire('click');
     await settle();
     assert.strictEqual(S.document.getElementById('logWrap').hidden, true);
+    assert.strictEqual(S.Plotly.counts.resize, 1, 'and one more when it disappears again');
   });
 
   await test('hiding a dataset on the dwell tab drops its stale heatmap instead of leaving it behind', async () => {

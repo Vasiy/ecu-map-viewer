@@ -894,17 +894,24 @@
       ? t('plot.diff_need_base')
       : t('plot.empty');
 
-    // #logWrap's own share of the stage is settled before draw(), not after:
-    // a Plotly.react() that runs while the container is still the OLD size,
-    // followed by a resize() once it catches up, left the gl3d scene's own
-    // drag-to-orbit handling broken for the rest of the session on every
-    // Plotly version this was tried against -- no relayout or second react()
-    // afterward brought it back. Deciding the box size first and letting
-    // draw() lay out into the size it will actually have sidesteps it
-    // instead of trying to recover from it.
+    // #logWrap's own share of the stage is settled before draw(), not after,
+    // and the forced reflow makes sure the browser has actually acted on it
+    // by the time draw() reads the container: Plotly.react() only updates
+    // traces and layout config, it does not itself resize the <canvas>
+    // element to match a container that just changed size (confirmed by
+    // inspecting the actual DOM: the parent div shrinks immediately, but the
+    // canvas inside it does not, and keeps overflowing into whatever is
+    // below -- which for #logWrap means it swallowed every click on the
+    // panel's own controls). Only Plotly.Plots.resize() touches the canvas
+    // itself, so it still has to run after draw() -- but only now that the
+    // container it will measure is already the right size.
+    var logHiddenChanged = false;
     if (el.logWrap) {
       var logReady = items.some(function (i) { return i.replay; });
+      var logWasHidden = el.logWrap.hidden;
       el.logWrap.hidden = !logReady;
+      logHiddenChanged = el.logWrap.hidden !== logWasHidden;
+      if (logHiddenChanged) void el.plot.offsetHeight;   // force the reflow before draw() measures it
     }
 
     if (curveMode) {
@@ -936,9 +943,21 @@
         showPath: state.log.showPath,
         camera: Viewer.currentCamera(el.plot)
       });
-      // only worth a resize when the stage swapped renderers; a plain redraw
-      // already fits the box, and a resize costs a full relayout
-      if (wasCurve) window.Plotly.Plots.resize(el.plot);
+      // only worth a resize when the stage swapped renderers or #logWrap's
+      // visibility just changed the box; a plain redraw already fits an
+      // unchanged box, and a resize costs a full relayout.
+      //
+      // Deferred a frame, not called right here: Plotly.Plots.resize() reads
+      // the container's current layout box to decide the canvas's new pixel
+      // size, and confirmed by direct measurement, calling it synchronously
+      // in the same tick as the react() that just changed that box's size
+      // reads the OLD box -- the canvas never actually grows or shrinks, it
+      // just keeps overflowing into whatever sits below it. One requestAnimationFrame
+      // is enough for the browser to have painted the new layout by the time
+      // resize() runs and actually measures it.
+      if (wasCurve || logHiddenChanged) {
+        window.requestAnimationFrame(function () { window.Plotly.Plots.resize(el.plot); });
+      }
     }
     renderSlice(items);
     renderLogChartPanel(items);
