@@ -361,12 +361,11 @@
     updatePlayLabel();
   }
 
-  /* Plays back at the log's own pace -- one real second per log-second at
-     speed 1, stretched by the chosen slowdown factor otherwise -- rather
-     than compressing an arbitrary ride into a fixed-length animation. A
-     wall-clock anchor (startWall/startLogTime) drives Log.rowAtTime() each
-     tick instead of stepping a fixed row count, so it tracks the log's own
-     timestamps even where the sample rate itself is uneven. */
+  /* Plays the whole ride in PLAY_WINDOW_SECONDS at speed 1, divided down by
+     the chosen slowdown factor otherwise -- a wall-clock anchor
+     (startWall/startLogTime) drives Log.rowAtTime() each tick rather than
+     stepping a fixed row count, so it still tracks the log's own timestamps
+     even where the sample rate itself is uneven. */
   function startLogPlay() {
     if (!state.log.doc || state.log.doc.rows < 2) return;
     if (state.log.scrub >= state.log.doc.rows - 1) state.log.scrub = 0;
@@ -376,13 +375,27 @@
     var startWall = Date.now();
     var startLogTime = state.log.doc.time[state.log.scrub];
     var endLogTime = state.log.doc.time[state.log.doc.rows - 1];
+    var totalSpan = endLogTime - state.log.doc.time[0];
+    var rate = totalSpan / PLAY_WINDOW_SECONDS;   // log-seconds advanced per wall-second at speed 1
     playTimer = window.setInterval(function () {
-      var target = startLogTime + (Date.now() - startWall) / 1000 / state.log.speed;
-      state.log.scrub = Log.rowAtTime(state.log.doc, target, state.log.scrub);
-      el.logScrub.value = String(state.log.scrub);
-      updateLogScrub();
+      var target = Math.min(endLogTime, startLogTime + (Date.now() - startWall) / 1000 * rate / state.log.speed);
+      var next = Log.rowAtTime(state.log.doc, target, state.log.scrub);
+      // most ticks at a slow speed land on the same row a 1 Hz-ish log was
+      // already sitting on -- skip the restyle (and the gl3d scene rework
+      // it costs) and just keep the elapsed label ticking over
+      if (next !== state.log.scrub) {
+        state.log.scrub = next;
+        el.logScrub.value = String(next);
+        updateLogScrub();
+      } else {
+        updateLogScrubLabel(target);
+      }
       if (target >= endLogTime) stopLogPlay();
     }, tickMs);
+  }
+
+  function updateLogScrubLabel(t0) {
+    el.logScrubValue.textContent = fmtElapsed(t0) + ' / ' + fmtElapsed(state.log.doc.time[state.log.doc.rows - 1]);
   }
 
   /* Moves the shared timeline without rebuilding anything: the playhead line
@@ -398,10 +411,9 @@
      catches up on release. */
   function updateLogScrub() {
     if (!state.log.doc) return;
-    var t0 = state.log.doc.time[state.log.scrub];
-    el.logScrubValue.textContent = fmtElapsed(t0) + ' / ' + fmtElapsed(state.log.doc.time[state.log.doc.rows - 1]);
+    updateLogScrubLabel(state.log.doc.time[state.log.scrub]);
     if (el.logChart && el.logChart.data && el.logChart.data.length) {
-      Viewer.setReplayPlayhead(el.logChart, t0, { theme: state.theme });
+      Viewer.setReplayPlayhead(el.logChart, state.log.doc.time[state.log.scrub], { theme: state.theme });
     }
     if (!plotInteracting) {
       Viewer.updatePathProgress(el.plot, lastItems, state.log.scrub, { pathColor: state.log.pathColor });
@@ -884,6 +896,11 @@
   var curveMode = false;
   var playTimer = null;   // the scrub timeline's play/pause interval, if running
   var plotInteracting = false;   // true while the mouse/touch is down on #plot
+  // :1 plays the whole ride in about this many real seconds, regardless of
+  // how long the ride actually was -- watching an hour of riding one row at
+  // a time, in real time, would not get watched. :10/:100/:1k divide this
+  // pace down from there, for stepping through a fast transient in detail.
+  var PLAY_WINDOW_SECONDS = 15;
 
   /* A table with a single column is a curve, not a surface: plot it as one. */
   function isCurve(items) {

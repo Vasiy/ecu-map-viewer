@@ -173,8 +173,9 @@ Tre viste sotto la scena:
   punto attuale — tutto attivabile insieme con un'unica casella.
 
 Una barra di scorrimento condivisa sotto la scena guida tutte e tre le viste insieme, con
-play/pausa e quattro velocità (**:1** tempo reale, fino a **:1k** mille volte più lento) per
-esaminare in dettaglio un transitorio rapido. Il colore della scia è una scelta tra cinque —
+play/pausa e quattro velocità — **:1** riproduce l'intero giro in circa quindici secondi,
+qualunque sia la sua durata; **:10**/**:100**/**:1k** rallentano questo ritmo per esaminare in
+dettaglio un transitorio rapido. Il colore della scia è una scelta tra cinque —
 rosso, verde, blu, giallo o bianco — tramite il pulsante rotondo accanto a «Reimposta
 vista»; il punto attuale resta sempre rosso, qualunque sia la scelta, così da non
 confondersi mai con la scia.

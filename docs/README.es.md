@@ -174,8 +174,9 @@ Tres vistas bajo la escena:
   punto actual — todo activable junto con una sola casilla.
 
 Una barra de desplazamiento compartida bajo la escena controla las tres vistas a la vez, con
-reproducir/pausar y cuatro velocidades (**:1** tiempo real, hasta **:1k** mil veces más lento)
-para examinar un transitorio rápido en detalle. El color de la estela es una elección entre
+reproducir/pausar y cuatro velocidades — **:1** reproduce todo el trayecto en unos quince
+segundos, sea cual sea su duración; **:10**/**:100**/**:1k** ralentizan ese ritmo para examinar
+un transitorio rápido en detalle. El color de la estela es una elección entre
 cinco — rojo, verde, azul, amarillo o blanco — mediante el botón redondo junto a «Restablecer
 vista»; el punto actual siempre queda rojo, sea cual sea la elección, para que nunca se
 confunda con la estela.

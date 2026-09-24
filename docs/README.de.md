@@ -172,8 +172,9 @@ Drei Ansichten unter der Szene:
   Punkt — alles zusammen per Häkchen ein- und ausschaltbar.
 
 Eine gemeinsame Scrub-Leiste unter der Szene steuert alle drei Ansichten zugleich, mit
-Play/Pause und vier Geschwindigkeiten (**:1** Echtzeit, bis **:1k** tausendfach langsamer),
-um einen schnellen Übergang im Detail zu verfolgen. Die Farbe der Spur ist eine Wahl aus
+Play/Pause und vier Geschwindigkeiten — **:1** spielt die ganze Fahrt in rund fünfzehn Sekunden
+ab, unabhängig von ihrer Länge; **:10**/**:100**/**:1k** verlangsamen dieses Tempo, um einen
+schnellen Übergang im Detail zu verfolgen. Die Farbe der Spur ist eine Wahl aus
 fünf — Rot, Grün, Blau, Gelb oder Weiß — über die runde Schaltfläche neben „Ansicht
 zurücksetzen"; der aktuelle Punkt bleibt unabhängig davon immer rot, damit er nicht mit der
 Spur verschmilzt.

@@ -165,8 +165,8 @@ Tři pohledy pod scénou:
   ujeté, a červená svislá značka v aktuálním bodě — vše zapínané společně jedním zaškrtávátkem.
 
 Společný posuvník pod scénou řídí všechny tři pohledy najednou, s přehráváním/pauzou a čtyřmi
-rychlostmi (**:1** reálný čas, až **:1k** tisíckrát pomaleji) pro podrobné sledování rychlého
-přechodového děje. Barva stopy je volba z pěti možností — červená, zelená, modrá, žlutá nebo
+rychlostmi — **:1** přehraje celou jízdu za zhruba patnáct sekund bez ohledu na její délku;
+**:10**/**:100**/**:1k** toto tempo zpomalují pro podrobné sledování rychlého přechodového děje. Barva stopy je volba z pěti možností — červená, zelená, modrá, žlutá nebo
 bílá — pomocí kulatého tlačítka vedle „Obnovit pohled“; aktuální bod zůstává vždy červený bez
 ohledu na volbu, aby se se stopou nikdy nesplýval.
 

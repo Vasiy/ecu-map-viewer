@@ -242,17 +242,20 @@
    * slice line is -- trace indices stay parallel and a checkbox restyles
    * rather than rebuilds.
    */
+  /* Dots only for what is still ahead of the scrub position -- the trail
+     line covers everything already driven, and a same-height dot sitting
+     on top of it was fighting the trail for the pixel. */
   function pathTrace(item, opts) {
     var on = !!(item.path && item.path.x.length && item.visible && opts.showPath);
     var lift = opts.pathLift || 0;
+    var hit = on ? nearestPathIndex(item.path.row, opts.scrubRow || 0) : -1;
+    var geom = on ? aheadXYZ(item, hit, lift) : { x: [], y: [], z: [] };
     var unit = item.units ? ' ' + item.units : '';
     return {
       type: 'scatter3d',
       mode: 'markers',
       name: item.name,
-      x: on ? item.path.x : [],
-      y: on ? item.path.y : [],
-      z: on ? item.path.z.map(function (v) { return v + lift; }) : [],
+      x: geom.x, y: geom.y, z: geom.z,
       visible: on,
       showlegend: false,
       marker: {
@@ -284,12 +287,36 @@
     return lo;
   }
 
-  function traveledXYZ(item, hit, lift) {
+  function aheadXYZ(item, hit, lift) {
     return {
-      x: item.path.x.slice(0, hit + 1),
-      y: item.path.y.slice(0, hit + 1),
-      z: item.path.z.slice(0, hit + 1).map(function (v) { return v + lift; })
+      x: item.path.x.slice(hit + 1),
+      y: item.path.y.slice(hit + 1),
+      z: item.path.z.slice(hit + 1).map(function (v) { return v + lift; })
     };
+  }
+
+  // intermediate points inserted between two consecutive samples, so the
+  // trail follows the surface's own curvature instead of cutting a straight
+  // chord under it -- a real ~1 Hz log is sparse enough, against a table
+  // this bumpy, that the raw samples alone dip visibly under the mesh
+  var TRAIL_SEGMENTS = 6;
+
+  function traveledXYZ(item, hit, lift) {
+    var px = item.path.x, py = item.path.y, pz = item.path.z;
+    var x = [], y = [], z = [];
+    for (var i = 0; i <= hit; i++) {
+      if (i > 0) {
+        for (var k = 1; k < TRAIL_SEGMENTS; k++) {
+          var f = k / TRAIL_SEGMENTS;
+          var xi = px[i - 1] + (px[i] - px[i - 1]) * f;
+          var yi = py[i - 1] + (py[i] - py[i - 1]) * f;
+          x.push(xi); y.push(yi);
+          z.push(Grid.sample(item.grid.x, item.grid.y, item.grid.z, xi, yi) + lift);
+        }
+      }
+      x.push(px[i]); y.push(py[i]); z.push(pz[i] + lift);
+    }
+    return { x: x, y: y, z: z };
   }
 
   /* A short vertical segment through the surface at the current point --
@@ -611,8 +638,8 @@
     return window.Plotly.relayout(el, { shapes: shapes });
   }
 
-  /* Moves the trail and the current-point marker to a scrub row -- restyled
-     in place on their existing traces, no new trace.
+  /* Moves the remaining dots, the trail and the current-point marker to a
+     scrub row -- restyled in place on their existing traces, no new trace.
 
      This restyle changes each trace's x/y/z from whatever the last full
      draw() left them at, and on a gl3d subplot that kind of change makes
@@ -622,7 +649,13 @@
      to wherever it was as of the last full react(). Carrying the live camera
      along in the same call (still one Plotly call) re-asserts it before the
      recreation can lose it -- the same fix the play-tick highlight needed
-     before the trail and marker existed as their own traces. */
+     before the trail and marker existed as their own traces.
+
+     line.color is only meaningful for the trail and marker traces; the dot
+     block's entry is left undefined, which restyle treats as "leave this
+     trace's own value alone" -- the same convention setVisible()'s x/y/z
+     arrays already rely on for the traces a given call has nothing to say
+     about. */
   function updatePathProgress(el, items, rowIndex, opts) {
     if (!el || !el.data) return Promise.resolve();
     var n = items.length;
@@ -634,6 +667,9 @@
     items.forEach(function (item, i) {
       if (!item.path || !item.path.x.length) return;
       var hit = nearestPathIndex(item.path.row, rowIndex);
+      var ahead = aheadXYZ(item, hit, lift);
+      indices.push(n * 2 + i);
+      x.push(ahead.x); y.push(ahead.y); z.push(ahead.z); lineColor.push(undefined);
       var trail = traveledXYZ(item, hit, lift);
       indices.push(n * 3 + i);
       x.push(trail.x); y.push(trail.y); z.push(trail.z); lineColor.push(color);

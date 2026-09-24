@@ -169,8 +169,9 @@ Three views below the scene:
   toggled together by one checkbox.
 
 A shared scrub bar under the scene drives all three views at once, with play/pause and four
-speed choices (**:1** real time, down to **:1k** a thousand times slower) for stepping through
-a fast transient in detail. The trail's colour is a five-way choice — red, green, blue, yellow
+speed choices — **:1** plays the whole ride in about fifteen seconds regardless of how long it
+was, **:10**/**:100**/**:1k** divide that pace down for stepping through a fast transient in
+detail. The trail's colour is a five-way choice — red, green, blue, yellow
 or white — via the round button next to **Reset view**; the current point stays red regardless,
 so it never blends into the trail.
 

@@ -173,8 +173,9 @@ Drie weergaven onder de scène:
   samen aan- en uit te zetten met één vinkje.
 
 Een gedeelde schuifbalk onder de scène stuurt alle drie de weergaven tegelijk aan, met
-afspelen/pauzeren en vier snelheden (**:1** realtime, tot **:1k** duizend keer trager) om een
-snelle overgang in detail te bekijken. De kleur van het spoor is een keuze uit vijf — rood,
+afspelen/pauzeren en vier snelheden — **:1** speelt de hele rit af in ongeveer vijftien
+seconden, ongeacht de duur ervan; **:10**/**:100**/**:1k** vertragen dat tempo om een snelle
+overgang in detail te bekijken. De kleur van het spoor is een keuze uit vijf — rood,
 groen, blauw, geel of wit — via de ronde knop naast "Weergave resetten"; het huidige punt
 blijft altijd rood, ongeacht die keuze, zodat het nooit met het spoor versmelt.
 

@@ -174,8 +174,9 @@ Kolme näkymää näkymän alla:
   yhdessä päälle kytkettävissä yhdellä valintaruudulla.
 
 Näkymän alla oleva yhteinen vierityspalkki ohjaa kaikkia kolmea näkymää kerralla,
-toisto/tauko-painikkeella ja neljällä nopeudella (**:1** reaaliaika, aina **:1k** tuhat kertaa
-hitaampaan) nopean siirtymän tarkastelemiseksi yksityiskohtaisesti. Jäljen väri valitaan
+toisto/tauko-painikkeella ja neljällä nopeudella — **:1** toistaa koko ajon noin viidessätoista
+sekunnissa sen pituudesta riippumatta; **:10**/**:100**/**:1k** hidastavat tätä tahtia nopean
+siirtymän tarkastelemiseksi yksityiskohtaisesti. Jäljen väri valitaan
 viidestä vaihtoehdosta — punainen, vihreä, sininen, keltainen tai valkoinen — "Palauta näkymä"
 -painikkeen vieressä olevasta pyöreästä painikkeesta; nykyinen piste pysyy aina punaisena
 valinnasta riippumatta, jottei se koskaan sekoitu jälkeen.

@@ -165,8 +165,9 @@ Tre vyer under scenen:
   tillsammans styrt av en enda kryssruta.
 
 Ett delat skjutreglage under scenen driver alla tre vyerna samtidigt, med uppspelning/paus
-och fyra hastigheter (**:1** realtid, ner till **:1k** tusen gånger långsammare) för att gå
-igenom ett snabbt förlopp i detalj. Spårets färg är ett val mellan fem — röd, grön, blå, gul
+och fyra hastigheter — **:1** spelar upp hela körningen på ungefär femton sekunder, oavsett
+dess längd; **:10**/**:100**/**:1k** saktar ner det tempot för att gå igenom ett snabbt förlopp
+i detalj. Spårets färg är ett val mellan fem — röd, grön, blå, gul
 eller vit — via den runda knappen bredvid "Återställ vyn"; den aktuella punkten förblir alltid
 röd oavsett val, så den aldrig smälter samman med spåret.
 

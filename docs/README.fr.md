@@ -177,8 +177,9 @@ Trois vues sous la scène :
   point actuel — le tout activé ensemble par une seule case à cocher.
 
 Une barre de défilement partagée sous la scène pilote les trois vues à la fois, avec
-lecture/pause et quatre vitesses (**:1** temps réel, jusqu'à **:1k** mille fois plus lent)
-pour examiner un régime transitoire en détail. La couleur de la traînée est un choix parmi
+lecture/pause et quatre vitesses — **:1** rejoue tout le trajet en environ quinze secondes,
+quelle que soit sa durée ; **:10**/**:100**/**:1k** ralentissent ce rythme pour examiner un
+régime transitoire en détail. La couleur de la traînée est un choix parmi
 cinq — rouge, vert, bleu, jaune ou blanc — via le bouton rond à côté de « Réinitialiser la
 vue » ; le point actuel reste rouge quel que soit ce choix, pour ne jamais se confondre avec
 la traînée.
