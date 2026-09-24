@@ -47,6 +47,24 @@
     ];
   }
 
+  /* The dwell heatmap's own scale: a fixed cold-to-hot ramp (the familiar
+     thermal-camera look), not tied to any dataset's own colour -- a single
+     hue's pale-to-saturated ramp reads as one flat shade once real seconds
+     are spread across a whole table, since most cells land in the low-mid
+     range where that ramp is still close to pale. Datasets are told apart
+     by the name label above each panel, not by the heatmap's own colour, so
+     nothing is lost by making every panel use the same scale. */
+  function thermalRamp() {
+    return [
+      [0.00, '#1b3a93'],
+      [0.20, '#2e78d6'],
+      [0.40, '#2ec4b6'],
+      [0.60, '#8bd346'],
+      [0.80, '#f4c430'],
+      [1.00, '#e6483c']
+    ];
+  }
+
   /* Diverging ramp for difference mode: two poles, neutral grey midpoint. */
   function divergingRamp(theme) {
     var mid = theme === 'dark' ? '#767b84' : '#b9bcc2';
@@ -691,7 +709,7 @@
     var trace = {
       type: 'heatmap',
       x: grid.x, y: grid.y, z: grid.seconds,
-      colorscale: ramp(opts.color || '#3987e5', opts.theme),
+      colorscale: thermalRamp(),
       colorbar: {
         title: { text: t('log.dwell_seconds'), font: { size: 10 } },
         thickness: 10, tickfont: { size: 10, color: c.muted }

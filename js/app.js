@@ -625,7 +625,7 @@
       var dwell = Log.replay(item.grid, upTo, m).dwell;
       Viewer.drawDwell(plot, {
         x: item.grid.x, y: item.grid.y, seconds: dwell.seconds
-      }, { theme: state.theme, color: item.color });
+      }, { theme: state.theme });
     });
   }
 
