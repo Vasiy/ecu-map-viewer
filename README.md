@@ -171,9 +171,10 @@ Three views below the scene:
 A shared scrub bar under the scene drives all three views at once, with play/pause and four
 speed choices — **:1** plays the whole ride in about fifteen seconds regardless of how long it
 was, **:10**/**:100**/**:1k** divide that pace down for stepping through a fast transient in
-detail. The trail's colour is a five-way choice — red, green, blue, yellow
-or white — via the round button next to **Reset view**; the current point stays red regardless,
-so it never blends into the trail.
+detail. Both sit at the right of that row, each with its own label: **Path:** and its round
+button cycle the trail's colour through five choices — red, green, blue, yellow or white; the
+current point stays red regardless, so it never blends into the trail. **Scale:** is the speed
+group itself.
 
 This is honest about steady-state maps and their usual corrections. It does not show
 transient enrichment on a snapped throttle — that correction runs on the rate of change and

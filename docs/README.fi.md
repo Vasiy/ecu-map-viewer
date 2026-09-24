@@ -176,10 +176,11 @@ Kolme näkymää näkymän alla:
 Näkymän alla oleva yhteinen vierityspalkki ohjaa kaikkia kolmea näkymää kerralla,
 toisto/tauko-painikkeella ja neljällä nopeudella — **:1** toistaa koko ajon noin viidessätoista
 sekunnissa sen pituudesta riippumatta; **:10**/**:100**/**:1k** hidastavat tätä tahtia nopean
-siirtymän tarkastelemiseksi yksityiskohtaisesti. Jäljen väri valitaan
-viidestä vaihtoehdosta — punainen, vihreä, sininen, keltainen tai valkoinen — "Palauta näkymä"
--painikkeen vieressä olevasta pyöreästä painikkeesta; nykyinen piste pysyy aina punaisena
-valinnasta riippumatta, jottei se koskaan sekoitu jälkeen.
+siirtymän tarkastelemiseksi yksityiskohtaisesti. Molemmat ovat rivin oikeassa reunassa, kumpikin
+omalla otsikollaan: **Path:** ja sen vieressä oleva pyöreä painike vaihtavat jäljen väriä
+viidestä vaihtoehdosta — punainen, vihreä, sininen, keltainen tai valkoinen; nykyinen piste
+pysyy aina punaisena valinnasta riippumatta, jottei se koskaan sekoitu jälkeen. **Scale:** on
+itse nopeusryhmä.
 
 Tämä on rehellinen tasaisen kuormituksen kartoista ja niiden tavanomaisista korjauksista. Se
 ei näytä äkillisen kaasunavauksen tilapäistä rikastusta — tuo korjaus lasketaan oikeassa

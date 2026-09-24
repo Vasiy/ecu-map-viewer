@@ -166,9 +166,11 @@ Tři pohledy pod scénou:
 
 Společný posuvník pod scénou řídí všechny tři pohledy najednou, s přehráváním/pauzou a čtyřmi
 rychlostmi — **:1** přehraje celou jízdu za zhruba patnáct sekund bez ohledu na její délku;
-**:10**/**:100**/**:1k** toto tempo zpomalují pro podrobné sledování rychlého přechodového děje. Barva stopy je volba z pěti možností — červená, zelená, modrá, žlutá nebo
-bílá — pomocí kulatého tlačítka vedle „Obnovit pohled“; aktuální bod zůstává vždy červený bez
-ohledu na volbu, aby se se stopou nikdy nesplýval.
+**:10**/**:100**/**:1k** toto tempo zpomalují pro podrobné sledování rychlého přechodového
+děje. Obojí je vpravo na tomto řádku, každé s vlastním popiskem: **Path:** s kulatým tlačítkem
+vedle přepíná barvu stopy mezi pěti možnostmi — červená, zelená, modrá, žlutá nebo bílá;
+aktuální bod zůstává vždy červený bez ohledu na volbu, aby se se stopou nikdy nesplýval.
+**Scale:** je samotná skupina rychlostí.
 
 To je poctivé vůči mapám v ustáleném stavu a jejich obvyklým korekcím. Neukazuje přechodné
 obohacení při prudkém sešlápnutí plynu — tato korekce se ve skutečném firmwaru počítá podle

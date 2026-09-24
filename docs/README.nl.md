@@ -175,9 +175,10 @@ Drie weergaven onder de scène:
 Een gedeelde schuifbalk onder de scène stuurt alle drie de weergaven tegelijk aan, met
 afspelen/pauzeren en vier snelheden — **:1** speelt de hele rit af in ongeveer vijftien
 seconden, ongeacht de duur ervan; **:10**/**:100**/**:1k** vertragen dat tempo om een snelle
-overgang in detail te bekijken. De kleur van het spoor is een keuze uit vijf — rood,
-groen, blauw, geel of wit — via de ronde knop naast "Weergave resetten"; het huidige punt
-blijft altijd rood, ongeacht die keuze, zodat het nooit met het spoor versmelt.
+overgang in detail te bekijken. Beide staan rechts op die regel, elk met een eigen label:
+**Path:** met de ronde knop ernaast doorloopt de kleur van het spoor uit vijf keuzes — rood,
+groen, blauw, geel of wit; het huidige punt blijft altijd rood, ongeacht die keuze, zodat het
+nooit met het spoor versmelt. **Scale:** is de snelhedengroep zelf.
 
 Dit is eerlijk over stabiele maps en hun gebruikelijke correcties. Het toont geen tijdelijke
 verrijking bij een plotselinge gasstoot — die correctie draait in de echte firmware op de

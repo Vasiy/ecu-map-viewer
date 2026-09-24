@@ -179,10 +179,11 @@ Trois vues sous la scène :
 Une barre de défilement partagée sous la scène pilote les trois vues à la fois, avec
 lecture/pause et quatre vitesses — **:1** rejoue tout le trajet en environ quinze secondes,
 quelle que soit sa durée ; **:10**/**:100**/**:1k** ralentissent ce rythme pour examiner un
-régime transitoire en détail. La couleur de la traînée est un choix parmi
-cinq — rouge, vert, bleu, jaune ou blanc — via le bouton rond à côté de « Réinitialiser la
-vue » ; le point actuel reste rouge quel que soit ce choix, pour ne jamais se confondre avec
-la traînée.
+régime transitoire en détail. Les deux se trouvent à droite de cette ligne, chacun avec sa
+propre étiquette : **Path:**, avec le bouton rond à côté, fait défiler la couleur de la
+traînée parmi cinq choix — rouge, vert, bleu, jaune ou blanc ; le point actuel reste rouge
+quel que soit ce choix, pour ne jamais se confondre avec la traînée. **Scale:** est le groupe
+de vitesses lui-même.
 
 Cela reste honnête sur les cartographies en régime stable et leurs corrections habituelles.
 Cela ne montre pas l'enrichissement transitoire d'un coup d'accélérateur — cette correction

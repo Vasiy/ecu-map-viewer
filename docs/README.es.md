@@ -176,10 +176,11 @@ Tres vistas bajo la escena:
 Una barra de desplazamiento compartida bajo la escena controla las tres vistas a la vez, con
 reproducir/pausar y cuatro velocidades — **:1** reproduce todo el trayecto en unos quince
 segundos, sea cual sea su duración; **:10**/**:100**/**:1k** ralentizan ese ritmo para examinar
-un transitorio rápido en detalle. El color de la estela es una elección entre
-cinco — rojo, verde, azul, amarillo o blanco — mediante el botón redondo junto a «Restablecer
-vista»; el punto actual siempre queda rojo, sea cual sea la elección, para que nunca se
-confunda con la estela.
+un transitorio rápido en detalle. Ambos están a la derecha de esa fila, cada uno con su propia
+etiqueta: **Path:** con el botón redondo junto a ella recorre el color de la estela entre cinco
+opciones — rojo, verde, azul, amarillo o blanco; el punto actual siempre queda rojo, sea cual
+sea la elección, para que nunca se confunda con la estela. **Scale:** es el propio grupo de
+velocidades.
 
 Esto es honesto sobre los mapas en régimen estable y sus correcciones habituales. No muestra
 el enriquecimiento transitorio de un acelerón brusco — esa corrección corre sobre la

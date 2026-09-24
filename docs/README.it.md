@@ -175,10 +175,11 @@ Tre viste sotto la scena:
 Una barra di scorrimento condivisa sotto la scena guida tutte e tre le viste insieme, con
 play/pausa e quattro velocità — **:1** riproduce l'intero giro in circa quindici secondi,
 qualunque sia la sua durata; **:10**/**:100**/**:1k** rallentano questo ritmo per esaminare in
-dettaglio un transitorio rapido. Il colore della scia è una scelta tra cinque —
-rosso, verde, blu, giallo o bianco — tramite il pulsante rotondo accanto a «Reimposta
-vista»; il punto attuale resta sempre rosso, qualunque sia la scelta, così da non
-confondersi mai con la scia.
+dettaglio un transitorio rapido. Entrambi stanno a destra di quella riga, ciascuno con la
+propria etichetta: **Path:**, con il pulsante rotondo accanto, fa scorrere il colore della
+scia tra cinque scelte — rosso, verde, blu, giallo o bianco; il punto attuale resta sempre
+rosso, qualunque sia la scelta, così da non confondersi mai con la scia. **Scale:** è il
+gruppo di velocità stesso.
 
 Questo è onesto riguardo alle mappe in regime stazionario e alle loro correzioni consuete.
 Non mostra l'arricchimento transitorio su un colpo di gas improvviso — quella correzione

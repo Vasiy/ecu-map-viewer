@@ -167,9 +167,10 @@ Tre vyer under scenen:
 Ett delat skjutreglage under scenen driver alla tre vyerna samtidigt, med uppspelning/paus
 och fyra hastigheter — **:1** spelar upp hela körningen på ungefär femton sekunder, oavsett
 dess längd; **:10**/**:100**/**:1k** saktar ner det tempot för att gå igenom ett snabbt förlopp
-i detalj. Spårets färg är ett val mellan fem — röd, grön, blå, gul
-eller vit — via den runda knappen bredvid "Återställ vyn"; den aktuella punkten förblir alltid
-röd oavsett val, så den aldrig smälter samman med spåret.
+i detalj. Båda sitter till höger på den raden, var och en med egen etikett: **Path:** med den
+runda knappen bredvid växlar spårets färg mellan fem val — röd, grön, blå, gul eller vit; den
+aktuella punkten förblir alltid röd oavsett val, så den aldrig smälter samman med spåret.
+**Scale:** är själva hastighetsgruppen.
 
 Det här är ärligt om kartor vid stabilt varvtal och deras vanliga korrigeringar. Det visar
 inte tillfällig anrikning vid ett tvärt gaspådrag — den korrigeringen räknas i den riktiga

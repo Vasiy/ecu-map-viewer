@@ -172,10 +172,10 @@ Trzy widoki pod sceną:
 Wspólny suwak przewijania pod sceną steruje wszystkimi trzema widokami naraz, z play/pauzą i
 czterema prędkościami — **:1** odtwarza cały przejazd w około piętnaście sekund, niezależnie
 od jego długości; **:10**/**:100**/**:1k** zwalniają to tempo do oglądania szybkiego stanu
-przejściowego w szczegółach. Kolor śladu to wybór spośród pięciu —
-czerwony, zielony, niebieski, żółty lub biały — za pomocą okrągłego przycisku obok „Zresetuj
-widok”; bieżący punkt zawsze pozostaje czerwony, niezależnie od wyboru, więc nigdy nie zlewa
-się ze śladem.
+przejściowego w szczegółach. Oba znajdują się po prawej stronie tego wiersza, każdy z własną
+etykietą: **Path:** z okrągłym przyciskiem obok przełącza kolor śladu spośród pięciu —
+czerwony, zielony, niebieski, żółty lub biały; bieżący punkt zawsze pozostaje czerwony,
+niezależnie od wyboru, więc nigdy nie zlewa się ze śladem. **Scale:** to sama grupa prędkości.
 
 To jest uczciwe wobec map w stanie ustalonym i ich zwykłych korekt. Nie pokazuje
 przejściowego wzbogacenia przy gwałtownym otwarciu przepustnicy — ta korekta w prawdziwym
