@@ -224,6 +224,39 @@ async function main() {
     assert.strictEqual(play.textContent, before, 'clicking again should stop it');
   });
 
+  await test('scrubbing re-asserts the live camera instead of the stale one baked into the last full redraw', async () => {
+    const S = makeSandbox();
+    await settle();
+    await drop(S, [file('granpasso.bin', Buffer.from(sampleImage())), file('granpasso.xdf', SAMPLE_XDF)]);
+    await settle();
+    await drop(S, [file('ride.csv', RIDE_CSV)]);
+    await settle();
+
+    // a real Plotly.react() populates el.data and el._fullLayout; this sandbox's
+    // stub does not, since nothing here needs a real GL scene -- stand in for
+    // just enough of it to exercise setPathHighlight's own guard and camera read
+    const plot = S.document.getElementById('plot');
+    plot.data = [];
+    const LIVE_CAMERA = { up: { x: 0, y: 0, z: 1 }, center: { x: 0, y: 0, z: 0 },
+      eye: { x: 9, y: 8, z: 7 }, projection: { type: 'perspective' } };
+    plot._fullLayout = { scene: {
+      camera: { eye: { x: 1.65, y: -1.75, z: 0.95 } },   // the stale value from the last full react()
+      _scene: { getCamera: () => LIVE_CAMERA },           // what the user's drag actually left on screen
+    } };
+
+    S.document.getElementById('logScrub').fire('input', { target: { value: '0' } });
+    await settle();
+
+    assert.ok(S.Plotly.last.update, 'the path-highlight restyle should go through Plotly.update, carrying scene.camera along');
+    // a strict object-identity check, not deepStrictEqual: the layout object
+    // itself is built inside the sandbox's vm realm, so its Object.prototype
+    // differs from this (outer) realm's -- deepStrictEqual across realms
+    // fails on that alone even when every value matches. The camera value is
+    // handed through by reference, so identity is the right check anyway.
+    assert.strictEqual(S.Plotly.last.update[2]['scene.camera'], LIVE_CAMERA,
+      'the live (rotated) camera must be re-asserted, not the stale one from the layout');
+  });
+
   console.log('\n' + passed + ' passed, ' + failed + ' failed');
   process.exit(failed ? 1 : 0);
 }

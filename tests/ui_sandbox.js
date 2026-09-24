@@ -217,12 +217,14 @@ function makeSandbox(opts = {}) {
     fetch: opts.fetch || (() => Promise.reject(new Error('offline'))),
     Plotly: (() => {
       const counts = { react: 0, update: 0, restyle: 0, resize: 0 };
+      const last = { react: null, update: null, restyle: null, relayout: null };
       return {
         counts,
-        react: () => { counts.react++; return Promise.resolve(); },
-        update: () => { counts.update++; return Promise.resolve(); },
-        restyle: () => { counts.restyle++; return Promise.resolve(); },
-        relayout: () => Promise.resolve(),
+        last,
+        react: (...a) => { counts.react++; last.react = a; return Promise.resolve(); },
+        update: (...a) => { counts.update++; last.update = a; return Promise.resolve(); },
+        restyle: (...a) => { counts.restyle++; last.restyle = a; return Promise.resolve(); },
+        relayout: (...a) => { last.relayout = a; return Promise.resolve(); },
         downloadImage: () => Promise.resolve(),
         Plots: { resize: () => { counts.resize++; } },
       };

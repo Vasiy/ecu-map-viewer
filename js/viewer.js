@@ -385,8 +385,17 @@
     return window.Plotly.restyle(el, { opacity: value }, surfaceIndices(items));
   }
 
+  /* el._fullLayout.scene.camera is the declarative value from the last full
+     react() -- it only gets synced from an actual drag on Plotly's own
+     mouseup handling, which a restyle fired in the same tick can outrun.
+     el._fullLayout.scene._scene is the live gl3d Scene instance; its own
+     getCamera() reads the orbit control's current position directly, so it
+     never lags behind what the user is actually looking at. */
   function currentCamera(el) {
-    return el && el._fullLayout && el._fullLayout.scene ? el._fullLayout.scene.camera : null;
+    if (!el || !el._fullLayout || !el._fullLayout.scene) return null;
+    var scene = el._fullLayout.scene._scene;
+    if (scene && typeof scene.getCamera === 'function') return scene.getCamera();
+    return el._fullLayout.scene.camera;
   }
 
   function resetCamera(el) {
@@ -529,7 +538,16 @@
   }
 
   /* Marks one point per dataset's path as "here" on the scrub timeline --
-     per-point marker arrays restyled in place, no new trace. */
+     per-point marker arrays restyled in place, no new trace.
+
+     This restyle changes marker.size/marker.color from a scalar (the trace's
+     initial shape) to a per-point array, and that shape change makes Plotly's
+     gl3d subplot recreate the scene rather than patch it in place -- which
+     reads camera straight from the layout's declarative scene.camera. Left
+     alone that discards whatever the user just rotated to, snapping the view
+     back to wherever it was as of the last full react(). Carrying the live
+     camera along in the same call (still one Plotly call, just update()
+     instead of restyle()) re-asserts it before the recreation can lose it. */
   function setPathHighlight(el, items, rowIndex, opts) {
     if (!el || !el.data) return Promise.resolve();
     var n = items.length;
@@ -543,7 +561,9 @@
       colors.push(item.path.x.map(function (_, k) { return k === hit ? item.color : base; }));
     });
     if (!indices.length) return Promise.resolve();
-    return window.Plotly.restyle(el, { 'marker.size': sizes, 'marker.color': colors }, indices);
+    var camera = currentCamera(el);
+    var layoutUpdate = camera ? { 'scene.camera': camera } : {};
+    return window.Plotly.update(el, { 'marker.size': sizes, 'marker.color': colors }, layoutUpdate, indices);
   }
 
   /* Dwell: how many seconds the log spent in each cell of one table, shaped
