@@ -169,8 +169,16 @@ Tres vistas bajo la escena:
   estable confirma que la asignación y las unidades son correctas.
 - **Tiempo pasado** — un mapa de calor con la forma del mapa, coloreado según cuánto tiempo
   pasó la conducción en cada celda.
-- Una **trayectoria** de puntos sobre la propia superficie, uno por muestra, activable con
-  una casilla.
+- Una **trayectoria** sobre la propia superficie: cada muestra como un punto pequeño, una
+  estela de color que une todo lo recorrido hasta ahora, y un marcador vertical rojo en el
+  punto actual — todo activable junto con una sola casilla.
+
+Una barra de desplazamiento compartida bajo la escena controla las tres vistas a la vez, con
+reproducir/pausar y cuatro velocidades (**:1** tiempo real, hasta **:1k** mil veces más lento)
+para examinar un transitorio rápido en detalle. El color de la estela es una elección entre
+cinco — rojo, verde, azul, amarillo o blanco — mediante el botón redondo junto a «Restablecer
+vista»; el punto actual siempre queda rojo, sea cual sea la elección, para que nunca se
+confunda con la estela.
 
 Esto es honesto sobre los mapas en régimen estable y sus correcciones habituales. No muestra
 el enriquecimiento transitorio de un acelerón brusco — esa corrección corre sobre la

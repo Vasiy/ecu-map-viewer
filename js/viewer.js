@@ -64,6 +64,16 @@
     return list[index % list.length];
   }
 
+  // The traveled-path trail's five choices, in cycling order; the current-
+  // point marker is always red, not one of these -- it has to read as "here"
+  // regardless of which trail colour is picked, including red itself.
+  var TRAIL_COLOR_ORDER = ['red', 'green', 'blue', 'yellow', 'white'];
+  var TRAIL_COLORS = {
+    red: '#e6483c', green: '#2ecc71', blue: '#3987e5', yellow: '#f4c430', white: '#f2f2f2'
+  };
+  function trailColor(name) { return TRAIL_COLORS[name] || TRAIL_COLORS.yellow; }
+  var CURRENT_POINT_COLOR = TRAIL_COLORS.red;
+
   function themeTokens(theme) {
     return theme === 'light'
       ? { paper: 'rgba(0,0,0,0)', ink: '#1b1f26', muted: '#5c636e', grid: '#d7dae0', zero: '#a9aeb8',
@@ -257,6 +267,79 @@
     };
   }
 
+  /* The path point at or just before a scrub row -- path.row is sparse
+     (dropout rows are skipped), so "at this row" means the nearest one not
+     past it, falling back to the first point for a row before the log starts
+     mapping anything. */
+  function nearestPathIndex(pathRow, rowIndex) {
+    var n = pathRow.length;
+    if (!n) return -1;
+    if (rowIndex <= pathRow[0]) return 0;
+    if (rowIndex >= pathRow[n - 1]) return n - 1;
+    var lo = 0, hi = n - 1;
+    while (hi - lo > 1) {
+      var mid = (lo + hi) >> 1;
+      if (pathRow[mid] <= rowIndex) lo = mid; else hi = mid;
+    }
+    return lo;
+  }
+
+  function traveledXYZ(item, hit, lift) {
+    return {
+      x: item.path.x.slice(0, hit + 1),
+      y: item.path.y.slice(0, hit + 1),
+      z: item.path.z.slice(0, hit + 1).map(function (v) { return v + lift; })
+    };
+  }
+
+  /* A short vertical segment through the surface at the current point --
+     mostly above it, a hair below, so it reads as a marker planted at that
+     spot ("поплавок") from any camera angle rather than a dot that can hide
+     behind the surface itself. */
+  function markerXYZ(item, hit, lift, poleUp) {
+    var x = item.path.x[hit], y = item.path.y[hit], z = item.path.z[hit];
+    return { x: [x, x], y: [y, y], z: [z - lift, z + poleUp] };
+  }
+
+  /* The trail behind the current point: every sampled position from the
+     start of the log up to the scrub row, drawn as a line so it reads as the
+     route actually driven rather than a scatter of unconnected dots. Emitted
+     for every item, visible or not, for the same reason the path markers
+     are -- trace indices stay parallel and a checkbox restyles in place. */
+  function traveledTrace(item, opts) {
+    var on = !!(item.path && item.path.x.length && item.visible && opts.showPath);
+    var hit = on ? nearestPathIndex(item.path.row, opts.scrubRow || 0) : -1;
+    var geom = on ? traveledXYZ(item, hit, opts.pathLift || 0) : { x: [], y: [], z: [] };
+    return {
+      type: 'scatter3d',
+      mode: 'lines',
+      name: item.name,
+      x: geom.x, y: geom.y, z: geom.z,
+      visible: on,
+      showlegend: false,
+      line: { color: trailColor(opts.pathColor), width: 4 },
+      hoverinfo: 'skip'
+    };
+  }
+
+  /* "You are here": a red vertical stick at the scrub row's own position,
+     always red regardless of the trail colour so it never blends into it. */
+  function currentMarkerTrace(item, opts) {
+    var on = !!(item.path && item.path.x.length && item.visible && opts.showPath);
+    var hit = on ? nearestPathIndex(item.path.row, opts.scrubRow || 0) : -1;
+    var geom = on ? markerXYZ(item, hit, opts.pathLift || 0, opts.polePush || 0) : { x: [], y: [], z: [] };
+    return {
+      type: 'scatter3d',
+      mode: 'lines',
+      name: item.name,
+      x: geom.x, y: geom.y, z: geom.z,
+      visible: on,
+      showlegend: false,
+      line: { color: CURRENT_POINT_COLOR, width: 9 },
+      hoverinfo: 'skip'
+    };
+  }
+
   var CONFIG = {
     displaylogo: false,
     responsive: true,
@@ -293,10 +376,16 @@
 
   function draw(el, items, opts) {
     if (opts.slice) opts.slice.lift = sliceLift(items);
-    var pathOpts = Object.assign({}, opts, { pathLift: sliceLift(items) });
+    var vr = visibleRange(items);
+    var pathOpts = Object.assign({}, opts, {
+      pathLift: sliceLift(items),
+      polePush: vr ? (vr[1] - vr[0]) * 0.12 : 1
+    });
     var traces = items.map(function (i) { return surfaceTrace(i, opts); })
       .concat(items.map(function (i) { return sliceTrace(i, opts); }))
-      .concat(items.map(function (i) { return pathTrace(i, pathOpts); }));
+      .concat(items.map(function (i) { return pathTrace(i, pathOpts); }))
+      .concat(items.map(function (i) { return traveledTrace(i, pathOpts); }))
+      .concat(items.map(function (i) { return currentMarkerTrace(i, pathOpts); }));
     if (!traces.length) traces = [seedTrace()];   // keep the scene warm
     // a single visible surface can afford a colour bar; several would fight
     var vis = items.filter(function (i) { return i.visible; });
@@ -326,23 +415,25 @@
     var n = items.length;
     var lineIndex = n + index;
     var pathIndex = n * 2 + index;
+    var traveledIndex = n * 3 + index;
+    var markerIndex = n * 4 + index;
     var slice = opts && opts.slice;
     var lineOn = visible && !!slice;
     var item = items[index];
     var pathOn = visible && !!(opts && opts.showPath) && !!(item.path && item.path.x.length);
-    var style = { visible: [visible, lineOn, pathOn] };
+    var style = { visible: [visible, lineOn, pathOn, pathOn, pathOn] };
     if (lineOn) {
       var geom = sliceGeometry(item, {
         axis: slice.axis, value: slice.value, lift: sliceLift(items)
       });
-      style.x = [undefined, geom.x, undefined];
-      style.y = [undefined, geom.y, undefined];
-      style.z = [undefined, geom.z, undefined];
+      style.x = [undefined, geom.x, undefined, undefined, undefined];
+      style.y = [undefined, geom.y, undefined, undefined, undefined];
+      style.z = [undefined, geom.z, undefined, undefined, undefined];
     }
     return window.Plotly.update(el,
       style,
       { 'scene.zaxis.range': visibleRange(items) },
-      [index, lineIndex, pathIndex]);
+      [index, lineIndex, pathIndex, traveledIndex, markerIndex]);
   }
 
   /*
@@ -520,50 +611,40 @@
     return window.Plotly.relayout(el, { shapes: shapes });
   }
 
-  /* The path point at or just before a scrub row -- path.row is sparse
-     (dropout rows are skipped), so "at this row" means the nearest one not
-     past it, falling back to the first point for a row before the log starts
-     mapping anything. */
-  function nearestPathIndex(pathRow, rowIndex) {
-    var n = pathRow.length;
-    if (!n) return -1;
-    if (rowIndex <= pathRow[0]) return 0;
-    if (rowIndex >= pathRow[n - 1]) return n - 1;
-    var lo = 0, hi = n - 1;
-    while (hi - lo > 1) {
-      var mid = (lo + hi) >> 1;
-      if (pathRow[mid] <= rowIndex) lo = mid; else hi = mid;
-    }
-    return lo;
-  }
+  /* Moves the trail and the current-point marker to a scrub row -- restyled
+     in place on their existing traces, no new trace.
 
-  /* Marks one point per dataset's path as "here" on the scrub timeline --
-     per-point marker arrays restyled in place, no new trace.
-
-     This restyle changes marker.size/marker.color from a scalar (the trace's
-     initial shape) to a per-point array, and that shape change makes Plotly's
-     gl3d subplot recreate the scene rather than patch it in place -- which
-     reads camera straight from the layout's declarative scene.camera. Left
-     alone that discards whatever the user just rotated to, snapping the view
-     back to wherever it was as of the last full react(). Carrying the live
-     camera along in the same call (still one Plotly call, just update()
-     instead of restyle()) re-asserts it before the recreation can lose it. */
-  function setPathHighlight(el, items, rowIndex, opts) {
+     This restyle changes each trace's x/y/z from whatever the last full
+     draw() left them at, and on a gl3d subplot that kind of change makes
+     Plotly recreate the scene rather than patch it in place -- which reads
+     camera straight from the layout's declarative scene.camera. Left alone
+     that discards whatever the user just rotated to, snapping the view back
+     to wherever it was as of the last full react(). Carrying the live camera
+     along in the same call (still one Plotly call) re-asserts it before the
+     recreation can lose it -- the same fix the play-tick highlight needed
+     before the trail and marker existed as their own traces. */
+  function updatePathProgress(el, items, rowIndex, opts) {
     if (!el || !el.data) return Promise.resolve();
     var n = items.length;
-    var indices = [], sizes = [], colors = [];
+    var lift = sliceLift(items);
+    var vr = visibleRange(items);
+    var polePush = vr ? (vr[1] - vr[0]) * 0.12 : 1;
+    var color = trailColor(opts && opts.pathColor);
+    var indices = [], x = [], y = [], z = [], lineColor = [];
     items.forEach(function (item, i) {
       if (!item.path || !item.path.x.length) return;
-      indices.push(n * 2 + i);
       var hit = nearestPathIndex(item.path.row, rowIndex);
-      var base = mix(item.color, opts && opts.theme === 'light' ? '#101318' : '#ffffff', 0.22);
-      sizes.push(item.path.x.map(function (_, k) { return k === hit ? 9 : 3; }));
-      colors.push(item.path.x.map(function (_, k) { return k === hit ? item.color : base; }));
+      var trail = traveledXYZ(item, hit, lift);
+      indices.push(n * 3 + i);
+      x.push(trail.x); y.push(trail.y); z.push(trail.z); lineColor.push(color);
+      var marker = markerXYZ(item, hit, lift, polePush);
+      indices.push(n * 4 + i);
+      x.push(marker.x); y.push(marker.y); z.push(marker.z); lineColor.push(CURRENT_POINT_COLOR);
     });
     if (!indices.length) return Promise.resolve();
     var camera = currentCamera(el);
     var layoutUpdate = camera ? { 'scene.camera': camera } : {};
-    return window.Plotly.update(el, { 'marker.size': sizes, 'marker.color': colors }, layoutUpdate, indices);
+    return window.Plotly.update(el, { x: x, y: y, z: z, 'line.color': lineColor }, layoutUpdate, indices);
   }
 
   /* Dwell: how many seconds the log spent in each cell of one table, shaped
@@ -605,8 +686,9 @@
     draw: draw, drawSlice: drawSlice, drawReplay: drawReplay, drawDwell: drawDwell,
     setVisible: setVisible, updateSlice: updateSlice, toPng: toPng,
     setOpacity: setOpacity, setReplayVisible: setReplayVisible,
-    setReplayPlayhead: setReplayPlayhead, setPathHighlight: setPathHighlight,
+    setReplayPlayhead: setReplayPlayhead, updatePathProgress: updatePathProgress,
     colorFor: colorFor, ramp: ramp, mix: mix, visibleRange: visibleRange,
-    currentCamera: currentCamera, resetCamera: resetCamera, fmt: fmt, SERIES: SERIES
+    currentCamera: currentCamera, resetCamera: resetCamera, fmt: fmt, SERIES: SERIES,
+    trailColor: trailColor, TRAIL_COLOR_ORDER: TRAIL_COLOR_ORDER
   };
 });

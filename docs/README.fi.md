@@ -169,7 +169,16 @@ Kolme näkymää näkymän alla:
   yksiköt ovat oikein.
 - **Vietetty aika** — kartan muotoinen lämpökartta, väritetty sen mukaan, kuinka kauan ajo
   vietti kussakin solussa.
-- **Reitti** pisteistä itse pinnalla, yksi per näyte, päälle kytkettävä valintaruudulla.
+- **Reitti** itse pinnalla: jokainen näyte pienenä pisteenä, värillinen jälki, joka yhdistää
+  tähän mennessä ajetun matkan, ja punainen pystysuora merkki nykyisessä pisteessä — kaikki
+  yhdessä päälle kytkettävissä yhdellä valintaruudulla.
+
+Näkymän alla oleva yhteinen vierityspalkki ohjaa kaikkia kolmea näkymää kerralla,
+toisto/tauko-painikkeella ja neljällä nopeudella (**:1** reaaliaika, aina **:1k** tuhat kertaa
+hitaampaan) nopean siirtymän tarkastelemiseksi yksityiskohtaisesti. Jäljen väri valitaan
+viidestä vaihtoehdosta — punainen, vihreä, sininen, keltainen tai valkoinen — "Palauta näkymä"
+-painikkeen vieressä olevasta pyöreästä painikkeesta; nykyinen piste pysyy aina punaisena
+valinnasta riippumatta, jottei se koskaan sekoitu jälkeen.
 
 Tämä on rehellinen tasaisen kuormituksen kartoista ja niiden tavanomaisista korjauksista. Se
 ei näytä äkillisen kaasunavauksen tilapäistä rikastusta — tuo korjaus lasketaan oikeassa

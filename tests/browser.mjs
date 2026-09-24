@@ -146,7 +146,8 @@ await page.locator('[data-mode="surface"]').click();
 await page.waitForTimeout(400);
 
 // drive-log replay: rpm/throttle auto-map onto @ign-main, and the 2N
-// surface+slice trace layout must extend to 3N with the path markers
+// surface+slice trace layout must extend to 5N -- path markers, the
+// traveled trail and the current-point marker, one block each
 await dropText(page, 'ride.csv', syntheticRideLog());
 report.logMapping = {
   y: await page.locator('#logAxisY').inputValue(),
@@ -157,8 +158,10 @@ report.logTraces = await page.evaluate(() => {
   const datasets = document.querySelectorAll('.ds').length;
   return {
     total: data.length,
-    expected3N: datasets * 3,
-    pathMarkers: data.filter((d) => d.type === 'scatter3d' && d.mode === 'markers').length
+    expected5N: datasets * 5,
+    pathMarkers: data.filter((d) => d.type === 'scatter3d' && d.mode === 'markers').length,
+    trailLines: data.filter((d) => d.type === 'scatter3d' && d.mode === 'lines' && d.line && d.line.width === 4).length,
+    currentMarkers: data.filter((d) => d.type === 'scatter3d' && d.mode === 'lines' && d.line && d.line.width === 9).length
   };
 });
 report.logChartTraces = await page.evaluate(() => {
@@ -185,19 +188,33 @@ report.dwellShrunkOnScrub = await page.evaluate(() => {
   const el = document.querySelectorAll('#logDwellList .log-dwell-plot')[0];
   return el.data[0].z.flat().reduce((a, b) => a + b, 0);
 }) < dwellFullTotal;
-report.pathHighlight = await page.evaluate(() => {
-  const trace = document.getElementById('plot').data.find((d) => d.type === 'scatter3d' && d.mode === 'markers');
-  return trace ? { sizes: [...new Set(trace.marker.size)].sort(), highlighted: trace.marker.size.filter((s) => s === 9).length } : null;
+// the trail should have shrunk back to the first 6 rows (scrub=5, 0-indexed)
+// and the current-point marker should sit at exactly two z values -- the
+// buoy's below-surface tail and its above-surface tip
+report.pathProgress = await page.evaluate(() => {
+  const data = document.getElementById('plot').data;
+  const trail = data.find((d) => d.type === 'scatter3d' && d.mode === 'lines' && d.line && d.line.width === 4);
+  const marker = data.find((d) => d.type === 'scatter3d' && d.mode === 'lines' && d.line && d.line.width === 9);
+  return trail && marker ? { trailPoints: trail.x.length, markerPoints: marker.x.length, markerColor: marker.line.color } : null;
 });
 await page.locator('[data-logview="replay"]').click();
 await page.waitForTimeout(300);
 report.playhead = await page.evaluate(() => (document.getElementById('logChart').layout.shapes || []).length);
 
-// play should advance the slider on its own and stop at the end
+// play should advance the slider on its own, at the log's own real-time
+// pace by default -- two seconds in should be a couple of rows past where
+// it started, not the whole ride
 await page.locator('#logPlay').click();
 await page.waitForTimeout(2000);
 report.playAdvanced = Number(await page.locator('#logScrub').inputValue()) > 5;
-await page.waitForTimeout(16000);
+await page.locator('#logPlay').click();   // stop it -- the rest of the ride at 1x would take ~35s for nothing
+
+// scrubbed to one row from the end, play only has to cross one row's worth
+// of real time (~1s here) to reach it and stop on its own
+await page.locator('#logScrub').fill(String(Number(await page.locator('#logScrub').getAttribute('max')) - 1));
+await page.locator('#logScrub').dispatchEvent('input');
+await page.locator('#logPlay').click();
+await page.waitForTimeout(1500);
 report.playStoppedAtEnd = await page.evaluate(() => {
   const s = document.getElementById('logScrub');
   return Number(s.value) === Number(s.max) && document.getElementById('logPlay').textContent === '▶';

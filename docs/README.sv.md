@@ -160,7 +160,15 @@ Tre vyer under scenen:
   och enheterna stämmer.
 - **Tid i cellen** — en värmekarta formad som kartan, färgad efter hur lång tid körningen
   tillbringade i varje cell.
-- En **körväg** av punkter på ytan själv, en per mätvärde, som slås på med en kryssruta.
+- En **körväg** på ytan själv: varje mätvärde som en liten punkt, ett färgat spår som binder
+  ihop allt som körts hittills, och en röd lodrät markering vid den aktuella punkten — allt
+  tillsammans styrt av en enda kryssruta.
+
+Ett delat skjutreglage under scenen driver alla tre vyerna samtidigt, med uppspelning/paus
+och fyra hastigheter (**:1** realtid, ner till **:1k** tusen gånger långsammare) för att gå
+igenom ett snabbt förlopp i detalj. Spårets färg är ett val mellan fem — röd, grön, blå, gul
+eller vit — via den runda knappen bredvid "Återställ vyn"; den aktuella punkten förblir alltid
+röd oavsett val, så den aldrig smälter samman med spåret.
 
 Det här är ärligt om kartor vid stabilt varvtal och deras vanliga korrigeringar. Det visar
 inte tillfällig anrikning vid ett tvärt gaspådrag — den korrigeringen räknas i den riktiga

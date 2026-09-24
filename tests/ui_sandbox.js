@@ -176,14 +176,17 @@ function makeSandbox(opts = {}) {
   };
 
   // Static markup this stub never parses from index.html, but app.js finds by
-  // querySelectorAll rather than by id -- the seg-toggle buttons.
-  [['data-mode', 'surface', 'view.surface'], ['data-mode', 'diff', 'view.diff'],
-    ['data-logview', 'replay', 'log.replay_title'], ['data-logview', 'dwell', 'log.dwell_title']]
-    .forEach(([attr, value, i18nKey], i) => {
+  // querySelectorAll rather than by id -- the seg-toggle buttons. `pressed`
+  // mirrors which one index.html itself marks aria-pressed="true" on load.
+  [['data-mode', 'surface', 'view.surface', true], ['data-mode', 'diff', 'view.diff', false],
+    ['data-logview', 'replay', 'log.replay_title', true], ['data-logview', 'dwell', 'log.dwell_title', false],
+    ['data-speed', '1', 'log.speed_1', true], ['data-speed', '10', 'log.speed_10', false],
+    ['data-speed', '100', 'log.speed_100', false], ['data-speed', '1000', 'log.speed_1000', false]]
+    .forEach(([attr, value, i18nKey, pressed]) => {
       const b = el('button');
       b.setAttribute(attr, value);
       b.setAttribute('data-i18n', i18nKey);
-      b.setAttribute('aria-pressed', String(i % 2 === 0));
+      b.setAttribute('aria-pressed', String(pressed));
       body.appendChild(b);
     });
 

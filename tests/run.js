@@ -340,6 +340,27 @@ test('log replay coverage reports the fraction of samples inside the axis extent
   assert.strictEqual(r.coverage, 0.5);
 });
 
+test('rowAtTime finds the row at or just before a given elapsed time', function () {
+  var log = { time: [0, 1, 2.5, 4] };
+  assert.strictEqual(Log.rowAtTime(log, 0), 0);
+  assert.strictEqual(Log.rowAtTime(log, 0.9), 0);    // hasn't reached row 1 yet
+  assert.strictEqual(Log.rowAtTime(log, 1), 1);       // exactly at row 1
+  assert.strictEqual(Log.rowAtTime(log, 2), 1);       // between rows 1 and 2
+  assert.strictEqual(Log.rowAtTime(log, 2.5), 2);
+  assert.strictEqual(Log.rowAtTime(log, 100), 3, 'clamps to the last row past the end');
+});
+
+test('rowAtTime resumes the scan from a given row instead of always starting at 0', function () {
+  var log = { time: [0, 1, 2, 3, 4, 5] };
+  assert.strictEqual(Log.rowAtTime(log, 4, 3), 4);
+  // a fromIndex past the target must not walk backward
+  assert.strictEqual(Log.rowAtTime(log, 1, 4), 4);
+});
+
+test('rowAtTime on an empty log stays at row 0', function () {
+  assert.strictEqual(Log.rowAtTime({ time: [] }, 5), 0);
+});
+
 /* ---------- roles ---------- */
 
 /* Real titles, as the four definitions in testdata/ spell them. */

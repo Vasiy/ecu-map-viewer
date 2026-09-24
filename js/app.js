@@ -40,7 +40,9 @@
       available: [],            // addon mode: [{name, day, file, size, mtime}]
       warnKey: null,             // dedupe key for the out-of-range toast
       scrub: 0,                  // row index into log.doc.time -- the shared timeline
-      playing: false
+      playing: false,
+      speed: 1,                  // playback slowdown factor: 1 (real time), 10, 100 or 1000
+      pathColor: 'yellow'        // the traveled-trail colour; the current-point marker is always red
     }
   };
 
@@ -345,41 +347,55 @@
     el.logPlay.setAttribute('aria-label', label);
   }
 
+  function updatePathColorButton() {
+    if (!el.logPathColor) return;
+    el.logPathColor.style.background = Viewer.trailColor(state.log.pathColor);
+    var label = t('log.path_color') + ': ' + t('log.color_' + state.log.pathColor);
+    el.logPathColor.title = label;
+    el.logPathColor.setAttribute('aria-label', label);
+  }
+
   function stopLogPlay() {
     if (playTimer) { window.clearInterval(playTimer); playTimer = null; }
     state.log.playing = false;
     updatePlayLabel();
   }
 
-  /* Compressed into a fixed-length animation regardless of how long the ride
-     actually was -- scrubbing through an hour of riding one row at a time,
-     in real time, would not get watched. */
+  /* Plays back at the log's own pace -- one real second per log-second at
+     speed 1, stretched by the chosen slowdown factor otherwise -- rather
+     than compressing an arbitrary ride into a fixed-length animation. A
+     wall-clock anchor (startWall/startLogTime) drives Log.rowAtTime() each
+     tick instead of stepping a fixed row count, so it tracks the log's own
+     timestamps even where the sample rate itself is uneven. */
   function startLogPlay() {
     if (!state.log.doc || state.log.doc.rows < 2) return;
     if (state.log.scrub >= state.log.doc.rows - 1) state.log.scrub = 0;
     state.log.playing = true;
     updatePlayLabel();
-    var tickMs = 80, totalMs = 15000;
-    var perTick = Math.max(1, Math.ceil((state.log.doc.rows - 1) * tickMs / totalMs));
+    var tickMs = 80;
+    var startWall = Date.now();
+    var startLogTime = state.log.doc.time[state.log.scrub];
+    var endLogTime = state.log.doc.time[state.log.doc.rows - 1];
     playTimer = window.setInterval(function () {
-      state.log.scrub = Math.min(state.log.doc.rows - 1, state.log.scrub + perTick);
+      var target = startLogTime + (Date.now() - startWall) / 1000 / state.log.speed;
+      state.log.scrub = Log.rowAtTime(state.log.doc, target, state.log.scrub);
       el.logScrub.value = String(state.log.scrub);
       updateLogScrub();
-      if (state.log.scrub >= state.log.doc.rows - 1) stopLogPlay();
+      if (target >= endLogTime) stopLogPlay();
     }, tickMs);
   }
 
   /* Moves the shared timeline without rebuilding anything: the playhead line
-     restyles, the path highlight restyles, and only the dwell panel -- which
-     has no per-trace restyle of its own -- redraws, and only while it is the
-     one actually on screen.
+     restyles, the trail/current-marker restyle, and only the dwell panel --
+     which has no per-trace restyle of its own -- redraws, and only while it
+     is the one actually on screen.
 
-     The path highlight is skipped while the user has a mouse or touch down on
-     the scene: a restyle mid-drag does not just jitter the camera, it kills
-     the drag outright -- Plotly's gl3d orbit control never sees the rest of
-     the gesture, so a ride playing back left the 3-D view impossible to
-     rotate, pan or zoom for as long as play kept ticking. The highlight
-     simply catches up on release. */
+     The trail/marker restyle is skipped while the user has a mouse or touch
+     down on the scene: a restyle mid-drag does not just jitter the camera,
+     it kills the drag outright -- Plotly's gl3d orbit control never sees the
+     rest of the gesture, so a ride playing back left the 3-D view impossible
+     to rotate, pan or zoom for as long as play kept ticking. It simply
+     catches up on release. */
   function updateLogScrub() {
     if (!state.log.doc) return;
     var t0 = state.log.doc.time[state.log.scrub];
@@ -387,7 +403,9 @@
     if (el.logChart && el.logChart.data && el.logChart.data.length) {
       Viewer.setReplayPlayhead(el.logChart, t0, { theme: state.theme });
     }
-    if (!plotInteracting) Viewer.setPathHighlight(el.plot, lastItems, state.log.scrub, { theme: state.theme });
+    if (!plotInteracting) {
+      Viewer.updatePathProgress(el.plot, lastItems, state.log.scrub, { pathColor: state.log.pathColor });
+    }
     if (state.log.view === 'dwell') renderLogDwellPanels(lastItems);
   }
 
@@ -529,7 +547,7 @@
     el.logChart.hidden = !showReplay;
     el.logDwellList.hidden = showReplay;
     if (showReplay) renderLogReplayChart(items); else renderLogDwellPanels(items);
-    Viewer.setPathHighlight(el.plot, items, state.log.scrub, { theme: state.theme });
+    Viewer.updatePathProgress(el.plot, items, state.log.scrub, { pathColor: state.log.pathColor });
   }
 
   /* One predicted line per dataset, always emitted (hidden ones included) so
@@ -941,6 +959,8 @@
         zTitle: zTitle(),
         slice: sliceSpec(items),
         showPath: state.log.showPath,
+        scrubRow: state.log.scrub,
+        pathColor: state.log.pathColor,
         camera: Viewer.currentCamera(el.plot)
       });
       // only worth a resize when the stage swapped renderers or #logWrap's
@@ -1238,6 +1258,7 @@
     }
     el.btnTheme.textContent = state.theme === 'dark' ? t('theme.light') : t('theme.dark');
     updatePlayLabel();
+    updatePathColorButton();
     try { localStorage.setItem('lang', lang); } catch (e) { /* private mode */ }
     refreshTables();
     renderAll();
@@ -1367,6 +1388,26 @@
       if (state.log.playing) stopLogPlay(); else startLogPlay();
     });
 
+    el.logSpeedBtns.forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        state.log.speed = Number(btn.dataset.speed);
+        el.logSpeedBtns.forEach(function (b) { b.setAttribute('aria-pressed', String(b === btn)); });
+        // playing already: restart the wall-clock anchor at the new speed
+        // from right where the scrub position already is, rather than
+        // stopping playback just because the rate changed
+        if (playTimer) { window.clearInterval(playTimer); playTimer = null; startLogPlay(); }
+      });
+    });
+
+    el.logPathColor.addEventListener('click', function () {
+      var order = Viewer.TRAIL_COLOR_ORDER;
+      var i = order.indexOf(state.log.pathColor);
+      state.log.pathColor = order[(i + 1) % order.length];
+      try { localStorage.setItem('pathColor', state.log.pathColor); } catch (e) { /* private mode */ }
+      updatePathColorButton();
+      renderPlot();
+    });
+
     el.logScrub.addEventListener('input', function (ev) {
       stopLogPlay();
       state.log.scrub = Number(ev.target.value);
@@ -1404,7 +1445,7 @@
     ['file', 'drop', 'tableSel', 'dsList', 'library', 'libList', 'libRefresh',
       'logPanel', 'logList', 'logRefresh', 'logInfo', 'logName', 'logClear',
       'logAxisY', 'logAxisX', 'logCompareSel', 'logShowPath', 'logWrap', 'logChart', 'logDwellList',
-      'logPlay', 'logScrub', 'logScrubValue',
+      'logPlay', 'logScrub', 'logScrubValue', 'logPathColor',
       'plot', 'curve', 'empty', 'sliceWrap', 'slicePlot',
       'sliceSel', 'sliceRange', 'sliceValue', 'contours', 'opacity', 'baseSel', 'baseField',
       'btnReset', 'btnPng', 'langSel', 'btnTheme', 'btnSide', 'btnInfo', 'about', 'toasts'].forEach(function (id) {
@@ -1420,6 +1461,7 @@
     }
     el.modeBtns = Array.prototype.slice.call(document.querySelectorAll('[data-mode]'));
     el.logViewBtns = Array.prototype.slice.call(document.querySelectorAll('[data-logview]'));
+    el.logSpeedBtns = Array.prototype.slice.call(document.querySelectorAll('[data-speed]'));
 
     // no stored choice yet: follow the browser, fall back to English
     var savedTheme = 'dark', savedLang = window.I18N.preferred();
@@ -1428,6 +1470,10 @@
     try {
       savedTheme = localStorage.getItem('theme') || savedTheme;
       savedLang = localStorage.getItem('lang') || savedLang;
+      var savedPathColor = localStorage.getItem('pathColor');
+      if (savedPathColor && Viewer.TRAIL_COLOR_ORDER.indexOf(savedPathColor) >= 0) {
+        state.log.pathColor = savedPathColor;
+      }
     } catch (e) { /* private mode */ }
 
     fillLangSelect();

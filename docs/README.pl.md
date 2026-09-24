@@ -165,7 +165,16 @@ Trzy widoki pod sceną:
   potwierdza, że przypisanie i jednostki są poprawne.
 - **Czas przebywania** — mapa cieplna w kształcie tablicy, kolorowana według tego, ile czasu
   jazda spędziła w każdej komórce.
-- **Trasa** z punktów na samej powierzchni, po jednym na próbkę, włączana zaznaczeniem pola.
+- **Trasa** na samej powierzchni: każda próbka jako mały punkt, kolorowy ślad łączący
+  wszystko przejechane do tej pory, i czerwony pionowy znacznik w bieżącym punkcie — wszystko
+  włączane razem jednym polem.
+
+Wspólny suwak przewijania pod sceną steruje wszystkimi trzema widokami naraz, z play/pauzą i
+czterema prędkościami (**:1** czas rzeczywisty, aż do **:1k** tysiąc razy wolniej) do
+oglądania szybkiego stanu przejściowego w szczegółach. Kolor śladu to wybór spośród pięciu —
+czerwony, zielony, niebieski, żółty lub biały — za pomocą okrągłego przycisku obok „Zresetuj
+widok”; bieżący punkt zawsze pozostaje czerwony, niezależnie od wyboru, więc nigdy nie zlewa
+się ze śladem.
 
 To jest uczciwe wobec map w stanie ustalonym i ich zwykłych korekt. Nie pokazuje
 przejściowego wzbogacenia przy gwałtownym otwarciu przepustnicy — ta korekta w prawdziwym

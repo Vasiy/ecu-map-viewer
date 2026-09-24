@@ -167,8 +167,16 @@ Drei Ansichten unter der Szene:
   Übereinstimmung bei ruhiger Fahrt bestätigt, dass Zuordnung und Einheiten stimmen.
 - **Verweildauer** — eine Heatmap in der Form des Kennfelds, gefärbt danach, wie lange die
   Fahrt in jeder Zelle verbrachte.
-- Ein **Fahrweg** aus Punkten auf der Fläche selbst, einer je Messwert, per Häkchen ein- und
-  ausschaltbar.
+- Ein **Fahrweg** auf der Fläche selbst: jeder Messwert als kleiner Punkt, eine farbige Spur,
+  die alles bisher Gefahrene verbindet, und eine rote senkrechte Markierung am aktuellen
+  Punkt — alles zusammen per Häkchen ein- und ausschaltbar.
+
+Eine gemeinsame Scrub-Leiste unter der Szene steuert alle drei Ansichten zugleich, mit
+Play/Pause und vier Geschwindigkeiten (**:1** Echtzeit, bis **:1k** tausendfach langsamer),
+um einen schnellen Übergang im Detail zu verfolgen. Die Farbe der Spur ist eine Wahl aus
+fünf — Rot, Grün, Blau, Gelb oder Weiß — über die runde Schaltfläche neben „Ansicht
+zurücksetzen"; der aktuelle Punkt bleibt unabhängig davon immer rot, damit er nicht mit der
+Spur verschmilzt.
 
 Das ist ehrlich über stationäre Kennfelder und ihre üblichen Korrekturen. Es zeigt keine
 Anreicherung bei einem plötzlichen Gasstoß — diese Korrektur läuft in der echten Firmware

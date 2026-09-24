@@ -168,8 +168,15 @@ Drie weergaven onder de scène:
   bevestigt dat de toewijzing en de eenheden kloppen.
 - **Verblijftijd** — een heatmap in de vorm van de map, gekleurd naar hoe lang de rit in elke
   cel doorbracht.
-- Een **pad** van punten op het vlak zelf, één per meting, aan- en uit te zetten met een
-  vinkje.
+- Een **pad** op het vlak zelf: elke meting als een klein punt, een gekleurd spoor dat alles
+  tot nu toe gereden verbindt, en een rode verticale markering op het huidige punt — alles
+  samen aan- en uit te zetten met één vinkje.
+
+Een gedeelde schuifbalk onder de scène stuurt alle drie de weergaven tegelijk aan, met
+afspelen/pauzeren en vier snelheden (**:1** realtime, tot **:1k** duizend keer trager) om een
+snelle overgang in detail te bekijken. De kleur van het spoor is een keuze uit vijf — rood,
+groen, blauw, geel of wit — via de ronde knop naast "Weergave resetten"; het huidige punt
+blijft altijd rood, ongeacht die keuze, zodat het nooit met het spoor versmelt.
 
 Dit is eerlijk over stabiele maps en hun gebruikelijke correcties. Het toont geen tijdelijke
 verrijking bij een plotselinge gasstoot — die correctie draait in de echte firmware op de

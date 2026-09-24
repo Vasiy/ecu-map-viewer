@@ -164,7 +164,15 @@ Three views below the scene:
   are right.
 - **Time spent** — a heatmap shaped like the map, coloured by how long the drive sat in each
   cell.
-- A **path** of markers on the surface itself, one per sample, toggled by a checkbox.
+- A **path** on the surface itself: every sample as a small marker, a coloured trail
+  connecting everything driven so far, and a red vertical marker at the current point — all
+  toggled together by one checkbox.
+
+A shared scrub bar under the scene drives all three views at once, with play/pause and four
+speed choices (**:1** real time, down to **:1k** a thousand times slower) for stepping through
+a fast transient in detail. The trail's colour is a five-way choice — red, green, blue, yellow
+or white — via the round button next to **Reset view**; the current point stays red regardless,
+so it never blends into the trail.
 
 This is honest about steady-state maps and their usual corrections. It does not show
 transient enrichment on a snapped throttle — that correction runs on the rate of change and

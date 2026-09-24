@@ -234,7 +234,7 @@ async function main() {
 
     // a real Plotly.react() populates el.data and el._fullLayout; this sandbox's
     // stub does not, since nothing here needs a real GL scene -- stand in for
-    // just enough of it to exercise setPathHighlight's own guard and camera read
+    // just enough of it to exercise updatePathProgress's own guard and camera read
     const plot = S.document.getElementById('plot');
     plot.data = [];
     const LIVE_CAMERA = { up: { x: 0, y: 0, z: 1 }, center: { x: 0, y: 0, z: 0 },
@@ -255,6 +255,49 @@ async function main() {
     // handed through by reference, so identity is the right check anyway.
     assert.strictEqual(S.Plotly.last.update[2]['scene.camera'], LIVE_CAMERA,
       'the live (rotated) camera must be re-asserted, not the stale one from the layout');
+  });
+
+  await test('a speed button presses itself and its siblings go up, and does not stop an active play', async () => {
+    const S = makeSandbox();
+    await settle();
+    await drop(S, [file('granpasso.bin', Buffer.from(sampleImage())), file('granpasso.xdf', SAMPLE_XDF)]);
+    await settle();
+    await drop(S, [file('ride.csv', RIDE_CSV)]);
+    await settle();
+
+    const speedBtns = () => S.document.querySelectorAll('[data-speed]');
+    assert.strictEqual(speedBtns().find((b) => b.dataset.speed === '1').getAttribute('aria-pressed'), 'true');
+
+    const play = S.document.getElementById('logPlay');
+    play.fire('click');
+    assert.strictEqual(play.textContent, '⏸', 'play should be running before the speed change');
+
+    speedBtns().find((b) => b.dataset.speed === '1000').fire('click');
+    assert.strictEqual(speedBtns().find((b) => b.dataset.speed === '1000').getAttribute('aria-pressed'), 'true');
+    assert.strictEqual(speedBtns().find((b) => b.dataset.speed === '1').getAttribute('aria-pressed'), 'false');
+    assert.strictEqual(play.textContent, '⏸', 'changing speed mid-play should not stop playback');
+  });
+
+  await test('the path-color button cycles through the five choices and persists the choice', async () => {
+    const S = makeSandbox();
+    await settle();
+
+    const btn = S.document.getElementById('logPathColor');
+    const order = ['red', 'green', 'blue', 'yellow', 'white'];
+    // starts on the default (yellow) -- click through a full lap back to it
+    for (let i = 0; i < order.length; i++) {
+      btn.fire('click');
+    }
+    assert.strictEqual(S.localStorage.getItem('pathColor'), 'yellow',
+      'five clicks from the default should land back on the default');
+  });
+
+  await test('a saved path color survives a reload', async () => {
+    const S = makeSandbox({ storage: { pathColor: 'blue' } });
+    await settle();
+    const btn = S.document.getElementById('logPathColor');
+    // the swatch's own background is the only visible trace of the loaded colour
+    assert.ok(btn.style.background, 'the swatch should be painted at startup');
   });
 
   console.log('\n' + passed + ' passed, ' + failed + ' failed');

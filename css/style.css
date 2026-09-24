@@ -403,6 +403,11 @@ main {
   font-weight: 600;
 }
 
+.log-view-row { display: flex; align-items: center; gap: .5rem; }
+
+/* its own background is the swatch -- set inline from the chosen trail colour */
+#logPathColor { width: 1.8rem; height: 1.8rem; padding: 0; border-radius: 50%; }
+
 /* ---------- plot ---------- */
 
 .plot-wrap { position: relative; flex: 1 1 auto; min-height: 0; }
@@ -590,6 +595,8 @@ body.curve-mode .only3d { display: none; }
   /* the slider and the select say what they are; the words can go */
   .toolbar .inline > span:first-child { display: none; }
   .toolbar .inline.check > span { display: inline; }
+  .log-view-row { flex-wrap: wrap; }
+  .log-view-row .spacer { flex-basis: 100%; height: 0; }
 }
 
 /* landscape phones: give the scene every pixel it can get */

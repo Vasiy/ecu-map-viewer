@@ -152,12 +152,27 @@
     return { columns: log.columns, time: log.time.slice(0, n), channels: channels, rows: n };
   }
 
+  /* The row at or just before a given elapsed-seconds target -- how playback
+     turns "this much wall-clock time has passed, divided by the speed
+     factor" into a row index. fromIndex resumes a forward-only scan instead
+     of rescanning from the start on every tick; playback only ever moves
+     forward, so a target behind fromIndex just stays put rather than
+     walking back. */
+  function rowAtTime(log, target, fromIndex) {
+    var time = log.time, n = time.length;
+    if (!n) return 0;
+    var i = Math.max(0, Math.min(fromIndex || 0, n - 1));
+    while (i < n - 1 && time[i + 1] <= target) i++;
+    return i;
+  }
+
   return {
     parse: parse,
     defaultAxisChannels: defaultAxisChannels,
     defaultCompareChannel: defaultCompareChannel,
     ROLE_COMPARE: ROLE_COMPARE,
     replay: replay,
-    sliceTo: sliceTo
+    sliceTo: sliceTo,
+    rowAtTime: rowAtTime
   };
 });

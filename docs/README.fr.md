@@ -172,8 +172,16 @@ Trois vues sous la scène :
   croisière stable confirme que l'association et les unités sont correctes.
 - **Temps passé** — une carte de chaleur à la forme de la cartographie, colorée selon le
   temps passé par le trajet dans chaque cellule.
-- Un **trajet** de points sur la surface elle-même, un par échantillon, activé par une case à
-  cocher.
+- Un **trajet** sur la surface elle-même : chaque échantillon comme un petit point, une
+  traînée colorée reliant tout ce qui a été parcouru jusqu'ici, et un repère vertical rouge au
+  point actuel — le tout activé ensemble par une seule case à cocher.
+
+Une barre de défilement partagée sous la scène pilote les trois vues à la fois, avec
+lecture/pause et quatre vitesses (**:1** temps réel, jusqu'à **:1k** mille fois plus lent)
+pour examiner un régime transitoire en détail. La couleur de la traînée est un choix parmi
+cinq — rouge, vert, bleu, jaune ou blanc — via le bouton rond à côté de « Réinitialiser la
+vue » ; le point actuel reste rouge quel que soit ce choix, pour ne jamais se confondre avec
+la traînée.
 
 Cela reste honnête sur les cartographies en régime stable et leurs corrections habituelles.
 Cela ne montre pas l'enrichissement transitoire d'un coup d'accélérateur — cette correction

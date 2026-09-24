@@ -168,8 +168,16 @@ Tre viste sotto la scena:
   marcia costante conferma che l'assegnazione e le unità sono corrette.
 - **Tempo trascorso** — una heatmap a forma della mappa, colorata in base a quanto tempo la
   guida ha trascorso in ogni cella.
-- Un **percorso** di punti sulla superficie stessa, uno per campione, attivabile con una
-  casella.
+- Un **percorso** sulla superficie stessa: ogni campione come un piccolo punto, una scia
+  colorata che collega tutto il tragitto percorso finora, e un indicatore verticale rosso nel
+  punto attuale — tutto attivabile insieme con un'unica casella.
+
+Una barra di scorrimento condivisa sotto la scena guida tutte e tre le viste insieme, con
+play/pausa e quattro velocità (**:1** tempo reale, fino a **:1k** mille volte più lento) per
+esaminare in dettaglio un transitorio rapido. Il colore della scia è una scelta tra cinque —
+rosso, verde, blu, giallo o bianco — tramite il pulsante rotondo accanto a «Reimposta
+vista»; il punto attuale resta sempre rosso, qualunque sia la scelta, così da non
+confondersi mai con la scia.
 
 Questo è onesto riguardo alle mappe in regime stazionario e alle loro correzioni consuete.
 Non mostra l'arricchimento transitorio su un colpo di gas improvviso — quella correzione
