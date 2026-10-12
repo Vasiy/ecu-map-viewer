@@ -140,7 +140,7 @@ la tiene queda marcado en rojo en su tarjeta.
   (revoluciones × valor).
 
 **Diferencia** toma la base elegida como referencia y muestra las demás como desvío
-respecto a ella. Los puntos de los ejes cambian entre plataformas (2,4° frente a 2,2° en el
+respecto a ella. Los puntos de los ejes cambian entre plataformas (1,9° frente a 2,2° en el
 primer punto de acelerador), así que un mapa se remuestrea de forma bilineal sobre los ejes
 de la base, no se empareja celda a celda.
 

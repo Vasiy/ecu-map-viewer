@@ -136,7 +136,7 @@ table. A firmware that does not is marked in red on its card.
   (RPM × throttle), the back wall (throttle × value) and the side wall (RPM × value).
 
 **Difference** turns the selected baseline into the reference and shows the others as
-deltas against it. Breakpoints differ between platforms (2.4° against 2.2° at the first
+deltas against it. Breakpoints differ between platforms (1.9° against 2.2° at the first
 throttle point), so a map is resampled bilinearly onto the baseline's axes rather than
 matched cell by cell.
 

@@ -138,7 +138,7 @@ Wo sie fehlt, steht ein roter Hinweis auf der Karte.
   (Drehzahl × Drosselklappe), Rückwand (Drosselklappe × Wert), Seitenwand (Drehzahl × Wert).
 
 **Differenz** macht die gewählte Basis zur Referenz und zeigt die übrigen als Delta dazu.
-Die Stützstellen unterscheiden sich zwischen Plattformen (2,4° gegen 2,2° am ersten
+Die Stützstellen unterscheiden sich zwischen Plattformen (1,9° gegen 2,2° am ersten
 Drosselklappenpunkt), deshalb wird ein Kennfeld bilinear auf die Achsen der Basis
 umgerechnet statt Zelle für Zelle zugeordnet.
 

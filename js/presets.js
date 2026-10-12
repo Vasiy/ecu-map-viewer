@@ -1,9 +1,10 @@
 /*
  * Fallback definitions for a firmware image that arrives without its XDF.
  *
- * The addresses are the ones verified on real IAW5AM dumps; the axes are the
- * breakpoints this ECU family shares (confirmed against the Granpasso and
- * Multistrada definitions). A preset builds the same document shape xdf.js
+ * The addresses are the ones verified on real IAW5AM dumps. The RPM axis is the
+ * one this ECU family shares; the shared TPS axis comes from the community
+ * definitions, and Granpasso carries its own, traced in its disassembly
+ * (TPS_GRANPASSO below). A preset builds the same document shape xdf.js
  * produces, so readTable() does not care where the definition came from.
  */
 (function (root, factory) {
@@ -18,9 +19,14 @@
     7000, 7250, 7500, 7750, 8000, 8250, 8500];
   var TPS = [2.4, 2.7, 3.2, 3.55, 4.0, 5.0, 6.0, 7.0, 8.5, 10.0, 12.0, 15.0, 19.0,
     24.0, 29.0, 34.0, 41.0, 51.0, 64.0, 81.0];
+  /* Granpasso (23ECCLGPSMD) reads Ignition Main against the TPS axis ending at
+   * 0x8C60 (file 0x4CC38..0x4CC5F), traced in the disassembly. The 2.4..81 axis
+   * above sits at file 0x495B6 there and serves only the advance slew limiter. */
+  var TPS_GRANPASSO = [1.9, 2.7, 3.2, 3.55, 4.0, 5.0, 6.0, 7.0, 8.5, 10.0, 12.0, 15.0,
+    19.0, 24.0, 29.0, 34.0, 41.0, 51.0, 64.0, 79.0];
 
   var PLATFORMS = [
-    { id: 'granpasso', name: 'Moto Morini Granpasso (23EC)', address: 0x4856E },
+    { id: 'granpasso', name: 'Moto Morini Granpasso (23EC)', address: 0x4856E, tps: TPS_GRANPASSO, signed: true },
     { id: 'mts1100', name: 'Ducati Multistrada 1100 DP', address: 0x484DE },
     { id: 'd1198', name: 'Ducati 1198 Stock', address: 0x48634 },
     { id: 'hyper1100', name: 'Ducati Hypermotard 1100', address: 0x4856E }
@@ -44,20 +50,22 @@
   function docFor(platformId) {
     var p = PLATFORMS.filter(function (q) { return q.id === platformId; })[0];
     if (!p) return null;
+    var tps = p.tps || TPS;
     var table = {
       index: 0, uniqueId: 1,
       title: 'Ignition Main advance',
       description: 'Preset definition (' + p.name + '), no XDF loaded',
       categories: ['Preset'],
-      x: axis('x', TPS),
+      x: axis('x', tps),
       y: axis('y', RPM),
       z: {
-        id: 'z', address: p.address, sizeBits: 16, flags: BinIO.LSB_FIRST,
-        rows: RPM.length, cols: TPS.length, majorStrideBits: 0, minorStrideBits: 0,
+        id: 'z', address: p.address, sizeBits: 16,
+        flags: BinIO.LSB_FIRST | (p.signed ? BinIO.SIGNED : 0),
+        rows: RPM.length, cols: tps.length, majorStrideBits: 0, minorStrideBits: 0,
         indexCount: null, decimals: 1, units: 'deg', min: null, max: null,
         linkId: null, embedType: null, labels: [], equation: 'X/10'
       },
-      rows: RPM.length, cols: TPS.length, is3d: true
+      rows: RPM.length, cols: tps.length, is3d: true
     };
     return {
       version: 'preset', title: p.name, description: table.description, author: '',

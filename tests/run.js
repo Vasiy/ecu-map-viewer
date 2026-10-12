@@ -147,6 +147,20 @@ test('preset reads Ignition Main without an XDF', function () {
   assert.strictEqual(g.cols, 20);
   assert.strictEqual(g.z[0][0], 10);
   assert.strictEqual(g.y[31], 8500);
+  assert.strictEqual(g.x[0], 1.9);   // Granpasso's own TPS axis, not the slew-limiter one
+  assert.strictEqual(g.x[19], 79);
+});
+
+test('Granpasso preset reads Ignition Main as signed', function () {
+  var doc = Presets.docFor('granpasso');
+  var buf = new ArrayBuffer(0x50000);
+  new DataView(buf).setInt16(0x4856E, -25, true);
+  assert.strictEqual(XDF.readTable(doc, doc.tables[0], buf).z[0][0], -2.5);
+});
+
+test('other presets keep the shared TPS axis', function () {
+  var doc = Presets.docFor('hyper1100');
+  var g = XDF.readTable(doc, doc.tables[0], new ArrayBuffer(0x50000));
   assert.strictEqual(g.x[0], 2.4);
 });
 

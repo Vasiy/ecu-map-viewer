@@ -143,7 +143,7 @@ qui ne l'a pas est signalé en rouge sur sa carte.
   (régime × valeur).
 
 **Différence** prend la référence choisie comme étalon et affiche les autres en écart par
-rapport à elle. Les points d'axe diffèrent d'une plateforme à l'autre (2,4° contre 2,2° au
+rapport à elle. Les points d'axe diffèrent d'une plateforme à l'autre (1,9° contre 2,2° au
 premier point de papillon), aussi une cartographie est-elle rééchantillonnée
 bilinéairement sur les axes de la référence, et non appariée cellule par cellule.
 

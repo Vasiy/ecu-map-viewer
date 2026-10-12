@@ -133,7 +133,7 @@ den märks med rött på sitt kort.
   bakväggen (gasspjäll × värde) och sidoväggen (varvtal × värde).
 
 **Skillnad** gör den valda basen till referens och visar de övriga som avvikelse mot den.
-Brytpunkterna skiljer sig mellan plattformar (2,4° mot 2,2° vid första gasspjällpunkten),
+Brytpunkterna skiljer sig mellan plattformar (1,9° mot 2,2° vid första gasspjällpunkten),
 så en karta samplas om bilinjärt på basens axlar i stället för att paras cell för cell.
 
 **Snitt** skär kartan vid ett fast varvtal eller en fast gasspjällvinkel. Snittet syns två

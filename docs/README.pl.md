@@ -137,7 +137,7 @@ nie ma, zostaje oznaczony na czerwono na swojej karcie.
   (obroty × wartość).
 
 **Różnica** czyni wybraną bazę odniesieniem i pokazuje pozostałe jako odchyłkę od niej.
-Punkty osi różnią się między platformami (2,4° wobec 2,2° w pierwszym punkcie
+Punkty osi różnią się między platformami (1,9° wobec 2,2° w pierwszym punkcie
 przepustnicy), więc mapa jest przepróbkowywana dwuliniowo na osie bazy, a nie dopasowywana
 komórka po komórce.
 

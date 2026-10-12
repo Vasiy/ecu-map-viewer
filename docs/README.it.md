@@ -139,7 +139,7 @@ cui manca viene segnalato in rosso sulla sua scheda.
   (giri × valore).
 
 **Differenza** prende la base scelta come riferimento e mostra le altre come scarto
-rispetto a essa. I punti degli assi cambiano tra piattaforme (2,4° contro 2,2° al primo
+rispetto a essa. I punti degli assi cambiano tra piattaforme (1,9° contro 2,2° al primo
 punto di farfalla), perciò una mappa viene ricampionata in modo bilineare sugli assi della
 base, non accoppiata cella per cella.
 

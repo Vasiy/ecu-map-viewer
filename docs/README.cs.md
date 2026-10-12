@@ -134,7 +134,7 @@ chybí, je na své kartě označen červeně.
   (otáčky × klapka), zadní stěny (klapka × hodnota) a boční (otáčky × hodnota).
 
 **Rozdíl** udělá ze zvoleného základu referenci a ostatní ukáže jako odchylku od něj. Body
-os se mezi platformami liší (2,4° proti 2,2° v prvním bodě klapky), proto se mapa
+os se mezi platformami liší (1,9° proti 2,2° v prvním bodě klapky), proto se mapa
 převzorkuje bilineárně na osy základu, místo aby se párovala buňku po buňce.
 
 **Řez** protne mapu při pevných otáčkách nebo při pevném úhlu klapky. Řez se objeví dvakrát:

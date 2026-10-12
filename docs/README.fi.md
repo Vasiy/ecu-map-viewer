@@ -141,7 +141,7 @@ josta se puuttuu, merkitään punaisella omaan korttiinsa.
   (kierrosluku × arvo).
 
 **Erotus** tekee valitusta perustasta vertailukohdan ja näyttää muut poikkeamana siihen.
-Akselipisteet eroavat alustojen välillä (2,4° vastaan 2,2° ensimmäisessä
+Akselipisteet eroavat alustojen välillä (1,9° vastaan 2,2° ensimmäisessä
 kaasuläppäpisteessä), joten kartta näytteistetään bilineaarisesti perustan akseleille eikä
 pariteta solu solulta.
 

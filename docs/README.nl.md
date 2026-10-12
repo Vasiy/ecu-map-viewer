@@ -139,7 +139,7 @@ hem mist, krijgt een rode melding op zijn kaart.
   (toerental × waarde).
 
 **Verschil** maakt de gekozen basis tot referentie en toont de andere als afwijking
-daarvan. De rasterpunten verschillen per platform (2,4° tegen 2,2° op het eerste
+daarvan. De rasterpunten verschillen per platform (1,9° tegen 2,2° op het eerste
 gaskleppunt), dus een map wordt bilineair op de assen van de basis herbemonsterd in plaats
 van cel voor cel gekoppeld.
 
